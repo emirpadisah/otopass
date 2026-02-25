@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+﻿import { notFound } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, StatusBadge } from "@/components/ui";
 import { getDealerApplicationForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 
@@ -6,33 +7,85 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+function formatNumber(value: number | null) {
+  if (value === null) return "-";
+  return new Intl.NumberFormat("tr-TR").format(value);
+}
+
 export default async function DealerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
   const application = await getDealerApplicationForCurrentUser(id);
   if (!application) return notFound();
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-          {application.brand} {application.model}
-        </h1>
-        <p className="mt-2 text-sm text-zinc-500">Review details and create an offer.</p>
+    <div className="space-y-5">
+      <header className="space-y-2">
+        <p className="text-caption text-[var(--accent)]">Başvuru Detayı</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-h2">
+            {application.brand} {application.model}
+          </h1>
+          <StatusBadge status={application.status} />
+        </div>
+        <p className="text-sm text-[var(--text-muted)]">Detayları inceleyip teklifinizi oluşturun.</p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm">
-          <p>Owner: {application.owner_name ?? "-"}</p>
-          <p>Phone: {application.owner_phone ?? "-"}</p>
-          <p>Year: {application.model_year ?? "-"}</p>
-          <p>KM: {application.km ?? "-"}</p>
-          <p>Fuel: {application.fuel_type ?? "-"}</p>
-          <p>Transmission: {application.transmission ?? "-"}</p>
-          <p>Status: {application.status}</p>
-        </div>
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-          <OfferForm applicationId={application.id} />
-        </div>
+      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card tone="flat">
+          <CardHeader>
+            <CardTitle className="text-xl">Araç ve Müşteri Bilgileri</CardTitle>
+            <CardDescription>Başvuru sırasında iletilen bilgiler</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl className="grid gap-3 sm:grid-cols-2">
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Sahibi</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.owner_name ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Telefon</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.owner_phone ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Model Yılı</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.model_year ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Kilometre</dt>
+                <dd className="mt-1 text-sm font-semibold">{formatNumber(application.km)} km</dd>
+              </div>
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Yakıt</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.fuel_type ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Vites</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.transmission ?? "-"}</dd>
+              </div>
+            </dl>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="panel-subtle p-3">
+                <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Tramer Bilgisi</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{application.tramer_info ?? "-"}</p>
+              </div>
+              <div className="panel-subtle p-3">
+                <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Hasar Bilgisi</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{application.damage_info ?? "-"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card tone="elevated">
+          <CardHeader>
+            <CardTitle className="text-xl">Teklif Oluştur</CardTitle>
+            <CardDescription>Müşteri için teklif tutarı ve açıklama ekleyin.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OfferForm applicationId={application.id} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

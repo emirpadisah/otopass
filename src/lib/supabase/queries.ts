@@ -1,14 +1,21 @@
 import { createSupabaseServerClient } from "./server";
+import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
 import type { UserRole } from "@/lib/types";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
 
+type DealerLinkRow = {
+  dealer_id: string;
+  role: string;
+  created_at: string;
+};
+
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
 
 export async function getDealerBySlug(slug: string): Promise<DealerRow | null> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).maybeSingle();
   if (error) throw error;
   return (data as DealerRow | null) ?? null;
@@ -25,14 +32,14 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 export async function getUserRoles(userId: string): Promise<UserRole[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw error;
   return data.map((row) => row.role as UserRole);
 }
 
 export async function listDealers(): Promise<DealerRow[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").order("created_at", { ascending: false });
   if (error) throw error;
   return (data as DealerRow[]) ?? [];
@@ -42,21 +49,30 @@ export async function getDealerForCurrentUser() {
   const userId = await getCurrentUserId();
   if (!userId) return null;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("dealer_users")
-    .select("dealer_id, role")
+    .select("dealer_id, role, created_at")
     .eq("user_id", userId)
-    .maybeSingle();
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   if (error) throw error;
-  return (data as { dealer_id: string; role: string } | null) ?? null;
+
+  const row = ((data as DealerLinkRow[] | null) ?? [])[0];
+  if (!row) return null;
+
+  return {
+    dealer_id: row.dealer_id,
+    role: row.role,
+  };
 }
 
 export async function getDealerForCurrentUserWithDetails() {
   const link = await getDealerForCurrentUser();
   if (!link?.dealer_id) return null;
-  const supabase = await createSupabaseServerClient();
+
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("dealers")
     .select("*")
@@ -67,7 +83,7 @@ export async function getDealerForCurrentUserWithDetails() {
 }
 
 export async function listDealerApplications(dealerId: string): Promise<ApplicationRow[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("applications")
     .select("*")
@@ -86,7 +102,8 @@ export async function listDealerApplicationsForCurrentUser(): Promise<Applicatio
 export async function getDealerApplicationForCurrentUser(applicationId: string): Promise<ApplicationRow | null> {
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return null;
-  const supabase = await createSupabaseServerClient();
+
+  const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("applications")
     .select("*")
@@ -98,7 +115,7 @@ export async function getDealerApplicationForCurrentUser(applicationId: string):
 }
 
 export async function listUsersForAdmin() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data: profiles, error: profilesError } = await supabase
     .from("user_profiles")
     .select("user_id, full_name, must_change_password, created_at")
@@ -115,7 +132,7 @@ export async function listUsersForAdmin() {
   const [{ data: roleRows, error: rolesError }, { data: memberships, error: membershipError }] =
     await Promise.all([
       supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
-      supabase.from("dealer_users").select("user_id, dealer_id"),
+      supabase.from("dealer_users").select("user_id, dealer_id").in("user_id", userIds),
     ]);
 
   if (rolesError) throw rolesError;

@@ -1,49 +1,74 @@
+﻿import Link from "next/link";
+import { ExternalLink, Link2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  buttonVariants,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
-import { Card } from "@/components/ui/card";
-import Link from "next/link";
 
 export default async function DealerProfilePage() {
   const dealer = await getDealerForCurrentUserWithDetails();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header>
-        <h2 className="text-xl font-semibold tracking-tight">Profile</h2>
-        <p className="mt-1 text-sm text-zinc-500">Dealer account details and intake link.</p>
+        <p className="text-caption text-[var(--accent)]">Hesap Bilgileri</p>
+        <h2 className="text-h2 mt-2">Profil</h2>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Galeri bilgileri ve başvuru linki.</p>
       </header>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h3 className="text-sm font-semibold">Dealer Details</h3>
-          <dl className="mt-3 space-y-2 text-sm text-zinc-700">
-            <div className="flex justify-between">
-              <dt className="text-zinc-500">Dealer Name</dt>
-              <dd className="font-medium">{dealer?.name ?? "-"}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-zinc-500">Contact Email</dt>
-              <dd className="font-medium">{dealer?.contact_email ?? "-"}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-zinc-500">Slug</dt>
-              <dd className="font-medium">{dealer?.slug ?? "-"}</dd>
-            </div>
-          </dl>
+      <section className="grid gap-4 xl:grid-cols-2">
+        <Card tone="flat">
+          <CardHeader>
+            <CardTitle className="text-xl">Galeri Bilgileri</CardTitle>
+            <CardDescription>Kayıtlı profil alanları</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-2.5 text-sm">
+              <div className="panel-subtle flex items-center justify-between p-3">
+                <dt className="text-[var(--text-muted)]">Galeri Adı</dt>
+                <dd className="font-semibold">{dealer?.name ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle flex items-center justify-between p-3">
+                <dt className="text-[var(--text-muted)]">İletişim E-postası</dt>
+                <dd className="font-semibold">{dealer?.contact_email ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle flex items-center justify-between p-3">
+                <dt className="text-[var(--text-muted)]">Slug</dt>
+                <dd className="mono text-xs font-semibold">{dealer?.slug ?? "-"}</dd>
+              </div>
+            </dl>
+          </CardContent>
         </Card>
 
-        <Card>
-          <h3 className="text-sm font-semibold">Intake Link</h3>
-          <p className="mt-2 text-xs text-zinc-500">Share this link with customers to collect vehicle info.</p>
-          <div className="mt-3 flex flex-col gap-2 text-sm">
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-700">
-              {dealer ? `/form/${dealer.slug}` : "/form/<dealer-slug>"}
+        <Card tone="flat">
+          <CardHeader>
+            <CardTitle className="text-xl">Başvuru Linki</CardTitle>
+            <CardDescription>Bu bağlantıyı müşterilerinizle paylaşabilirsiniz.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="panel-subtle flex items-center gap-2 p-3">
+              <Link2 size={15} className="text-[var(--accent)]" />
+              <p className="mono break-all text-xs text-[var(--text-secondary)]">
+                {dealer ? `/form/${dealer.slug}` : "/form/<dealer-slug>"}
+              </p>
             </div>
-            {dealer && (
-              <Link href={`/form/${dealer.slug}`} className="text-xs text-emerald-600">
-                Open preview
+
+            {dealer ? (
+              <Link
+                href={`/form/${dealer.slug}`}
+                className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
+              >
+                Formu Aç
+                <ExternalLink size={14} />
               </Link>
-            )}
-          </div>
+            ) : null}
+          </CardContent>
         </Card>
       </section>
     </div>

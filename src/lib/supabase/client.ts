@@ -1,14 +1,16 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
+import { getSupabasePublicEnv } from "./env";
 
 let client: SupabaseClient<Database> | null = null;
 
 export function getSupabaseBrowserClient(): SupabaseClient<Database> {
   if (!client) {
+    const { url, anonKey } = getSupabasePublicEnv();
     client = createBrowserClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      url,
+      anonKey
     );
   }
 

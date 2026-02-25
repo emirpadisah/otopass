@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import type { ActionResponse } from "@/lib/types";
 import { createOfferForCurrentDealer } from "@/lib/supabase/offers";
@@ -13,12 +13,12 @@ export async function createOfferAction(
 
   try {
     await createOfferForCurrentDealer({ applicationId, amount, notes });
-    return { ok: true, code: "OFFER_CREATED", message: "Offer created successfully." };
+    return { ok: true, code: "OFFER_CREATED", message: "Teklif başarıyla oluşturuldu." };
   } catch (error) {
     return {
       ok: false,
       code: "OFFER_FAILED",
-      message: error instanceof Error ? error.message : "Offer creation failed.",
+      message: error instanceof Error ? error.message : "Teklif oluşturulamadı.",
     };
   }
 }

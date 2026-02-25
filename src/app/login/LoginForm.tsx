@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
+import { Button, Field, Input } from "@/components/ui";
 import { login } from "./actions";
 
 export function LoginForm() {
@@ -8,40 +9,29 @@ export function LoginForm() {
 
   return (
     <form className="space-y-4" action={formAction}>
-      <div className="space-y-1.5">
-        <label htmlFor="email" className="text-xs font-medium text-zinc-700">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/40"
-        />
-      </div>
+      <Field label="E-posta" labelFor="email">
+        <Input id="email" name="email" type="email" required autoComplete="email" />
+      </Field>
 
-      <div className="space-y-1.5">
-        <label htmlFor="password" className="text-xs font-medium text-zinc-700">
-          Password
-        </label>
-        <input
+      <Field label="Şifre" labelFor="password">
+        <Input
           id="password"
           name="password"
           type="password"
           required
-          className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/40"
+          autoComplete="current-password"
         />
-      </div>
+      </Field>
 
-      {state.error && <p className="text-xs font-medium text-rose-600">{state.error}</p>}
+      {state.error ? (
+        <div className="rounded-2xl border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.12)] px-3 py-2 text-xs font-semibold text-[var(--danger)]">
+          {state.error}
+        </div>
+      ) : null}
 
-      <button
-        type="submit"
-        className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-      >
-        Login
-      </button>
+      <Button type="submit" size="lg" className="mt-2 w-full justify-center">
+        Giriş Yap
+      </Button>
     </form>
   );
 }

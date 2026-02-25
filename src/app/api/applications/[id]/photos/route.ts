@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserId, getDealerApplicationForCurrentUser, getUserRoles } from "@/lib/supabase/queries";
 
 export async function GET(
@@ -13,20 +14,26 @@ export async function GET(
   const roles = await getUserRoles(userId);
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");
 
+  const service = createSupabaseServiceClient();
+
   const application = isAdmin
     ? await (async () => {
-        const supabase = await createSupabaseServerClient();
-        const { data } = await supabase.from("applications").select("photo_paths").eq("id", id).maybeSingle();
+        const { data, error } = await service
+          .from("applications")
+          .select("photo_paths")
+          .eq("id", id)
+          .maybeSingle();
+        if (error) throw error;
         return data;
       })()
     : await getDealerApplicationForCurrentUser(id);
 
   if (!application) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const supabase = await createSupabaseServerClient();
+  const authClient = await createSupabaseServerClient();
   const urls: string[] = [];
   for (const path of application.photo_paths ?? []) {
-    const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
+    const { data, error } = await authClient.storage.from("applications").createSignedUrl(path, 300);
     if (!error && data?.signedUrl) urls.push(data.signedUrl);
   }
 

@@ -1,4 +1,4 @@
-import type { ApplicationInput } from "@/lib/types";
+﻿import type { ApplicationInput } from "@/lib/types";
 
 const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -17,12 +17,12 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
   const model_year = toNullableNumber(formData.get("model_year"));
   const km = toNullableNumber(formData.get("km"));
 
-  if (!dealer_slug) throw new Error("Dealer slug is required.");
-  if (!brand || !model) throw new Error("Brand and model are required.");
+  if (!dealer_slug) throw new Error("Galeri slug bilgisi zorunludur.");
+  if (!brand || !model) throw new Error("Marka ve model zorunludur.");
   if (model_year !== null && (model_year < 1950 || model_year > new Date().getFullYear() + 1)) {
-    throw new Error("Model year is out of range.");
+    throw new Error("Model yılı geçersiz aralıkta.");
   }
-  if (km !== null && km < 0) throw new Error("KM must be >= 0.");
+  if (km !== null && km < 0) throw new Error("KM değeri 0 veya büyük olmalıdır.");
 
   return {
     dealer_slug,
@@ -49,18 +49,18 @@ function toNullableNumber(value: FormDataEntryValue | null): number | null {
   const raw = String(value).trim();
   if (!raw) return null;
   const number = Number(raw);
-  if (!Number.isFinite(number)) throw new Error("Invalid numeric field.");
+  if (!Number.isFinite(number)) throw new Error("Sayısal alan geçersiz.");
   return number;
 }
 
 export function validatePhotoFiles(files: File[]): void {
-  if (files.length > MAX_FILES) throw new Error(`At most ${MAX_FILES} photos are allowed.`);
+  if (files.length > MAX_FILES) throw new Error(`En fazla ${MAX_FILES} fotoğraf yüklenebilir.`);
   for (const file of files) {
     if (file.size > MAX_FILE_SIZE) {
-      throw new Error("Each photo must be <= 10MB.");
+      throw new Error("Her fotoğraf en fazla 10 MB olabilir.");
     }
     if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-      throw new Error("Only JPG, PNG or WEBP files are allowed.");
+      throw new Error("Sadece JPG, PNG veya WEBP dosyaları kabul edilir.");
     }
   }
 }

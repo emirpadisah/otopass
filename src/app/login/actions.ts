@@ -16,14 +16,14 @@ export async function login(
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    return { error: "E-posta ve şifre zorunludur." };
   }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Login failed. Check credentials." };
+    return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
   }
 
   const {
@@ -42,7 +42,13 @@ export async function login(
     }
   }
 
-  redirect(await resolvePostLoginRoute());
+  const targetRoute = await resolvePostLoginRoute();
+  if (targetRoute === "/login") {
+    await supabase.auth.signOut();
+    return { error: "Bu hesaba giriş yetkisi atanmadı. Admin panelinden rol atayın." };
+  }
+
+  redirect(targetRoute);
 }
 
 export async function logout(): Promise<void> {
@@ -59,10 +65,10 @@ export async function changePassword(
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
   if (password.length < 12) {
-    return { error: "Password must be at least 12 characters." };
+    return { error: "Şifre en az 12 karakter olmalıdır." };
   }
   if (password !== confirmPassword) {
-    return { error: "Passwords do not match." };
+    return { error: "Şifreler eşleşmiyor." };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -71,12 +77,12 @@ export async function changePassword(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Session expired. Please login again." };
+    return { error: "Oturum süresi doldu. Lütfen tekrar giriş yapın." };
   }
 
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
-    return { error: "Password update failed." };
+    return { error: "Şifre güncellenemedi." };
   }
 
   await supabase

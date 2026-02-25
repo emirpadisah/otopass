@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "./server";
+import { createSupabaseServiceClient } from "./service";
 import { getDealerForCurrentUser } from "./queries";
 
 export async function createOfferForCurrentDealer(input: {
@@ -7,10 +7,10 @@ export async function createOfferForCurrentDealer(input: {
   notes: string | null;
 }) {
   const dealer = await getDealerForCurrentUser();
-  if (!dealer?.dealer_id) throw new Error("Dealer account is required.");
-  if (!Number.isFinite(input.amount) || input.amount <= 0) throw new Error("Offer amount is invalid.");
+  if (!dealer?.dealer_id) throw new Error("Galeri hesabı gerekli.");
+  if (!Number.isFinite(input.amount) || input.amount <= 0) throw new Error("Teklif tutarı geçersiz.");
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServiceClient();
   const { data: application, error: appError } = await supabase
     .from("applications")
     .select("id, dealer_id")
@@ -18,7 +18,7 @@ export async function createOfferForCurrentDealer(input: {
     .eq("dealer_id", dealer.dealer_id)
     .maybeSingle();
   if (appError) throw appError;
-  if (!application) throw new Error("Application was not found.");
+  if (!application) throw new Error("Başvuru bulunamadı.");
 
   const { error: offerError } = await supabase.from("offers").insert({
     application_id: input.applicationId,

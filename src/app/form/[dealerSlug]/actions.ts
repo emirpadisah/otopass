@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { headers } from "next/headers";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -30,12 +30,12 @@ export async function submitApplication(
 
     const cooldownAllowed = await checkFormCooldown(ip, input.dealer_slug);
     if (!cooldownAllowed) {
-      return { ok: false, code: "RATE_LIMIT", message: "Please wait before submitting again." };
+      return { ok: false, code: "RATE_LIMIT", message: "Lütfen tekrar denemeden önce bekleyin." };
     }
 
     const dealer = await getDealerBySlug(input.dealer_slug);
     if (!dealer) {
-      return { ok: false, code: "DEALER_NOT_FOUND", message: "Dealer was not found." };
+      return { ok: false, code: "DEALER_NOT_FOUND", message: "Galeri bulunamadı." };
     }
 
     const files = formData
@@ -53,7 +53,7 @@ export async function submitApplication(
         .from("applications")
         .upload(filename, file, { upsert: false });
       if (uploadError) {
-        return { ok: false, code: "UPLOAD_FAILED", message: "Photo upload failed." };
+        return { ok: false, code: "UPLOAD_FAILED", message: "Fotoğraf yükleme başarısız." };
       }
       photo_paths.push(filename);
     }
@@ -75,16 +75,16 @@ export async function submitApplication(
     });
 
     if (insertError) {
-      return { ok: false, code: "INSERT_FAILED", message: "Application could not be saved." };
+      return { ok: false, code: "INSERT_FAILED", message: "Başvuru kaydedilemedi." };
     }
 
     await registerFormSubmit(ip, dealer.slug);
-    return { ok: true, code: "APPLICATION_CREATED", message: "Your application was submitted." };
+    return { ok: true, code: "APPLICATION_CREATED", message: "Başvurunuz başarıyla gönderildi." };
   } catch (error) {
     return {
       ok: false,
       code: "VALIDATION_FAILED",
-      message: error instanceof Error ? error.message : "Unexpected error",
+      message: error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu",
     };
   }
 }

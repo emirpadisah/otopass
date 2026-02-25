@@ -1,52 +1,54 @@
+import {
+  DataTable,
+  Table,
+  TableBody,
+  TableCell,
+  TableEmptyState,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+} from "@/components/ui";
 import { listDealers } from "@/lib/supabase/queries";
+import { DealerCreateForm } from "./DealerCreateForm";
 
 export default async function AdminGalleriesPage() {
   const dealers = await listDealers();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header>
-        <h2 className="text-xl font-semibold tracking-tight">Dealers</h2>
-        <p className="mt-1 text-sm text-zinc-500">Registered dealer organizations.</p>
+        <p className="text-caption text-[var(--accent)]">Galeri Ağı</p>
+        <h2 className="text-h2 mt-2">Galeriler</h2>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
+          Galeri kaydı oluşturun ve hesaplara galeri atayın.
+        </p>
       </header>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-zinc-200 text-sm">
-          <thead className="bg-zinc-50">
+      <DealerCreateForm />
+
+      <DataTable>
+        <Table>
+          <TableHead>
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Name
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Slug
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Contact
-              </th>
+              <TableHeaderCell>Galeri Adı</TableHeaderCell>
+              <TableHeaderCell>Slug</TableHeaderCell>
+              <TableHeaderCell>İletişim</TableHeaderCell>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200 bg-white">
+          </TableHead>
+          <TableBody>
             {dealers.map((dealer) => (
-              <tr key={dealer.id}>
-                <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-zinc-900">
+              <TableRow key={dealer.id}>
+                <TableCell className="whitespace-nowrap font-semibold text-[var(--text-primary)]">
                   {dealer.name}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">{dealer.slug}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">
-                  {dealer.contact_email ?? "-"}
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="whitespace-nowrap mono text-xs">{dealer.slug}</TableCell>
+                <TableCell className="whitespace-nowrap">{dealer.contact_email ?? "-"}</TableCell>
+              </TableRow>
             ))}
-            {dealers.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-sm text-zinc-500">
-                  No dealers found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            {dealers.length === 0 ? <TableEmptyState colSpan={3} message="Galeri kaydı bulunamadı." /> : null}
+          </TableBody>
+        </Table>
+      </DataTable>
     </div>
   );
 }
