@@ -30,6 +30,9 @@ export function FormClient({ dealerSlug }: { dealerSlug: string }) {
           <Field label="Model" labelFor="model">
             <Input id="model" name="model" placeholder="Örn. Golf" required />
           </Field>
+          <Field label="Araç Paketi" labelFor="vehicle_package">
+            <Input id="vehicle_package" name="vehicle_package" placeholder="Örn. Comfortline" />
+          </Field>
           <Field label="Model Yılı" labelFor="model_year">
             <Input id="model_year" name="model_year" type="number" placeholder="Örn. 2020" />
           </Field>
@@ -85,7 +88,7 @@ export function FormClient({ dealerSlug }: { dealerSlug: string }) {
       ) : null}
 
       <Button type="submit" size="lg">
-        Başvuruyu Gönder
+        Fiyat Teklifi Al
       </Button>
     </form>
   );

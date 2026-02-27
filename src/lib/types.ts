@@ -18,6 +18,7 @@ export type ApplicationInput = {
   owner_phone: string | null;
   brand: string;
   model: string;
+  vehicle_package: string | null;
   model_year: number | null;
   km: number | null;
   fuel_type: string | null;

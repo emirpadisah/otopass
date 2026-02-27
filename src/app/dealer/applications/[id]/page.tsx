@@ -51,6 +51,10 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
                 <dd className="mt-1 text-sm font-semibold">{application.model_year ?? "-"}</dd>
               </div>
               <div className="panel-subtle p-3">
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Paketi</dt>
+                <dd className="mt-1 text-sm font-semibold">{application.vehicle_package ?? "-"}</dd>
+              </div>
+              <div className="panel-subtle p-3">
                 <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Kilometre</dt>
                 <dd className="mt-1 text-sm font-semibold">{formatNumber(application.km)} km</dd>
               </div>

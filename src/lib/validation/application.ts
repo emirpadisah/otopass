@@ -8,6 +8,7 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
   const dealer_slug = String(formData.get("dealer_slug") ?? "").trim();
   const brand = String(formData.get("brand") ?? "").trim();
   const model = String(formData.get("model") ?? "").trim();
+  const vehicle_package = toNullableText(formData.get("vehicle_package"));
   const owner_name = toNullableText(formData.get("owner_name"));
   const owner_phone = toNullableText(formData.get("owner_phone"));
   const fuel_type = toNullableText(formData.get("fuel_type"));
@@ -30,6 +31,7 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
     owner_phone,
     brand,
     model,
+    vehicle_package,
     model_year,
     km,
     fuel_type,

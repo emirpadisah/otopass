@@ -17,6 +17,7 @@ create table if not exists public.applications (
   owner_phone text,
   brand text not null,
   model text not null,
+  vehicle_package text,
   model_year integer,
   km integer,
   fuel_type text,
@@ -27,6 +28,8 @@ create table if not exists public.applications (
   status text not null default 'pending',
   created_at timestamptz not null default now()
 );
+
+alter table public.applications add column if not exists vehicle_package text;
 
 create table if not exists public.dealer_users (
   id uuid primary key default gen_random_uuid(),

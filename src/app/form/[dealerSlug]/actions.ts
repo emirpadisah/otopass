@@ -15,6 +15,14 @@ function getClientIp(headerBag: Headers): string {
   );
 }
 
+function isMissingVehiclePackageColumn(error: { code?: string; message?: string } | null): boolean {
+  return (
+    error?.code === "42703" &&
+    typeof error.message === "string" &&
+    error.message.toLowerCase().includes("vehicle_package")
+  );
+}
+
 export async function submitApplication(
   _prevState: ActionResponse,
   formData: FormData
@@ -58,13 +66,14 @@ export async function submitApplication(
       photo_paths.push(filename);
     }
 
-    const { error: insertError } = await supabase.from("applications").insert({
+    const insertPayload = {
       dealer_id: dealer.id,
       dealer_slug: input.dealer_slug,
       owner_name: input.owner_name,
       owner_phone: input.owner_phone,
       brand: input.brand,
       model: input.model,
+      vehicle_package: input.vehicle_package,
       model_year: input.model_year,
       km: input.km,
       fuel_type: input.fuel_type,
@@ -72,7 +81,15 @@ export async function submitApplication(
       tramer_info: input.tramer_info,
       damage_info: input.damage_info,
       photo_paths,
-    });
+    };
+
+    let { error: insertError } = await supabase.from("applications").insert(insertPayload);
+
+    if (isMissingVehiclePackageColumn(insertError)) {
+      const { vehicle_package: _ignoredVehiclePackage, ...legacyInsertPayload } = insertPayload;
+      const retry = await supabase.from("applications").insert(legacyInsertPayload);
+      insertError = retry.error;
+    }
 
     if (insertError) {
       return { ok: false, code: "INSERT_FAILED", message: "Başvuru kaydedilemedi." };
