@@ -1,11 +1,15 @@
-﻿"use server";
+"use server";
 
 import { headers } from "next/headers";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import type { Database } from "@/lib/supabase/database.types";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { checkFormCooldown, registerFormSubmit } from "@/lib/security/rate-limit";
 import { parseApplicationInput, validatePhotoFiles } from "@/lib/validation/application";
 import type { ActionResponse } from "@/lib/types";
+
+const STORAGE_BUCKET = "applications";
 
 function getClientIp(headerBag: Headers): string {
   return (
@@ -15,12 +19,51 @@ function getClientIp(headerBag: Headers): string {
   );
 }
 
+function sanitizeFileName(name: string): string {
+  const normalized = name.normalize("NFKD").replace(/[^\w.-]+/g, "-");
+  const cleaned = normalized.replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return cleaned || "photo";
+}
+
 function isMissingVehiclePackageColumn(error: { code?: string; message?: string } | null): boolean {
   return (
     error?.code === "42703" &&
     typeof error.message === "string" &&
     error.message.toLowerCase().includes("vehicle_package")
   );
+}
+
+function isBucketMissing(error: { message?: string } | null): boolean {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("not found") || message.includes("does not exist");
+}
+
+function isAlreadyExists(error: { message?: string } | null): boolean {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("already exists") || message.includes("duplicate");
+}
+
+async function ensureApplicationsBucket(supabase: SupabaseClient<Database>): Promise<ActionResponse | null> {
+  const { data: bucket, error: getBucketError } = await supabase.storage.getBucket(STORAGE_BUCKET);
+  if (bucket) return null;
+
+  if (getBucketError && !isBucketMissing(getBucketError)) {
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı kontrol edilemedi." };
+  }
+
+  const { error: createBucketError } = await supabase.storage.createBucket(STORAGE_BUCKET, {
+    public: false,
+    fileSizeLimit: "10MB",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  });
+
+  if (createBucketError && !isAlreadyExists(createBucketError)) {
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı oluşturulamadı." };
+  }
+
+  return null;
 }
 
 export async function submitApplication(
@@ -52,17 +95,26 @@ export async function submitApplication(
     validatePhotoFiles(files);
 
     const supabase = createSupabaseServiceClient();
+    const bucketCheck = await ensureApplicationsBucket(supabase);
+    if (bucketCheck) return bucketCheck;
+
     const photo_paths: string[] = [];
 
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
-      const filename = `${dealer.slug}/${Date.now()}-${i}-${file.name}`.replace(/\s+/g, "-");
+      const filename = `${dealer.slug}/${Date.now()}-${i}-${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
       const { error: uploadError } = await supabase.storage
-        .from("applications")
+        .from(STORAGE_BUCKET)
         .upload(filename, file, { upsert: false });
+
       if (uploadError) {
-        return { ok: false, code: "UPLOAD_FAILED", message: "Fotoğraf yükleme başarısız." };
+        return {
+          ok: false,
+          code: "UPLOAD_FAILED",
+          message: `Fotoğraf yükleme başarısız: ${uploadError.message}`,
+        };
       }
+
       photo_paths.push(filename);
     }
 
