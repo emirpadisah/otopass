@@ -30,3 +30,24 @@ export async function createOfferForCurrentDealer(input: {
 
   await supabase.from("applications").update({ status: "offered" }).eq("id", input.applicationId);
 }
+
+export async function markApplicationAsSoldForCurrentDealer(applicationId: string) {
+  if (!applicationId.trim()) throw new Error("Basvuru secimi gecersiz.");
+
+  const dealer = await getDealerForCurrentUser();
+  if (!dealer?.dealer_id) throw new Error("Galeri hesabi gerekli.");
+
+  const supabase = createSupabaseServiceClient();
+  const { data: application, error: appError } = await supabase
+    .from("applications")
+    .select("id, dealer_id")
+    .eq("id", applicationId)
+    .eq("dealer_id", dealer.dealer_id)
+    .maybeSingle();
+
+  if (appError) throw appError;
+  if (!application) throw new Error("Basvuru bulunamadi.");
+
+  const { error: statusError } = await supabase.from("applications").update({ status: "sold" }).eq("id", applicationId);
+  if (statusError) throw statusError;
+}

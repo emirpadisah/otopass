@@ -16,7 +16,7 @@ const statusMap: Record<
     className: "bg-[rgba(59,130,246,0.18)] text-[#60a5fa] border-[rgba(59,130,246,0.35)]",
   },
   sold: {
-    label: "Satıldı",
+    label: "Alindi",
     className: "bg-[rgba(34,197,94,0.18)] text-[#4ade80] border-[rgba(34,197,94,0.35)]",
   },
 };

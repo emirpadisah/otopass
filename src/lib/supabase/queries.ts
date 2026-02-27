@@ -5,6 +5,7 @@ import type { UserRole } from "@/lib/types";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
+type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
 
 type DealerLinkRow = {
   dealer_id: string;
@@ -97,6 +98,23 @@ export async function listDealerApplicationsForCurrentUser(): Promise<Applicatio
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return [];
   return listDealerApplications(dealer.dealer_id);
+}
+
+export async function listDealerOffers(dealerId: string): Promise<OfferRow[]> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("dealer_id", dealerId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as OfferRow[]) ?? [];
+}
+
+export async function listDealerOffersForCurrentUser(): Promise<OfferRow[]> {
+  const dealer = await getDealerForCurrentUser();
+  if (!dealer?.dealer_id) return [];
+  return listDealerOffers(dealer.dealer_id);
 }
 
 export async function getDealerApplicationForCurrentUser(applicationId: string): Promise<ApplicationRow | null> {
