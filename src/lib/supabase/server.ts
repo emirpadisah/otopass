@@ -27,20 +27,28 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient<Datab
           return decodeURIComponent(match.split("=").slice(1).join("="));
         },
         set(name: string, value: string, options: CookieOptions) {
-          if (typeof cookieStore.set === "function") {
-            cookieStore.set({ name, value, ...options });
-            return;
+          try {
+            if (typeof cookieStore.set === "function") {
+              cookieStore.set({ name, value, ...options });
+              return;
+            }
+          } catch {
+            // Server Components may not allow mutating cookies during render.
           }
           // No-op fallback when running in an environment that doesn't support setting cookies here
         },
         remove(name: string, options: CookieOptions) {
-          if (typeof cookieStore.delete === "function") {
-            cookieStore.delete(name);
-            return;
-          }
-          if (typeof cookieStore.set === "function") {
-            cookieStore.set({ name, value: "", ...options });
-            return;
+          try {
+            if (typeof cookieStore.delete === "function") {
+              cookieStore.delete(name);
+              return;
+            }
+            if (typeof cookieStore.set === "function") {
+              cookieStore.set({ name, value: "", ...options });
+              return;
+            }
+          } catch {
+            // Server Components may not allow mutating cookies during render.
           }
           // No-op fallback
         },

@@ -13,7 +13,7 @@ import {
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { listDealerApplicationsForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerForCurrentUser, listDealerApplications, listDealerOffers } from "@/lib/supabase/queries";
 import { markApplicationAsSoldAction } from "./actions";
 
 function formatCurrency(amount: number) {
@@ -25,9 +25,14 @@ function formatCurrency(amount: number) {
 }
 
 export default async function DealerApplicationsPage() {
+  const dealer = await getDealerForCurrentUser();
+  if (!dealer?.dealer_id) {
+    return null;
+  }
+
   const [applications, offers] = await Promise.all([
-    listDealerApplicationsForCurrentUser(),
-    listDealerOffersForCurrentUser(),
+    listDealerApplications(dealer.dealer_id),
+    listDealerOffers(dealer.dealer_id),
   ]);
 
   const latestOfferByApplication = new Map<string, number>();

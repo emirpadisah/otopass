@@ -14,7 +14,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@/components/ui";
-import { listDealerApplicationsForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerForCurrentUser, listDealerApplications, listDealerOffers } from "@/lib/supabase/queries";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("tr-TR", {
@@ -32,9 +32,14 @@ function formatDate(value: string) {
 }
 
 export default async function DealerDashboardPage() {
+  const dealer = await getDealerForCurrentUser();
+  if (!dealer?.dealer_id) {
+    return null;
+  }
+
   const [applications, offers] = await Promise.all([
-    listDealerApplicationsForCurrentUser(),
-    listDealerOffersForCurrentUser(),
+    listDealerApplications(dealer.dealer_id),
+    listDealerOffers(dealer.dealer_id),
   ]);
 
   const pendingCount = applications.filter((a) => a.status === "pending").length;
