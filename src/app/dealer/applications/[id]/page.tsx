@@ -1,5 +1,6 @@
-﻿import { notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, StatusBadge } from "@/components/ui";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getDealerApplicationForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 
@@ -12,10 +13,27 @@ function formatNumber(value: number | null) {
   return new Intl.NumberFormat("tr-TR").format(value);
 }
 
+async function getSignedPhotoUrls(photoPaths: string[]): Promise<string[]> {
+  if (photoPaths.length === 0) return [];
+  const supabase = createSupabaseServiceClient();
+
+  const signedUrls = await Promise.all(
+    photoPaths.map(async (path) => {
+      const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
+      if (error || !data?.signedUrl) return null;
+      return data.signedUrl;
+    })
+  );
+
+  return signedUrls.filter((url): url is string => Boolean(url));
+}
+
 export default async function DealerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
   const application = await getDealerApplicationForCurrentUser(id);
   if (!application) return notFound();
+
+  const photoUrls = await getSignedPhotoUrls(application.photo_paths ?? []);
 
   return (
     <div className="space-y-5">
@@ -77,6 +95,32 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
                 <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Hasar Bilgisi</p>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">{application.damage_info ?? "-"}</p>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Fotoğrafları</p>
+              {photoUrls.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {photoUrls.map((url, index) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group block overflow-hidden rounded-2xl border border-[var(--border-color)]"
+                    >
+                      <img
+                        src={url}
+                        alt={`Araç fotoğrafı ${index + 1}`}
+                        loading="lazy"
+                        className="h-44 w-full object-cover transition duration-200 group-hover:scale-[1.02]"
+                      />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="panel-subtle p-3 text-sm text-[var(--text-secondary)]">Fotoğraf bulunmuyor.</div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -170,8 +170,11 @@ export async function submitApplication(
 
       if ("photo_paths" in insertPayload && isMissingColumn(insertError, "photo_paths")) {
         await cleanupUploadedPhotos(supabase, photoPaths);
-        insertPayload = { ...insertPayload, photo_paths: undefined };
-        continue;
+        return {
+          ok: false,
+          code: "DB_MIGRATION_REQUIRED",
+          message: "Fotograf kaydi icin veritabani guncellemesi gerekiyor. Lutfen admin ile iletisime gecin.",
+        };
       }
 
       break;

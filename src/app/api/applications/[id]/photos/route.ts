@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserId, getDealerApplicationForCurrentUser, getUserRoles } from "@/lib/supabase/queries";
 
@@ -30,11 +29,12 @@ export async function GET(
 
   if (!application) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const authClient = await createSupabaseServerClient();
   const urls: string[] = [];
   for (const path of application.photo_paths ?? []) {
-    const { data, error } = await authClient.storage.from("applications").createSignedUrl(path, 300);
-    if (!error && data?.signedUrl) urls.push(data.signedUrl);
+    const { data, error } = await service.storage.from("applications").createSignedUrl(path, 300);
+    if (!error && data?.signedUrl) {
+      urls.push(data.signedUrl);
+    }
   }
 
   return NextResponse.json({ urls });
