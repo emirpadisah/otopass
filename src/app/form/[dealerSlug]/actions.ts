@@ -2,14 +2,23 @@
 
 import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/lib/supabase/database.types";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { checkFormCooldown, registerFormSubmit } from "@/lib/security/rate-limit";
 import { parseApplicationInput, validatePhotoFiles } from "@/lib/validation/application";
 import type { ActionResponse } from "@/lib/types";
 
 const STORAGE_BUCKET = "applications";
+
+type DbError = {
+  code?: string | null;
+  message?: string | null;
+  details?: string | null;
+  hint?: string | null;
+};
+
+type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
 
 function getClientIp(headerBag: Headers): string {
   return (
@@ -25,14 +34,6 @@ function sanitizeFileName(name: string): string {
   return cleaned || "photo";
 }
 
-function isMissingVehiclePackageColumn(error: { code?: string; message?: string } | null): boolean {
-  return (
-    error?.code === "42703" &&
-    typeof error.message === "string" &&
-    error.message.toLowerCase().includes("vehicle_package")
-  );
-}
-
 function isBucketMissing(error: { message?: string } | null): boolean {
   if (!error?.message) return false;
   const message = error.message.toLowerCase();
@@ -45,12 +46,19 @@ function isAlreadyExists(error: { message?: string } | null): boolean {
   return message.includes("already exists") || message.includes("duplicate");
 }
 
+function isMissingColumn(error: DbError | null, column: string): boolean {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  const code = error.code ?? "";
+  return (code === "42703" || code === "PGRST204") && message.includes(column.toLowerCase());
+}
+
 async function ensureApplicationsBucket(supabase: SupabaseClient<Database>): Promise<ActionResponse | null> {
   const { data: bucket, error: getBucketError } = await supabase.storage.getBucket(STORAGE_BUCKET);
   if (bucket) return null;
 
   if (getBucketError && !isBucketMissing(getBucketError)) {
-    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı kontrol edilemedi." };
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotograf alani kontrol edilemedi." };
   }
 
   const { error: createBucketError } = await supabase.storage.createBucket(STORAGE_BUCKET, {
@@ -60,10 +68,22 @@ async function ensureApplicationsBucket(supabase: SupabaseClient<Database>): Pro
   });
 
   if (createBucketError && !isAlreadyExists(createBucketError)) {
-    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı oluşturulamadı." };
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotograf alani olusturulamadi." };
   }
 
   return null;
+}
+
+async function cleanupUploadedPhotos(supabase: SupabaseClient<Database>, paths: string[]) {
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+  if (error) {
+    console.error("Failed to cleanup uploaded photos", {
+      code: error.name,
+      message: error.message,
+      pathsCount: paths.length,
+    });
+  }
 }
 
 export async function submitApplication(
@@ -81,12 +101,12 @@ export async function submitApplication(
 
     const cooldownAllowed = await checkFormCooldown(ip, input.dealer_slug);
     if (!cooldownAllowed) {
-      return { ok: false, code: "RATE_LIMIT", message: "Lütfen tekrar denemeden önce bekleyin." };
+      return { ok: false, code: "RATE_LIMIT", message: "Lutfen tekrar denemeden once bekleyin." };
     }
 
     const dealer = await getDealerBySlug(input.dealer_slug);
     if (!dealer) {
-      return { ok: false, code: "DEALER_NOT_FOUND", message: "Galeri bulunamadı." };
+      return { ok: false, code: "DEALER_NOT_FOUND", message: "Galeri bulunamadi." };
     }
 
     const files = formData
@@ -98,7 +118,7 @@ export async function submitApplication(
     const bucketCheck = await ensureApplicationsBucket(supabase);
     if (bucketCheck) return bucketCheck;
 
-    const photo_paths: string[] = [];
+    const photoPaths: string[] = [];
 
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
@@ -108,17 +128,18 @@ export async function submitApplication(
         .upload(filename, file, { upsert: false });
 
       if (uploadError) {
+        await cleanupUploadedPhotos(supabase, photoPaths);
         return {
           ok: false,
           code: "UPLOAD_FAILED",
-          message: `Fotoğraf yükleme başarısız: ${uploadError.message}`,
+          message: `Fotograf yukleme basarisiz: ${uploadError.message}`,
         };
       }
 
-      photo_paths.push(filename);
+      photoPaths.push(filename);
     }
 
-    const insertPayload = {
+    let insertPayload: ApplicationInsert = {
       dealer_id: dealer.id,
       dealer_slug: input.dealer_slug,
       owner_name: input.owner_name,
@@ -132,28 +153,47 @@ export async function submitApplication(
       transmission: input.transmission,
       tramer_info: input.tramer_info,
       damage_info: input.damage_info,
-      photo_paths,
+      photo_paths: photoPaths,
     };
 
-    let { error: insertError } = await supabase.from("applications").insert(insertPayload);
+    let insertError: DbError | null = null;
 
-    if (isMissingVehiclePackageColumn(insertError)) {
-      const { vehicle_package: _ignoredVehiclePackage, ...legacyInsertPayload } = insertPayload;
-      const retry = await supabase.from("applications").insert(legacyInsertPayload);
-      insertError = retry.error;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { error } = await supabase.from("applications").insert(insertPayload);
+      insertError = error as DbError | null;
+      if (!insertError) break;
+
+      if ("vehicle_package" in insertPayload && isMissingColumn(insertError, "vehicle_package")) {
+        insertPayload = { ...insertPayload, vehicle_package: undefined };
+        continue;
+      }
+
+      if ("photo_paths" in insertPayload && isMissingColumn(insertError, "photo_paths")) {
+        await cleanupUploadedPhotos(supabase, photoPaths);
+        insertPayload = { ...insertPayload, photo_paths: undefined };
+        continue;
+      }
+
+      break;
     }
 
     if (insertError) {
-      return { ok: false, code: "INSERT_FAILED", message: "Başvuru kaydedilemedi." };
+      await cleanupUploadedPhotos(supabase, photoPaths);
+      console.error("Application insert failed", insertError);
+      return {
+        ok: false,
+        code: "INSERT_FAILED",
+        message: `Basvuru kaydedilemedi: ${insertError.message ?? "Bilinmeyen hata."}`,
+      };
     }
 
     await registerFormSubmit(ip, dealer.slug);
-    return { ok: true, code: "APPLICATION_CREATED", message: "Başvurunuz başarıyla gönderildi." };
+    return { ok: true, code: "APPLICATION_CREATED", message: "Basvurunuz basariyla gonderildi." };
   } catch (error) {
     return {
       ok: false,
       code: "VALIDATION_FAILED",
-      message: error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu",
+      message: error instanceof Error ? error.message : "Beklenmeyen bir hata olustu",
     };
   }
 }
