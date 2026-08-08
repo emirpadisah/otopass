@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "crypto";
 import { cookies } from "next/headers";
+import { isLocalUserAuthEnabled } from "@/lib/data-mode";
 import {
   hashLocalPassword,
   hashLocalSessionToken,
@@ -11,6 +12,7 @@ import {
 
 const LOCAL_SESSION_COOKIE = "otopass-local-session";
 const SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+const LOCAL_AUTH_DISABLED_MESSAGE = "Yerel kullanıcı işlemleri devre dışı.";
 
 export type LocalSessionUser = Pick<
   LocalUserRecord,
@@ -29,6 +31,8 @@ function toSessionUser(user: LocalUserRecord): LocalSessionUser {
 }
 
 export async function signInLocalUser(email: string, password: string): Promise<LocalSessionUser | null> {
+  if (!isLocalUserAuthEnabled()) return null;
+
   const normalizedEmail = email.trim().toLowerCase();
   const data = await readLocalData();
   const user = data.users.find((candidate) => candidate.email.toLowerCase() === normalizedEmail);
@@ -60,6 +64,8 @@ export async function signInLocalUser(email: string, password: string): Promise<
 }
 
 export async function getLocalSessionUser(): Promise<LocalSessionUser | null> {
+  if (!isLocalUserAuthEnabled()) return null;
+
   const cookieStore = await cookies();
   const token = cookieStore.get(LOCAL_SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -91,6 +97,8 @@ export async function signOutLocalUser(): Promise<void> {
 }
 
 export async function updateLocalUserPassword(userId: string, password: string): Promise<void> {
+  if (!isLocalUserAuthEnabled()) throw new Error(LOCAL_AUTH_DISABLED_MESSAGE);
+
   await mutateLocalData((data) => {
     const user = data.users.find((candidate) => candidate.id === userId);
     if (!user) throw new Error("Yerel kullanıcı bulunamadı.");
@@ -107,6 +115,8 @@ export async function createLocalUser(input: {
   dealerId?: string;
   actorUserId?: string | null;
 }): Promise<void> {
+  if (!isLocalUserAuthEnabled()) throw new Error(LOCAL_AUTH_DISABLED_MESSAGE);
+
   const normalizedEmail = input.email.trim().toLowerCase();
 
   await mutateLocalData((data) => {

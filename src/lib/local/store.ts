@@ -8,17 +8,6 @@ type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
 type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
 
-export const LOCAL_TEST_ACCOUNTS = {
-  admin: {
-    email: "test.admin@otopass.local",
-    password: "OtoPass.Admin123!",
-  },
-  dealer: {
-    email: "test.galeri@otopass.local",
-    password: "OtoPass.Galeri123!",
-  },
-} as const;
-
 export type LocalUserRecord = {
   id: string;
   email: string;
@@ -95,8 +84,6 @@ export function hashLocalSessionToken(token: string): string {
 }
 
 function createSeedData(): LocalData {
-  const adminUserId = "00000000-0000-4000-8000-000000000001";
-  const dealerUserId = "00000000-0000-4000-8000-000000000002";
   const dealerId = "10000000-0000-4000-8000-000000000001";
   const pendingApplicationId = "20000000-0000-4000-8000-000000000001";
   const offeredApplicationId = "20000000-0000-4000-8000-000000000002";
@@ -104,28 +91,7 @@ function createSeedData(): LocalData {
 
   return {
     version: 1,
-    users: [
-      {
-        id: adminUserId,
-        email: LOCAL_TEST_ACCOUNTS.admin.email,
-        password_hash: hashLocalPassword(LOCAL_TEST_ACCOUNTS.admin.password),
-        full_name: "OtoPass Test Admin",
-        must_change_password: false,
-        roles: ["super_admin"],
-        dealer_ids: [],
-        created_at: isoOffset(-14),
-      },
-      {
-        id: dealerUserId,
-        email: LOCAL_TEST_ACCOUNTS.dealer.email,
-        password_hash: hashLocalPassword(LOCAL_TEST_ACCOUNTS.dealer.password),
-        full_name: "OtoPass Test Galeri",
-        must_change_password: false,
-        roles: ["dealer_owner"],
-        dealer_ids: [dealerId],
-        created_at: isoOffset(-13),
-      },
-    ],
+    users: [],
     sessions: [],
     dealers: [
       {
@@ -220,7 +186,7 @@ function createSeedData(): LocalData {
     activity_log: [
       {
         id: 1,
-        actor_user_id: adminUserId,
+        actor_user_id: null,
         dealer_id: dealerId,
         application_id: null,
         offer_id: null,

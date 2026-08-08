@@ -1,5 +1,5 @@
 ﻿import { createSupabaseServiceClient } from "./service";
-import { isLocalDataMode } from "@/lib/data-mode";
+import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { createLocalUser } from "@/lib/local/auth";
 import type { UserRole } from "@/lib/types";
 import { validatePasswordPolicy } from "@/lib/validation/password";
@@ -49,6 +49,10 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
   validatePasswordPolicy(input.password);
 
   if (isLocalDataMode()) {
+    if (!isLocalUserAuthEnabled()) {
+      throw new Error("Yerel kullanıcı oluşturma devre dışı. Supabase kullanıcı yönetimini kullanın.");
+    }
+
     await createLocalUser(input);
     return;
   }

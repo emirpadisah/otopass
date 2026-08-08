@@ -1,7 +1,7 @@
 ﻿"use server";
 
 import { redirect } from "next/navigation";
-import { isLocalDataMode } from "@/lib/data-mode";
+import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import {
   getLocalSessionUser,
   signInLocalUser,
@@ -47,6 +47,11 @@ export async function login(
     }
 
     if (isLocalDataMode()) {
+      if (!isLocalUserAuthEnabled()) {
+        await signOutLocalUser();
+        return { error: "Yerel kullanıcı girişi devre dışı. Panel erişimi için Supabase kullanın." };
+      }
+
       const user = await signInLocalUser(email, password);
       if (!user) {
         return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
@@ -134,6 +139,11 @@ export async function changePassword(
     }
 
     if (isLocalDataMode()) {
+      if (!isLocalUserAuthEnabled()) {
+        await signOutLocalUser();
+        return { error: "Yerel kullanıcı hesapları için şifre değişimi devre dışı." };
+      }
+
       const user = await getLocalSessionUser();
       if (!user) {
         return { error: "Oturum süresi doldu. Lütfen tekrar giriş yapın." };

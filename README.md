@@ -1,7 +1,7 @@
 # Otopass
 
-Next.js application for vehicle intake and dealer offer workflow. It runs in a self-contained
-local mode by default and supports Supabase for production.
+Next.js application for vehicle intake and dealer offer workflow. Public vehicle intake data can
+run in a self-contained local mode, while panel authentication uses Supabase for production.
 
 ## Local quick start
 
@@ -10,13 +10,10 @@ npm install
 npm run dev
 ```
 
-No environment file is required. Local records are persisted in `.local-data/` and that folder
-is ignored by Git. The first run creates these inspection accounts:
-
-| Role | E-mail | Password |
-| --- | --- | --- |
-| Admin | `test.admin@otopass.local` | `OtoPass.Admin123!` |
-| Dealer | `test.galeri@otopass.local` | `OtoPass.Galeri123!` |
+No environment file is required for the public vehicle intake demo. Local records are persisted in
+`.local-data/` and that folder is ignored by Git. Local user authentication is disabled by default;
+existing local users and sessions are ignored, and new local data stores do not seed user accounts.
+Admin and dealer panel access requires Supabase configuration.
 
 The dealer's public intake form is available at `/form/test-galeri`.
 
@@ -37,6 +34,7 @@ Supabase credentials:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+OTOPASS_ENABLE_LOCAL_AUTH=false
 OPTIONAL_ENABLE_CAPTCHA=false
 ```
 

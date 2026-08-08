@@ -20,3 +20,11 @@ export function getDataMode(): DataMode {
 export function isLocalDataMode(): boolean {
   return getDataMode() === "local";
 }
+
+export function isLocalUserAuthEnabled(): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    isLocalDataMode() &&
+    process.env.OTOPASS_ENABLE_LOCAL_AUTH?.trim().toLowerCase() === "true"
+  );
+}

@@ -1,18 +1,22 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getDataMode } from "../src/lib/data-mode";
+import { getDataMode, isLocalUserAuthEnabled } from "../src/lib/data-mode";
 
 const originalEnvironment = {
+  nodeEnvironment: process.env.NODE_ENV,
   mode: process.env.OTOPASS_DATA_MODE,
   url: process.env.NEXT_PUBLIC_SUPABASE_URL,
   anon: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   service: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  localAuth: process.env.OTOPASS_ENABLE_LOCAL_AUTH,
 };
 
 afterEach(() => {
+  setEnvironment("NODE_ENV", originalEnvironment.nodeEnvironment);
   setEnvironment("OTOPASS_DATA_MODE", originalEnvironment.mode);
   setEnvironment("NEXT_PUBLIC_SUPABASE_URL", originalEnvironment.url);
   setEnvironment("NEXT_PUBLIC_SUPABASE_ANON_KEY", originalEnvironment.anon);
   setEnvironment("SUPABASE_SERVICE_ROLE_KEY", originalEnvironment.service);
+  setEnvironment("OTOPASS_ENABLE_LOCAL_AUTH", originalEnvironment.localAuth);
 });
 
 function setEnvironment(name: string, value: string | undefined): void {
@@ -43,5 +47,28 @@ describe.sequential("data mode", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
     expect(getDataMode()).toBe("local");
+  });
+
+  it("keeps local user authentication disabled by default", () => {
+    process.env.OTOPASS_DATA_MODE = "local";
+    delete process.env.OTOPASS_ENABLE_LOCAL_AUTH;
+    expect(isLocalUserAuthEnabled()).toBe(false);
+  });
+
+  it("requires an explicit local-only opt in for local user authentication", () => {
+    setEnvironment("NODE_ENV", "test");
+    process.env.OTOPASS_DATA_MODE = "local";
+    process.env.OTOPASS_ENABLE_LOCAL_AUTH = "true";
+    expect(isLocalUserAuthEnabled()).toBe(true);
+
+    process.env.OTOPASS_DATA_MODE = "supabase";
+    expect(isLocalUserAuthEnabled()).toBe(false);
+  });
+
+  it("never enables local user authentication in production", () => {
+    setEnvironment("NODE_ENV", "production");
+    process.env.OTOPASS_DATA_MODE = "local";
+    process.env.OTOPASS_ENABLE_LOCAL_AUTH = "true";
+    expect(isLocalUserAuthEnabled()).toBe(false);
   });
 });

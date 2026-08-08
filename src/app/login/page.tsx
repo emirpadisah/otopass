@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { KeyRound, ShieldCheck, UserCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/ui";
+import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
@@ -21,6 +22,8 @@ const trustItems = [
 ];
 
 export default function LoginPage() {
+  const localAuthDisabled = isLocalDataMode() && !isLocalUserAuthEnabled();
+
   return (
     <div className="mx-auto grid min-h-screen w-full max-w-[1180px] items-center gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
       <section className="glass-highlight p-6 sm:p-8">
@@ -71,7 +74,7 @@ export default function LoginPage() {
           </div>
           <ThemeToggle className="shrink-0" />
         </header>
-        <LoginForm />
+        <LoginForm disabled={localAuthDisabled} />
       </section>
     </div>
   );
