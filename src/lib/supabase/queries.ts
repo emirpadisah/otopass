@@ -1,6 +1,21 @@
 import { createSupabaseServerClient } from "./server";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
+import { isLocalDataMode } from "@/lib/data-mode";
+import {
+  getLocalAdminDashboardCounts,
+  getLocalCurrentUserId,
+  getLocalDealerApplicationForCurrentUser,
+  getLocalDealerById,
+  getLocalDealerBySlug,
+  getLocalDealerForCurrentUser,
+  getLocalDealerForCurrentUserWithDetails,
+  getLocalUserRoles,
+  listLocalDealerApplications,
+  listLocalDealerOffers,
+  listLocalDealers,
+  listLocalUsersForAdmin,
+} from "@/lib/local/repository";
 import type { UserRole } from "@/lib/types";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
@@ -16,13 +31,26 @@ type DealerLinkRow = {
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
 
 export async function getDealerBySlug(slug: string): Promise<DealerRow | null> {
+  if (isLocalDataMode()) return getLocalDealerBySlug(slug);
+
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).maybeSingle();
   if (error) throw error;
   return (data as DealerRow | null) ?? null;
 }
 
+export async function getDealerById(id: string): Promise<DealerRow | null> {
+  if (isLocalDataMode()) return getLocalDealerById(id);
+
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.from("dealers").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return (data as DealerRow | null) ?? null;
+}
+
 export async function getCurrentUserId(): Promise<string | null> {
+  if (isLocalDataMode()) return getLocalCurrentUserId();
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -33,6 +61,8 @@ export async function getCurrentUserId(): Promise<string | null> {
 }
 
 export async function getUserRoles(userId: string): Promise<UserRole[]> {
+  if (isLocalDataMode()) return getLocalUserRoles(userId);
+
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw error;
@@ -40,6 +70,8 @@ export async function getUserRoles(userId: string): Promise<UserRole[]> {
 }
 
 export async function listDealers(): Promise<DealerRow[]> {
+  if (isLocalDataMode()) return listLocalDealers();
+
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").order("created_at", { ascending: false });
   if (error) throw error;
@@ -47,6 +79,8 @@ export async function listDealers(): Promise<DealerRow[]> {
 }
 
 export async function getDealerForCurrentUser() {
+  if (isLocalDataMode()) return getLocalDealerForCurrentUser();
+
   const userId = await getCurrentUserId();
   if (!userId) return null;
 
@@ -70,6 +104,8 @@ export async function getDealerForCurrentUser() {
 }
 
 export async function getDealerForCurrentUserWithDetails() {
+  if (isLocalDataMode()) return getLocalDealerForCurrentUserWithDetails();
+
   const link = await getDealerForCurrentUser();
   if (!link?.dealer_id) return null;
 
@@ -84,6 +120,8 @@ export async function getDealerForCurrentUserWithDetails() {
 }
 
 export async function listDealerApplications(dealerId: string): Promise<ApplicationRow[]> {
+  if (isLocalDataMode()) return listLocalDealerApplications(dealerId);
+
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("applications")
@@ -101,6 +139,8 @@ export async function listDealerApplicationsForCurrentUser(): Promise<Applicatio
 }
 
 export async function listDealerOffers(dealerId: string): Promise<OfferRow[]> {
+  if (isLocalDataMode()) return listLocalDealerOffers(dealerId);
+
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("offers")
@@ -118,6 +158,8 @@ export async function listDealerOffersForCurrentUser(): Promise<OfferRow[]> {
 }
 
 export async function getDealerApplicationForCurrentUser(applicationId: string): Promise<ApplicationRow | null> {
+  if (isLocalDataMode()) return getLocalDealerApplicationForCurrentUser(applicationId);
+
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return null;
 
@@ -133,6 +175,8 @@ export async function getDealerApplicationForCurrentUser(applicationId: string):
 }
 
 export async function listUsersForAdmin() {
+  if (isLocalDataMode()) return listLocalUsersForAdmin();
+
   const supabase = createSupabaseServiceClient();
   const { data: profiles, error: profilesError } = await supabase
     .from("user_profiles")
@@ -158,10 +202,46 @@ export async function listUsersForAdmin() {
 
   const safeRoles = (roleRows as { user_id: string; role: string }[]) ?? [];
   const safeMemberships = (memberships as { user_id: string; dealer_id: string }[]) ?? [];
+  const emailByUserId = new Map<string, string>();
+
+  for (let page = 1; page <= 10 && emailByUserId.size < userIds.length; page += 1) {
+    const { data: authPage, error: authError } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 200,
+    });
+    if (authError) throw authError;
+
+    for (const authUser of authPage.users) {
+      if (authUser.email) emailByUserId.set(authUser.id, authUser.email);
+    }
+    if (authPage.users.length < 200) break;
+  }
 
   return safeProfiles.map((profile) => ({
     ...profile,
+    email: emailByUserId.get(profile.user_id) ?? null,
     roles: safeRoles.filter((r) => r.user_id === profile.user_id).map((r) => r.role),
     dealer_ids: safeMemberships.filter((m) => m.user_id === profile.user_id).map((m) => m.dealer_id),
   }));
+}
+
+export async function getAdminDashboardCounts(): Promise<{
+  applications: number;
+  dealers: number;
+  offers: number;
+}> {
+  if (isLocalDataMode()) return getLocalAdminDashboardCounts();
+
+  const supabase = createSupabaseServiceClient();
+  const [{ count: applications }, { count: dealers }, { count: offers }] = await Promise.all([
+    supabase.from("applications").select("*", { count: "exact", head: true }),
+    supabase.from("dealers").select("*", { count: "exact", head: true }),
+    supabase.from("offers").select("*", { count: "exact", head: true }),
+  ]);
+
+  return {
+    applications: applications ?? 0,
+    dealers: dealers ?? 0,
+    offers: offers ?? 0,
+  };
 }

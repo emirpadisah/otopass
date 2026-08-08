@@ -3,10 +3,17 @@
 import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { isLocalDataMode } from "@/lib/data-mode";
+import { createLocalApplication } from "@/lib/local/repository";
+import { removeLocalPhoto, saveLocalPhoto } from "@/lib/local/store";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { checkFormCooldown, registerFormSubmit } from "@/lib/security/rate-limit";
-import { parseApplicationInput, validatePhotoFiles } from "@/lib/validation/application";
+import {
+  parseApplicationInput,
+  validatePhotoContent,
+  validatePhotoFiles,
+} from "@/lib/validation/application";
 import type { ActionResponse } from "@/lib/types";
 
 const STORAGE_BUCKET = "applications";
@@ -58,7 +65,7 @@ async function ensureApplicationsBucket(supabase: SupabaseClient<Database>): Pro
   if (bucket) return null;
 
   if (getBucketError && !isBucketMissing(getBucketError)) {
-    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotograf alani kontrol edilemedi." };
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı kontrol edilemedi." };
   }
 
   const { error: createBucketError } = await supabase.storage.createBucket(STORAGE_BUCKET, {
@@ -68,7 +75,7 @@ async function ensureApplicationsBucket(supabase: SupabaseClient<Database>): Pro
   });
 
   if (createBucketError && !isAlreadyExists(createBucketError)) {
-    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotograf alani olusturulamadi." };
+    return { ok: false, code: "UPLOAD_CONFIG_FAILED", message: "Fotoğraf alanı oluşturulamadı." };
   }
 
   return null;
@@ -101,18 +108,55 @@ export async function submitApplication(
 
     const cooldownAllowed = await checkFormCooldown(ip, input.dealer_slug);
     if (!cooldownAllowed) {
-      return { ok: false, code: "RATE_LIMIT", message: "Lutfen tekrar denemeden once bekleyin." };
+      return { ok: false, code: "RATE_LIMIT", message: "Lütfen tekrar denemeden önce bekleyin." };
     }
 
     const dealer = await getDealerBySlug(input.dealer_slug);
     if (!dealer) {
-      return { ok: false, code: "DEALER_NOT_FOUND", message: "Galeri bulunamadi." };
+      return { ok: false, code: "DEALER_NOT_FOUND", message: "Galeri bulunamadı." };
     }
 
     const files = formData
       .getAll("photos")
       .filter((value): value is File => value instanceof File && value.size > 0);
     validatePhotoFiles(files);
+    await validatePhotoContent(files);
+
+    if (isLocalDataMode()) {
+      const photoPaths: string[] = [];
+
+      try {
+        for (let i = 0; i < files.length; i += 1) {
+          const file = files[i];
+          const filename = `${dealer.slug}/${Date.now()}-${i}-${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
+          await saveLocalPhoto(filename, new Uint8Array(await file.arrayBuffer()));
+          photoPaths.push(filename);
+        }
+
+        await createLocalApplication({
+          dealer_id: dealer.id,
+          dealer_slug: input.dealer_slug,
+          owner_name: input.owner_name,
+          owner_phone: input.owner_phone,
+          brand: input.brand,
+          model: input.model,
+          vehicle_package: input.vehicle_package,
+          model_year: input.model_year,
+          km: input.km,
+          fuel_type: input.fuel_type,
+          transmission: input.transmission,
+          tramer_info: input.tramer_info,
+          damage_info: input.damage_info,
+          photo_paths: photoPaths,
+        });
+
+        await registerFormSubmit(ip, dealer.slug);
+        return { ok: true, code: "APPLICATION_CREATED", message: "Başvurunuz başarıyla gönderildi." };
+      } catch (error) {
+        await Promise.all(photoPaths.map((photoPath) => removeLocalPhoto(photoPath)));
+        throw error;
+      }
+    }
 
     const supabase = createSupabaseServiceClient();
     const bucketCheck = await ensureApplicationsBucket(supabase);
@@ -132,7 +176,7 @@ export async function submitApplication(
         return {
           ok: false,
           code: "UPLOAD_FAILED",
-          message: `Fotograf yukleme basarisiz: ${uploadError.message}`,
+          message: `Fotoğraf yükleme başarısız: ${uploadError.message}`,
         };
       }
 
@@ -173,7 +217,7 @@ export async function submitApplication(
         return {
           ok: false,
           code: "DB_MIGRATION_REQUIRED",
-          message: "Fotograf kaydi icin veritabani guncellemesi gerekiyor. Lutfen admin ile iletisime gecin.",
+          message: "Fotoğraf kaydı için veritabanı güncellemesi gerekiyor. Lütfen admin ile iletişime geçin.",
         };
       }
 
@@ -186,17 +230,17 @@ export async function submitApplication(
       return {
         ok: false,
         code: "INSERT_FAILED",
-        message: `Basvuru kaydedilemedi: ${insertError.message ?? "Bilinmeyen hata."}`,
+        message: `Başvuru kaydedilemedi: ${insertError.message ?? "Bilinmeyen hata."}`,
       };
     }
 
     await registerFormSubmit(ip, dealer.slug);
-    return { ok: true, code: "APPLICATION_CREATED", message: "Basvurunuz basariyla gonderildi." };
+    return { ok: true, code: "APPLICATION_CREATED", message: "Başvurunuz başarıyla gönderildi." };
   } catch (error) {
     return {
       ok: false,
       code: "VALIDATION_FAILED",
-      message: error instanceof Error ? error.message : "Beklenmeyen bir hata olustu",
+      message: error instanceof Error ? error.message : "Beklenmeyen bir hata oluştu.",
     };
   }
 }

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { parseApplicationInput } from "../src/lib/validation/application";
+import {
+  parseApplicationInput,
+  validatePhotoContent,
+  validatePhotoFiles,
+} from "../src/lib/validation/application";
 
 function makeForm(data: Record<string, string>): FormData {
   const form = new FormData();
@@ -28,5 +32,26 @@ describe("application validation", () => {
       makeForm({ dealer_slug: "demo", brand: "VW", model: "Golf", vehicle_package: "R-Line" })
     );
     expect(parsed.vehicle_package).toBe("R-Line");
+  });
+
+  it("rejects invalid phone, kilometer and overlong text values", () => {
+    const base = { dealer_slug: "demo", brand: "VW", model: "Golf" };
+    expect(() => parseApplicationInput(makeForm({ ...base, owner_phone: "123" }))).toThrow(
+      "Telefon numarası"
+    );
+    expect(() => parseApplicationInput(makeForm({ ...base, km: "-1" }))).toThrow("KM değeri");
+    expect(() => parseApplicationInput(makeForm({ ...base, brand: "x".repeat(81) }))).toThrow(
+      "Marka en fazla"
+    );
+  });
+
+  it("accepts a matching PNG signature and rejects spoofed image content", async () => {
+    const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const validPng = new File([pngBytes], "vehicle.png", { type: "image/png" });
+    const spoofedPng = new File(["plain text"], "vehicle.png", { type: "image/png" });
+
+    expect(() => validatePhotoFiles([validPng])).not.toThrow();
+    await expect(validatePhotoContent([validPng])).resolves.toBeUndefined();
+    await expect(validatePhotoContent([spoofedPng])).rejects.toThrow("dosya türüyle eşleşmiyor");
   });
 });

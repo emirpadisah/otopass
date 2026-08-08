@@ -1,8 +1,19 @@
 ﻿"use client";
 
 import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button, Field, Input } from "@/components/ui";
 import { login } from "./actions";
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" size="lg" className="mt-2 w-full justify-center" disabled={pending}>
+      {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
+    </Button>
+  );
+}
 
 export function LoginForm() {
   const [state, formAction] = useActionState(login, { error: null as string | null });
@@ -24,14 +35,12 @@ export function LoginForm() {
       </Field>
 
       {state.error ? (
-        <div className="rounded-2xl border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.12)] px-3 py-2 text-xs font-semibold text-[var(--danger)]">
+        <div className="status-alert" data-tone="danger" role="alert">
           {state.error}
         </div>
       ) : null}
 
-      <Button type="submit" size="lg" className="mt-2 w-full justify-center">
-        Giriş Yap
-      </Button>
+      <SubmitButton />
     </form>
   );
 }

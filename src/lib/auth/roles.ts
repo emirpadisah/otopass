@@ -1,14 +1,17 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { isLocalDataMode } from "@/lib/data-mode";
+import { getLocalSessionUser } from "@/lib/local/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { hasDealerRole, resolveRouteForRoles } from "@/lib/auth/route";
 import type { AuthRedirectTarget, UserRole } from "@/lib/types";
 
-function isDealerRole(role: UserRole): boolean {
-  return role === "dealer_owner" || role === "dealer_manager" || role === "dealer_viewer";
-}
-
 export const getCurrentUserRoles = cache(async (): Promise<UserRole[]> => {
+  if (isLocalDataMode()) {
+    return (await getLocalSessionUser())?.roles ?? [];
+  }
+
   const authClient = await createSupabaseServerClient();
   const {
     data: { user },
@@ -28,10 +31,7 @@ export const getCurrentUserRoles = cache(async (): Promise<UserRole[]> => {
 });
 
 export async function resolvePostLoginRoute(): Promise<AuthRedirectTarget> {
-  const roles = await getCurrentUserRoles();
-  if (roles.some((role) => role === "admin" || role === "super_admin")) return "/admin";
-  if (roles.some(isDealerRole)) return "/dealer";
-  return "/login";
+  return resolveRouteForRoles(await getCurrentUserRoles());
 }
 
 export async function requireAdminAccess(): Promise<void> {
@@ -43,7 +43,7 @@ export async function requireAdminAccess(): Promise<void> {
 
 export async function requireDealerAccess(): Promise<void> {
   const roles = await getCurrentUserRoles();
-  if (!roles.some(isDealerRole)) {
+  if (!hasDealerRole(roles)) {
     redirect("/");
   }
 }

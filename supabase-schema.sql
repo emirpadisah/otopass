@@ -86,11 +86,46 @@ create table if not exists public.form_rate_limits (
 create index if not exists idx_form_rate_limits_ip_dealer_created
   on public.form_rate_limits(ip_hash, dealer_slug, created_at desc);
 
+create index if not exists idx_applications_dealer_created
+  on public.applications(dealer_id, created_at desc);
+create index if not exists idx_applications_dealer_status
+  on public.applications(dealer_id, status);
+create index if not exists idx_offers_dealer_created
+  on public.offers(dealer_id, created_at desc);
+create index if not exists idx_offers_application
+  on public.offers(application_id);
+
+alter table public.dealer_users drop constraint if exists dealer_users_role_check;
+alter table public.dealer_users
+  add constraint dealer_users_role_check check (role in ('owner', 'manager', 'viewer')) not valid;
+
+alter table public.applications drop constraint if exists applications_status_check;
+alter table public.applications
+  add constraint applications_status_check check (status in ('pending', 'offered', 'sold')) not valid;
+
+alter table public.applications drop constraint if exists applications_model_year_check;
+alter table public.applications
+  add constraint applications_model_year_check check (model_year is null or model_year between 1886 and 2100) not valid;
+
+alter table public.applications drop constraint if exists applications_km_check;
+alter table public.applications
+  add constraint applications_km_check check (km is null or km between 0 and 10000000) not valid;
+
+alter table public.offers drop constraint if exists offers_amount_check;
+alter table public.offers
+  add constraint offers_amount_check check (amount > 0 and amount <= 1000000000) not valid;
+
+alter table public.offers drop constraint if exists offers_status_check;
+alter table public.offers
+  add constraint offers_status_check check (status in ('pending', 'accepted', 'rejected')) not valid;
+
 -- Helpers
 create or replace function public.current_user_has_role(_role text)
 returns boolean
 language sql
 stable
+security definer
+set search_path = pg_catalog, public
 as $$
   select exists (
     select 1
@@ -103,6 +138,8 @@ create or replace function public.current_user_is_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = pg_catalog, public
 as $$
   select public.current_user_has_role('admin') or public.current_user_has_role('super_admin');
 $$;
@@ -111,6 +148,8 @@ create or replace function public.current_user_has_dealer_access(_dealer_id uuid
 returns boolean
 language sql
 stable
+security definer
+set search_path = pg_catalog, public
 as $$
   select exists (
     select 1
@@ -118,6 +157,13 @@ as $$
     where user_id = auth.uid() and dealer_id = _dealer_id
   );
 $$;
+
+revoke all on function public.current_user_has_role(text) from public;
+revoke all on function public.current_user_is_admin() from public;
+revoke all on function public.current_user_has_dealer_access(uuid) from public;
+grant execute on function public.current_user_has_role(text) to authenticated;
+grant execute on function public.current_user_is_admin() to authenticated;
+grant execute on function public.current_user_has_dealer_access(uuid) to authenticated;
 
 -- RLS
 alter table public.dealers enable row level security;
@@ -187,12 +233,9 @@ on public.user_profiles
 for select
 using (user_id = auth.uid());
 
+-- Password state is changed by the verified server action through the service role.
+-- Direct profile updates would allow clients to bypass the first-login requirement.
 drop policy if exists user_profiles_self_update on public.user_profiles;
-create policy user_profiles_self_update
-on public.user_profiles
-for update
-using (user_id = auth.uid())
-with check (user_id = auth.uid());
 
 -- Applications
 drop policy if exists applications_admin_all on public.applications;

@@ -1,9 +1,10 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { logout } from "@/app/login/actions";
 import { requireDealerAccess } from "@/lib/auth/roles";
-import { getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
+import { canManageDealerMembership } from "@/lib/auth/route";
+import { getDealerForCurrentUser, getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
 import { requireUser } from "@/lib/auth/session";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
@@ -13,24 +14,32 @@ export const metadata: Metadata = {
 };
 
 const navItems: AppShellNavItem[] = [
-  { href: "/dealer", label: "Genel Bakış" },
-  { href: "/dealer/applications", label: "Başvurular" },
-  { href: "/dealer/profile", label: "Profil" },
+  { href: "/dealer", label: "Genel Bakış", icon: "dashboard" },
+  { href: "/dealer/applications", label: "Başvurular", icon: "applications" },
+  { href: "/dealer/profile", label: "Profil", icon: "store" },
 ];
 
 export default async function DealerLayout({ children }: { children: ReactNode }) {
   await requireUser();
   await requireDealerAccess();
 
-  const dealer = await getDealerForCurrentUserWithDetails();
-  if (!dealer) redirect("/");
+  const [dealer, membership] = await Promise.all([
+    getDealerForCurrentUserWithDetails(),
+    getDealerForCurrentUser(),
+  ]);
+  if (!dealer || !membership) redirect("/");
+  const canManage = canManageDealerMembership(membership.role);
 
   return (
     <AppShell
       sidebarTitle={dealer.name}
       sidebarSubtitle="Galeri operasyon alanı"
       headerTitle={dealer.name}
-      headerSubtitle="Atanan başvuruları inceleyin ve teklif süreçlerini yönetin."
+      headerSubtitle={
+        canManage
+          ? "Atanan başvuruları inceleyin ve teklif süreçlerini yönetin."
+          : "Atanan başvuruları ve mevcut teklif durumlarını inceleyin."
+      }
       navItems={navItems}
       footerNote="Galeri oturumu aktif"
       logoutAction={logout}

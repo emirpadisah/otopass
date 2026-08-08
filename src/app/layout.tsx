@@ -1,10 +1,10 @@
 ﻿import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope } from "next/font/google";
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
   display: "swap",
 });
@@ -16,8 +16,9 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Otopass",
-  description: "Aracını galerilere güvenle satmak isteyenler için platform",
+  title: "OtoPass | Araç Alım Operasyonunu Tek Akışta Yönetin",
+  description:
+    "Müşteri başvurusundan galeri teklifine kadar araç alım sürecini tek merkezden yöneten operasyon platformu.",
 };
 
 const themeBootstrapScript = `
@@ -46,7 +47,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body className={`${manrope.variable} ${jetBrainsMono.variable} antialiased`}>
+      <body className={`${plusJakarta.variable} ${jetBrainsMono.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

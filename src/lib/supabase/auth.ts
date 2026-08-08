@@ -1,5 +1,8 @@
 ﻿import { createSupabaseServiceClient } from "./service";
+import { isLocalDataMode } from "@/lib/data-mode";
+import { createLocalUser } from "@/lib/local/auth";
 import type { UserRole } from "@/lib/types";
+import { validatePasswordPolicy } from "@/lib/validation/password";
 
 type CreateUserInput = {
   email: string;
@@ -19,15 +22,6 @@ type SupabaseLikeError = {
 
 const ALREADY_REGISTERED_MARKER = "already registered";
 
-function validatePassword(password: string): void {
-  if (password.length < 12) {
-    throw new Error("Şifre en az 12 karakter olmalıdır.");
-  }
-  if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
-    throw new Error("Şifre büyük harf, küçük harf ve sayı içermelidir.");
-  }
-}
-
 function toErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -46,39 +40,19 @@ function toErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function isAlreadyRegisteredError(error: SupabaseLikeError | null): boolean {
-  if (!error?.message) return false;
-  return error.message.toLowerCase().includes(ALREADY_REGISTERED_MARKER);
-}
-
 function assertNoSupabaseError(error: SupabaseLikeError | null, fallback: string): void {
   if (!error) return;
   throw new Error(toErrorMessage(error, fallback));
 }
 
-async function findAuthUserIdByEmail(
-  email: string,
-  supabase = createSupabaseServiceClient()
-): Promise<string | null> {
-  const targetEmail = email.trim().toLowerCase();
-  const perPage = 200;
+export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
+  validatePasswordPolicy(input.password);
 
-  for (let page = 1; page <= 10; page += 1) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
-    assertNoSupabaseError(error, "Kayıtlı kullanıcılar okunamadı.");
-
-    const users = data?.users ?? [];
-    const found = users.find((user) => (user.email ?? "").toLowerCase() === targetEmail);
-    if (found) return found.id;
-
-    if (users.length < perPage) break;
+  if (isLocalDataMode()) {
+    await createLocalUser(input);
+    return;
   }
 
-  return null;
-}
-
-export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
-  validatePassword(input.password);
   const supabase = createSupabaseServiceClient();
 
   let userId: string | null = null;
@@ -91,31 +65,14 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       email_confirm: true,
     });
 
-    if (createUserError) {
-      if (!isAlreadyRegisteredError(createUserError)) {
-        assertNoSupabaseError(createUserError, "Kullanıcı oluşturulamadı.");
-      }
+    assertNoSupabaseError(createUserError, "Kullanıcı oluşturulamadı.");
 
-      const existingUserId = await findAuthUserIdByEmail(input.email, supabase);
-      if (!existingUserId) {
-        throw new Error("Bu e-posta ile kullanıcı bulundu ancak hesap bilgileri okunamadı.");
-      }
-
-      userId = existingUserId;
-
-      const { error: updatePasswordError } = await supabase.auth.admin.updateUserById(existingUserId, {
-        password: input.password,
-        email_confirm: true,
-      });
-      assertNoSupabaseError(updatePasswordError, "Mevcut kullanıcının şifresi güncellenemedi.");
-    } else {
-      if (!createdUser.user) {
-        throw new Error("Kullanıcı oluşturulamadı.");
-      }
-
-      userId = createdUser.user.id;
-      createdFreshUser = true;
+    if (!createdUser.user) {
+      throw new Error("Kullanıcı oluşturulamadı.");
     }
+
+    userId = createdUser.user.id;
+    createdFreshUser = true;
 
     if (!userId) {
       throw new Error("Kullanıcı oluşturma akışı tamamlanamadı.");
