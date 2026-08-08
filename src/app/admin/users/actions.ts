@@ -1,12 +1,20 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResponse, UserRole } from "@/lib/types";
 import { requireUser } from "@/lib/auth/session";
 import { requireAdminAccess } from "@/lib/auth/roles";
 import { createUserByAdmin } from "@/lib/supabase/auth";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getDealerById } from "@/lib/supabase/queries";
 
 const DEALER_ROLES: UserRole[] = ["dealer_owner", "dealer_manager", "dealer_viewer"];
+const ALL_ROLES = new Set<UserRole>([
+  "super_admin",
+  "admin",
+  "dealer_owner",
+  "dealer_manager",
+  "dealer_viewer",
+]);
 
 function getActionErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error && error.message) {
@@ -40,19 +48,25 @@ export async function createUserAction(
     return { ok: false, code: "VALIDATION", message: "E-posta, şifre ve rol zorunludur." };
   }
 
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return { ok: false, code: "VALIDATION", message: "Geçerli bir e-posta adresi girin." };
+  }
+
+  if (!ALL_ROLES.has(role)) {
+    return { ok: false, code: "VALIDATION", message: "Geçersiz kullanıcı rolü." };
+  }
+
+  if (fullName && fullName.length > 120) {
+    return { ok: false, code: "VALIDATION", message: "Ad soyad en fazla 120 karakter olabilir." };
+  }
+
   if (DEALER_ROLES.includes(role) && !dealerId) {
     return { ok: false, code: "VALIDATION", message: "Galeri rolleri için galeri seçimi zorunludur." };
   }
 
   if (dealerId) {
-    const supabase = createSupabaseServiceClient();
-    const { data: dealer, error: dealerError } = await supabase
-      .from("dealers")
-      .select("id")
-      .eq("id", dealerId)
-      .maybeSingle();
-
-    if (dealerError || !dealer) {
+    const dealer = await getDealerById(dealerId);
+    if (!dealer) {
       return { ok: false, code: "VALIDATION", message: "Seçilen galeri bulunamadı." };
     }
   }
@@ -63,9 +77,11 @@ export async function createUserAction(
       password,
       fullName,
       role,
-      dealerId,
+      dealerId: DEALER_ROLES.includes(role) ? dealerId : undefined,
       actorUserId: actor.id,
     });
+
+    revalidatePath("/admin/users");
 
     if (DEALER_ROLES.includes(role)) {
       return {

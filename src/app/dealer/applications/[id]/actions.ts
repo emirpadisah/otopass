@@ -1,5 +1,6 @@
 ﻿"use server";
 
+import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/lib/types";
 import { createOfferForCurrentDealer } from "@/lib/supabase/offers";
 
@@ -13,6 +14,9 @@ export async function createOfferAction(
 
   try {
     await createOfferForCurrentDealer({ applicationId, amount, notes });
+    revalidatePath("/dealer");
+    revalidatePath("/dealer/applications");
+    revalidatePath(`/dealer/applications/${applicationId}`);
     return { ok: true, code: "OFFER_CREATED", message: "Teklif başarıyla oluşturuldu." };
   } catch (error) {
     return {

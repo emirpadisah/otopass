@@ -1,4 +1,6 @@
 import { createHash } from "crypto";
+import { isLocalDataMode } from "@/lib/data-mode";
+import { getLocalLatestFormSubmit, registerLocalFormSubmit } from "@/lib/local/repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 const COOLDOWN_SECONDS = 30;
@@ -8,8 +10,15 @@ function hashIp(ip: string): string {
 }
 
 export async function checkFormCooldown(ip: string, dealerSlug: string): Promise<boolean> {
-  const supabase = createSupabaseServiceClient();
   const ipHash = hashIp(ip || "unknown");
+
+  if (isLocalDataMode()) {
+    const createdAt = await getLocalLatestFormSubmit(ipHash, dealerSlug);
+    if (!createdAt) return true;
+    return (Date.now() - new Date(createdAt).getTime()) / 1000 >= COOLDOWN_SECONDS;
+  }
+
+  const supabase = createSupabaseServiceClient();
 
   const { data, error } = await supabase
     .from("form_rate_limits")
@@ -28,8 +37,14 @@ export async function checkFormCooldown(ip: string, dealerSlug: string): Promise
 }
 
 export async function registerFormSubmit(ip: string, dealerSlug: string): Promise<void> {
-  const supabase = createSupabaseServiceClient();
   const ipHash = hashIp(ip || "unknown");
+
+  if (isLocalDataMode()) {
+    await registerLocalFormSubmit(ipHash, dealerSlug);
+    return;
+  }
+
+  const supabase = createSupabaseServiceClient();
   const { error } = await supabase.from("form_rate_limits").insert({
     ip_hash: ipHash,
     dealer_slug: dealerSlug,

@@ -1,8 +1,17 @@
 ﻿"use server";
 
 import { redirect } from "next/navigation";
+import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
+import {
+  getLocalSessionUser,
+  signInLocalUser,
+  signOutLocalUser,
+  updateLocalUserPassword,
+} from "@/lib/local/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { resolvePostLoginRoute } from "@/lib/auth/roles";
+import { validatePasswordPolicy } from "@/lib/validation/password";
 
 type LoginState = {
   error: string | null;
@@ -35,6 +44,30 @@ export async function login(
 
     if (!email || !password) {
       return { error: "E-posta ve şifre zorunludur." };
+    }
+
+    if (isLocalDataMode()) {
+      if (!isLocalUserAuthEnabled()) {
+        await signOutLocalUser();
+        return { error: "Yerel kullanıcı girişi devre dışı. Panel erişimi için Supabase kullanın." };
+      }
+
+      const user = await signInLocalUser(email, password);
+      if (!user) {
+        return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
+      }
+
+      if (user.must_change_password) {
+        redirect("/login/change-password");
+      }
+
+      const targetRoute = await resolvePostLoginRoute();
+      if (targetRoute === "/login") {
+        await signOutLocalUser();
+        return { error: "Bu hesaba giriş yetkisi atanmadı. Admin panelinden rol atayın." };
+      }
+
+      redirect(targetRoute);
     }
 
     const supabase = await createSupabaseServerClient();
@@ -75,6 +108,11 @@ export async function login(
 
 export async function logout(): Promise<void> {
   try {
+    if (isLocalDataMode()) {
+      await signOutLocalUser();
+      return;
+    }
+
     const supabase = await createSupabaseServerClient();
     await supabase.auth.signOut();
   } finally {
@@ -90,11 +128,29 @@ export async function changePassword(
     const password = String(formData.get("password") ?? "");
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-    if (password.length < 12) {
-      return { error: "Şifre en az 12 karakter olmalıdır." };
+    try {
+      validatePasswordPolicy(password);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "Şifre güvenlik koşullarını karşılamıyor." };
     }
+
     if (password !== confirmPassword) {
       return { error: "Şifreler eşleşmiyor." };
+    }
+
+    if (isLocalDataMode()) {
+      if (!isLocalUserAuthEnabled()) {
+        await signOutLocalUser();
+        return { error: "Yerel kullanıcı hesapları için şifre değişimi devre dışı." };
+      }
+
+      const user = await getLocalSessionUser();
+      if (!user) {
+        return { error: "Oturum süresi doldu. Lütfen tekrar giriş yapın." };
+      }
+
+      await updateLocalUserPassword(user.id, password);
+      redirect(await resolvePostLoginRoute());
     }
 
     const supabase = await createSupabaseServerClient();
@@ -111,10 +167,15 @@ export async function changePassword(
       return { error: "Şifre güncellenemedi." };
     }
 
-    await supabase
+    const service = createSupabaseServiceClient();
+    const { error: profileError } = await service
       .from("user_profiles")
       .update({ must_change_password: false })
       .eq("user_id", user.id);
+
+    if (profileError) {
+      return { error: "Şifre güncellendi ancak profil durumu kaydedilemedi. Lütfen tekrar deneyin." };
+    }
 
     redirect(await resolvePostLoginRoute());
   } catch (error) {

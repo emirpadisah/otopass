@@ -1,7 +1,18 @@
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, StatusBadge } from "@/components/ui";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, UserRound } from "lucide-react";
+import {
+  PanelPageHeader,
+  PanelSection,
+  StatusBadge,
+  buttonVariants,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { isLocalDataMode } from "@/lib/data-mode";
+import { canManageDealerMembership } from "@/lib/auth/route";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { getDealerApplicationForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerApplicationForCurrentUser, getDealerForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 
 type PageProps = {
@@ -13,10 +24,13 @@ function formatNumber(value: number | null) {
   return new Intl.NumberFormat("tr-TR").format(value);
 }
 
-async function getSignedPhotoUrls(photoPaths: string[]): Promise<string[]> {
+async function getSignedPhotoUrls(applicationId: string, photoPaths: string[]): Promise<string[]> {
   if (photoPaths.length === 0) return [];
-  const supabase = createSupabaseServiceClient();
+  if (isLocalDataMode()) {
+    return photoPaths.map((_, index) => `/api/applications/${applicationId}/photos?index=${index}`);
+  }
 
+  const supabase = createSupabaseServiceClient();
   const signedUrls = await Promise.all(
     photoPaths.map(async (path) => {
       const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
@@ -24,116 +38,124 @@ async function getSignedPhotoUrls(photoPaths: string[]): Promise<string[]> {
       return data.signedUrl;
     })
   );
-
   return signedUrls.filter((url): url is string => Boolean(url));
 }
 
 export default async function DealerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const application = await getDealerApplicationForCurrentUser(id);
-  if (!application) return notFound();
+  const [application, dealer] = await Promise.all([
+    getDealerApplicationForCurrentUser(id),
+    getDealerForCurrentUser(),
+  ]);
+  if (!application || !dealer) return notFound();
+  const canManage = canManageDealerMembership(dealer.role);
+  const photoUrls = await getSignedPhotoUrls(application.id, application.photo_paths ?? []);
 
-  const photoUrls = await getSignedPhotoUrls(application.photo_paths ?? []);
+  const facts = [
+    { label: "Araç sahibi", value: application.owner_name ?? "-", icon: UserRound },
+    { label: "Telefon", value: application.owner_phone ?? "-", icon: Phone },
+    { label: "Model yılı", value: application.model_year ?? "-", icon: CarFront },
+    { label: "Kilometre", value: `${formatNumber(application.km)} km`, icon: CarFront },
+    { label: "Paket", value: application.vehicle_package ?? "-", icon: CarFront },
+    { label: "Yakıt", value: application.fuel_type ?? "-", icon: CarFront },
+    { label: "Vites", value: application.transmission ?? "-", icon: CarFront },
+  ];
 
   return (
-    <div className="space-y-5">
-      <header className="space-y-2">
-        <p className="text-caption text-[var(--accent)]">Başvuru Detayı</p>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-h2">
-            {application.brand} {application.model}
-          </h1>
-          <StatusBadge status={application.status} />
+    <div>
+      <PanelPageHeader
+        eyebrow="Galeri / Başvuru detayı"
+        title={`${application.brand} ${application.model}`}
+        description={canManage
+          ? "Araç verilerini ve görselleri doğrulayın, ardından karar teklifini oluşturun."
+          : "Araç verilerini, görselleri ve mevcut başvuru durumunu inceleyin."}
+        icon={CarFront}
+        meta={
+          <>
+            <StatusBadge status={application.status} />
+            <span className="ops-chip"><Camera size={13} aria-hidden="true" /> {photoUrls.length} fotoğraf</span>
+          </>
+        }
+        actions={
+          <Link
+            href="/dealer/applications"
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Listeye dön
+          </Link>
+        }
+      />
+
+      <div className={cn("mt-4 grid gap-4", canManage && "xl:grid-cols-[minmax(0,1.35fr)_360px]")}>
+        <div className="grid min-w-0 gap-4">
+          <PanelSection
+            title="Araç görselleri"
+            description="İnceleme için yüklenen güncel fotoğraflar"
+            icon={Camera}
+            meta={<span className="ops-chip">{photoUrls.length} dosya</span>}
+          >
+            {photoUrls.length > 0 ? (
+              <div className="ops-photo-grid">
+                {photoUrls.map((url, index) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ops-photo"
+                    aria-label={`${index + 1}. araç fotoğrafını yeni sekmede aç`}
+                  >
+                    <Image
+                      src={url}
+                      alt={`Araç fotoğrafı ${index + 1}`}
+                      width={900}
+                      height={600}
+                      unoptimized
+                      className="h-full w-full object-cover"
+                      priority={index === 0}
+                    />
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="ops-empty-state"><Camera size={20} aria-hidden="true" /><p>Bu başvuruda fotoğraf bulunmuyor.</p></div>
+            )}
+          </PanelSection>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
+            <PanelSection title="Araç ve müşteri" description="Başvuru sırasında iletilen bilgiler" icon={ClipboardCheck}>
+              <dl className="ops-fact-grid">
+                {facts.map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="ops-fact">
+                    <dt><Icon size={14} aria-hidden="true" /> {label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </PanelSection>
+
+            <PanelSection title="Ekspertiz notları" description="Tramer ve hasar beyanı" icon={ClipboardCheck}>
+              <dl className="ops-note-list">
+                <div><dt>Tramer bilgisi</dt><dd>{application.tramer_info ?? "-"}</dd></div>
+                <div><dt>Hasar bilgisi</dt><dd>{application.damage_info ?? "-"}</dd></div>
+              </dl>
+            </PanelSection>
+          </div>
         </div>
-        <p className="text-sm text-[var(--text-muted)]">Detayları inceleyip teklifinizi oluşturun.</p>
-      </header>
 
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card tone="flat">
-          <CardHeader>
-            <CardTitle className="text-xl">Araç ve Müşteri Bilgileri</CardTitle>
-            <CardDescription>Başvuru sırasında iletilen bilgiler</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <dl className="grid gap-3 sm:grid-cols-2">
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Sahibi</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.owner_name ?? "-"}</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Telefon</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.owner_phone ?? "-"}</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Model Yılı</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.model_year ?? "-"}</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Paketi</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.vehicle_package ?? "-"}</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Kilometre</dt>
-                <dd className="mt-1 text-sm font-semibold">{formatNumber(application.km)} km</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Yakıt</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.fuel_type ?? "-"}</dd>
-              </div>
-              <div className="panel-subtle p-3">
-                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Vites</dt>
-                <dd className="mt-1 text-sm font-semibold">{application.transmission ?? "-"}</dd>
-              </div>
-            </dl>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="panel-subtle p-3">
-                <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Tramer Bilgisi</p>
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">{application.tramer_info ?? "-"}</p>
-              </div>
-              <div className="panel-subtle p-3">
-                <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Hasar Bilgisi</p>
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">{application.damage_info ?? "-"}</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">Araç Fotoğrafları</p>
-              {photoUrls.length > 0 ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {photoUrls.map((url, index) => (
-                    <a
-                      key={url}
-                      href={url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group block overflow-hidden rounded-2xl border border-[var(--border-color)]"
-                    >
-                      <img
-                        src={url}
-                        alt={`Araç fotoğrafı ${index + 1}`}
-                        loading="lazy"
-                        className="h-44 w-full object-cover transition duration-200 group-hover:scale-[1.02]"
-                      />
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <div className="panel-subtle p-3 text-sm text-[var(--text-secondary)]">Fotoğraf bulunmuyor.</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card tone="elevated">
-          <CardHeader>
-            <CardTitle className="text-xl">Teklif Oluştur</CardTitle>
-            <CardDescription>Müşteri için teklif tutarı ve açıklama ekleyin.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OfferForm applicationId={application.id} />
-          </CardContent>
-        </Card>
+        {canManage ? (
+          <aside className="xl:sticky xl:top-[102px] xl:self-start">
+            <PanelSection
+              title="Teklif oluştur"
+              description="Tutarı ve müşteriye iletilecek notu kaydedin"
+              icon={HandCoins}
+            >
+              <OfferForm applicationId={application.id} />
+            </PanelSection>
+          </aside>
+        ) : null}
       </div>
     </div>
   );

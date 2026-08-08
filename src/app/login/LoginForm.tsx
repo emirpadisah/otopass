@@ -1,16 +1,39 @@
 ﻿"use client";
 
 import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button, Field, Input } from "@/components/ui";
 import { login } from "./actions";
 
-export function LoginForm() {
+function SubmitButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      size="lg"
+      className="mt-2 w-full justify-center"
+      disabled={disabled || pending}
+    >
+      {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
+    </Button>
+  );
+}
+
+export function LoginForm({ disabled = false }: { disabled?: boolean }) {
   const [state, formAction] = useActionState(login, { error: null as string | null });
 
   return (
     <form className="space-y-4" action={formAction}>
       <Field label="E-posta" labelFor="email">
-        <Input id="email" name="email" type="email" required autoComplete="email" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          disabled={disabled}
+        />
       </Field>
 
       <Field label="Şifre" labelFor="password">
@@ -20,18 +43,21 @@ export function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
+          disabled={disabled}
         />
       </Field>
 
-      {state.error ? (
-        <div className="rounded-2xl border border-[rgba(239,68,68,0.4)] bg-[rgba(239,68,68,0.12)] px-3 py-2 text-xs font-semibold text-[var(--danger)]">
+      {disabled ? (
+        <div className="status-alert" role="status">
+          Yerel kullanıcı hesapları devre dışı. Panel erişimi için Supabase yapılandırması gereklidir.
+        </div>
+      ) : state.error ? (
+        <div className="status-alert" data-tone="danger" role="alert">
           {state.error}
         </div>
       ) : null}
 
-      <Button type="submit" size="lg" className="mt-2 w-full justify-center">
-        Giriş Yap
-      </Button>
+      <SubmitButton disabled={disabled} />
     </form>
   );
 }

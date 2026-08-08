@@ -1,4 +1,5 @@
 import React from "react";
+import { Inbox } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export function DataTable({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -13,7 +14,7 @@ export function TableHead({ className, ...props }: React.HTMLAttributes<HTMLTabl
   return (
     <thead
       className={cn(
-        "bg-[color:color-mix(in_srgb,var(--surface-2)_82%,transparent)] text-[var(--text-muted)]",
+        "bg-[color:color-mix(in_srgb,var(--surface-2)_78%,transparent)] text-[var(--text-muted)]",
         className
       )}
       {...props}
@@ -41,7 +42,7 @@ export function TableHeaderCell({ className, ...props }: React.ThHTMLAttributes<
   return (
     <th
       className={cn(
-        "px-4 py-3 text-left text-[0.69rem] font-semibold uppercase tracking-[0.11em]",
+        "px-4 py-3 text-left text-xs font-bold",
         className
       )}
       {...props}
@@ -62,8 +63,11 @@ export function TableEmptyState({
 }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-4 py-10 text-center text-sm text-[var(--text-muted)]">
-        {message}
+      <td colSpan={colSpan} className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
+        <span className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-[var(--radius-md)] border border-[var(--border-soft)] bg-[var(--surface-1)]">
+          <Inbox size={17} aria-hidden="true" />
+        </span>
+        <span>{message}</span>
       </td>
     </tr>
   );

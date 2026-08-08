@@ -9,15 +9,15 @@ const statusMap: Record<
 > = {
   pending: {
     label: "Beklemede",
-    className: "bg-[rgba(245,158,11,0.18)] text-[#fbbf24] border-[rgba(245,158,11,0.35)]",
+    className: "bg-[color:color-mix(in_srgb,var(--warning)_16%,transparent)] text-[var(--warning)] border-[color:color-mix(in_srgb,var(--warning)_42%,transparent)]",
   },
   offered: {
     label: "Teklif Verildi",
-    className: "bg-[rgba(59,130,246,0.18)] text-[#60a5fa] border-[rgba(59,130,246,0.35)]",
+    className: "bg-[var(--accent-soft)] text-[var(--accent)] border-[color:var(--accent-soft-strong)]",
   },
   sold: {
-    label: "Alindi",
-    className: "bg-[rgba(34,197,94,0.18)] text-[#4ade80] border-[rgba(34,197,94,0.35)]",
+    label: "Alındı",
+    className: "bg-[color:color-mix(in_srgb,var(--success)_16%,transparent)] text-[var(--success)] border-[color:color-mix(in_srgb,var(--success)_42%,transparent)]",
   },
 };
 
@@ -38,7 +38,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.08em]",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold",
         config.className,
         className
       )}

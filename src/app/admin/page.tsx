@@ -1,59 +1,132 @@
-﻿import { Building2, FileText, HandCoins, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
-
-const statsConfig = [
-  { key: "applications", label: "Toplam Başvuru", icon: FileText },
-  { key: "dealers", label: "Kayıtlı Galeri", icon: Building2 },
-  { key: "offers", label: "Toplam Teklif", icon: HandCoins },
-] as const;
+import Link from "next/link";
+import {
+  ArrowUpRight,
+  Building2,
+  FileText,
+  Gauge,
+  HandCoins,
+  ShieldCheck,
+  UserPlus,
+} from "lucide-react";
+import {
+  MetricStrip,
+  PanelPageHeader,
+  PanelSection,
+  ProcessRail,
+  buttonVariants,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { getDataMode } from "@/lib/data-mode";
+import { getAdminDashboardCounts } from "@/lib/supabase/queries";
 
 export default async function AdminDashboardPage() {
-  const supabase = createSupabaseServiceClient();
-  const [{ count: applicationsCount }, { count: dealersCount }, { count: offersCount }] =
-    await Promise.all([
-      supabase.from("applications").select("*", { count: "exact", head: true }),
-      supabase.from("dealers").select("*", { count: "exact", head: true }),
-      supabase.from("offers").select("*", { count: "exact", head: true }),
-    ]);
+  const counts = await getAdminDashboardCounts();
+  const dataMode = getDataMode();
+  const maxCount = Math.max(1, counts.applications, counts.dealers, counts.offers);
 
-  const statMap = {
-    applications: applicationsCount ?? 0,
-    dealers: dealersCount ?? 0,
-    offers: offersCount ?? 0,
-  };
+  const metrics = [
+    {
+      label: "Başvuru hacmi",
+      value: String(counts.applications),
+      note: "Sisteme giren araç kayıtları",
+      icon: FileText,
+      progress: (counts.applications / maxCount) * 100,
+    },
+    {
+      label: "Galeri ağı",
+      value: String(counts.dealers),
+      note: "Teklif sürecine bağlı işletmeler",
+      icon: Building2,
+      tone: "success" as const,
+      progress: (counts.dealers / maxCount) * 100,
+    },
+    {
+      label: "Teklif etkileşimi",
+      value: String(counts.offers),
+      note: "Galerilerden gelen toplam teklif",
+      icon: HandCoins,
+      tone: "accent" as const,
+      progress: (counts.offers / maxCount) * 100,
+    },
+  ];
+
+  const pipeline = [
+    {
+      label: "Galeri ağı hazır",
+      value: counts.dealers,
+      description: "Başvuru kabul eden kayıtlı galeri",
+      tone: "neutral" as const,
+    },
+    {
+      label: "Başvuru toplandı",
+      value: counts.applications,
+      description: "Değerlendirme havuzundaki araç kaydı",
+      tone: "warning" as const,
+    },
+    {
+      label: "Teklif üretildi",
+      value: counts.offers,
+      description: "Galeri tarafında oluşturulan teklif",
+      tone: "accent" as const,
+    },
+  ];
 
   return (
-    <div className="space-y-5">
-      <section>
-        <p className="text-caption text-[var(--accent)]">Genel Bakış</p>
-        <h2 className="text-h2 mt-2">Canlı Operasyon Özeti</h2>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          Supabase verileri üzerinden güncel hacim ve etkileşim metrikleri.
-        </p>
-      </section>
+    <div>
+      <PanelPageHeader
+        eyebrow="Yönetim / Genel bakış"
+        title="Operasyon merkezi"
+        description="Galeri ağını, araç başvurularını ve teklif hareketini tek karar ekranından izleyin."
+        icon={Gauge}
+        meta={
+          <span className="ops-chip">
+            <span className="ops-live-dot" aria-hidden="true" />
+            {dataMode === "local" ? "Yerel test verisi" : "Canlı veri"}
+          </span>
+        }
+      />
 
-      <section className="grid gap-4 md:grid-cols-3">
-        {statsConfig.map(({ key, label, icon: Icon }) => (
-          <Card key={key} tone="flat" className="kpi-card border-0">
-            <CardHeader className="flex items-start justify-between gap-3 space-y-0">
-              <div>
-                <CardDescription className="text-xs uppercase tracking-[0.09em]">{label}</CardDescription>
-                <CardTitle className="mt-2 text-3xl">{statMap[key]}</CardTitle>
-              </div>
-              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--surface-3)] p-2.5 text-[var(--accent)]">
-                <Icon size={17} />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-3">
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)] px-2.5 py-1 text-[0.69rem] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
-                <TrendingUp size={12} className="text-[var(--accent)]" />
-                Canlı istatistik
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      <MetricStrip metrics={metrics} />
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,.75fr)]">
+        <PanelSection
+          title="Operasyon akışı"
+          description="Ağın başvuru ve teklif üretimine katkısı"
+          icon={Gauge}
+          meta={<span className="ops-chip">Anlık görünüm</span>}
+        >
+          <ProcessRail items={pipeline} />
+        </PanelSection>
+
+        <div className="grid gap-4">
+          <PanelSection title="Hızlı işlemler" description="En sık kullanılan yönetim adımları" icon={ArrowUpRight}>
+            <div className="grid gap-2">
+              <Link
+                href="/admin/galleries"
+                className={cn(buttonVariants({ variant: "primary", size: "md" }), "w-full justify-between")}
+              >
+                <span className="flex items-center gap-2"><Building2 size={16} aria-hidden="true" /> Galeri oluştur</span>
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </Link>
+              <Link
+                href="/admin/users"
+                className={cn(buttonVariants({ variant: "secondary", size: "md" }), "w-full justify-between")}
+              >
+                <span className="flex items-center gap-2"><UserPlus size={16} aria-hidden="true" /> Kullanıcı tanımla</span>
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+          </PanelSection>
+
+          <PanelSection title="Erişim çerçevesi" description="Aktif güvenlik varsayılanları" icon={ShieldCheck}>
+            <dl className="ops-info-list">
+              <div className="ops-info-row"><dt>Kullanıcı oluşturma</dt><dd>Admin</dd></div>
+              <div className="ops-info-row"><dt>Galeri ataması</dt><dd>Rol bazlı</dd></div>
+              <div className="ops-info-row"><dt>İlk giriş</dt><dd>Şifre yenileme</dd></div>
+            </dl>
+          </PanelSection>
+        </div>
+      </div>
     </div>
   );
 }
