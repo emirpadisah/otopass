@@ -44,7 +44,6 @@ const applicationSchema = z.object({
   tramer_info: nullableText(2000),
   damage_info: nullableText(2000),
   privacy_acknowledged: z.boolean().refine(Boolean, "Aydınlatma metnini onaylamalısınız."),
-  marketing_consent: z.boolean().default(false),
 });
 
 function normalizePhone(value: string): string {
@@ -75,7 +74,6 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
     tramer_info: formData.get("tramer_info"),
     damage_info: formData.get("damage_info"),
     privacy_acknowledged: formData.get("privacy_acknowledged") === "on",
-    marketing_consent: formData.get("marketing_consent") === "on",
   });
 }
 

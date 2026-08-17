@@ -163,7 +163,6 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       submitted_at: input.submitted_at ?? new Date().toISOString(),
       privacy_version: input.privacy_version ?? null,
       privacy_acknowledged_at: input.privacy_acknowledged_at ?? null,
-      marketing_consent: input.marketing_consent ?? false,
       updated_at: input.updated_at ?? new Date().toISOString(),
       archived_at: input.archived_at ?? null,
       purged_at: input.purged_at ?? null,

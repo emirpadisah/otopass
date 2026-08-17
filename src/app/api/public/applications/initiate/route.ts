@@ -80,7 +80,6 @@ export async function POST(request: Request) {
       reference_code: referenceCode,
       privacy_version: PRIVACY_NOTICE_VERSION,
       privacy_acknowledged_at: now,
-      marketing_consent: application.marketing_consent,
       submitted_at: null,
       photo_paths: [],
     });

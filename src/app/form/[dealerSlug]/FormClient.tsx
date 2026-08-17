@@ -53,7 +53,6 @@ function toApplicationPayload(formData: FormData, dealerSlug: string) {
     tramer_info: String(formData.get("tramer_info") ?? ""),
     damage_info: String(formData.get("damage_info") ?? ""),
     privacy_acknowledged: formData.get("privacy_acknowledged") === "on",
-    marketing_consent: formData.get("marketing_consent") === "on",
   };
 }
 
@@ -243,7 +242,6 @@ export function FormClient({
 
       <section className="panel-subtle space-y-3 p-4" aria-label="Gizlilik tercihleri">
         <label className="checkbox-row"><input type="checkbox" name="privacy_acknowledged" required /><span><a href={`/form/${dealerSlug}/privacy`} target="_blank">KVKK aydınlatma metnini</a> okudum. *</span></label>
-        <label className="checkbox-row"><input type="checkbox" name="marketing_consent" /><span>Kampanya ve bilgilendirme e-postaları almak istiyorum.</span></label>
       </section>
 
       {!localMode && turnstileSiteKey ? (

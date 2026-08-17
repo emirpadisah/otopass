@@ -31,7 +31,6 @@ export type ApplicationInput = {
   tramer_info: string | null;
   damage_info: string | null;
   privacy_acknowledged: boolean;
-  marketing_consent: boolean;
 };
 
 export type PaginationInput = {

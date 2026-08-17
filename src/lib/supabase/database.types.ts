@@ -37,7 +37,6 @@ type ApplicationRow = {
   submitted_at: string | null;
   privacy_version: string | null;
   privacy_acknowledged_at: string | null;
-  marketing_consent: boolean;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
@@ -128,20 +127,6 @@ export type Database = {
         sort_order: number;
         created_at: string;
       }>;
-      notification_outbox: TableShape<{
-        id: string;
-        idempotency_key: string;
-        event_type: string;
-        recipient_email: string;
-        payload: Json;
-        status: string;
-        attempts: number;
-        next_attempt_at: string;
-        last_error: string | null;
-        sent_at: string | null;
-        created_at: string;
-        updated_at: string;
-      }>;
       app_settings: TableShape<{ key: string; value: Json; updated_at: string; updated_by: string | null }>;
       migration_issues: TableShape<{
         id: number;
@@ -175,10 +160,6 @@ export type Database = {
       finalize_public_application: {
         Args: { p_session_id: string; p_photo_paths: string[] };
         Returns: ApplicationRow;
-      };
-      claim_notification_outbox: {
-        Args: { p_limit?: number };
-        Returns: Database["public"]["Tables"]["notification_outbox"]["Row"][];
       };
       admin_update_user_access: {
         Args: { p_user_id: string; p_full_name: string; p_role: string; p_dealer_id: string | null; p_is_active: boolean };

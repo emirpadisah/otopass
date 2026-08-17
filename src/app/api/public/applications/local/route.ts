@@ -57,7 +57,6 @@ export async function POST(request: Request) {
       reference_code: createReferenceCode(),
       privacy_version: PRIVACY_NOTICE_VERSION,
       privacy_acknowledged_at: new Date().toISOString(),
-      marketing_consent: application.marketing_consent,
       submitted_at: new Date().toISOString(),
     });
     return NextResponse.json({ ok: true, referenceCode: created.reference_code, requestId });
