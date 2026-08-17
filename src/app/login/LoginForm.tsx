@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, Field, Input } from "@/components/ui";
+import Link from "next/link";
 import { login } from "./actions";
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
@@ -46,6 +47,8 @@ export function LoginForm({ disabled = false }: { disabled?: boolean }) {
           disabled={disabled}
         />
       </Field>
+
+      {!disabled ? <div className="text-right"><Link href="/login/forgot-password" className="text-xs font-bold text-[var(--accent)] hover:underline">Şifremi unuttum</Link></div> : null}
 
       {disabled ? (
         <div className="status-alert" role="status">

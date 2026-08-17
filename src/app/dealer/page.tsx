@@ -155,13 +155,13 @@ export default async function DealerDashboardPage() {
                     const application = applicationById.get(offer.application_id);
                     return (
                       <TableRow key={offer.id}>
-                        <TableCell className="whitespace-nowrap font-bold text-[var(--ops-text)]">
+                        <TableCell data-label="Araç" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                           {application ? `${application.brand} ${application.model}` : "Başvuru"}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap font-bold text-[var(--ops-text)]">
+                        <TableCell data-label="Tutar" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                           {formatCurrency(offer.amount)}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(offer.created_at)}</TableCell>
+                        <TableCell data-label="Tarih" className="whitespace-nowrap">{formatDate(offer.created_at)}</TableCell>
                       </TableRow>
                     );
                   })

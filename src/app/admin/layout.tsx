@@ -14,6 +14,9 @@ const navItems: AppShellNavItem[] = [
   { href: "/admin", label: "Genel Bakış", icon: "dashboard" },
   { href: "/admin/galleries", label: "Galeriler", icon: "building" },
   { href: "/admin/users", label: "Kullanıcılar", icon: "users" },
+  { href: "/admin/applications", label: "Başvurular", icon: "applications" },
+  { href: "/admin/offers", label: "Teklifler", icon: "offers" },
+  { href: "/admin/audit", label: "İşlem Geçmişi", icon: "audit" },
   { href: "/admin/settings", label: "Ayarlar", icon: "settings" },
 ];
 

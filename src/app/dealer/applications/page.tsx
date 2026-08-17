@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight, ClipboardList, SlidersHorizontal } from "lucide-react";
 import {
   DataTable,
+  ListControls,
+  PaginationNav,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
@@ -15,14 +17,15 @@ import {
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { parsePagination } from "@/lib/pagination";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerForCurrentUser, listDealerApplications, listDealerOffers } from "@/lib/supabase/queries";
 import { SoldButtonForm } from "./SoldButtonForm";
 
-type StatusFilter = "all" | "pending" | "offered" | "sold";
+type StatusFilter = "all" | "pending" | "offered" | "accepted" | "rejected" | "sold" | "archived";
 
 type PageProps = {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; pageSize?: string; sort?: string }>;
 };
 
 function formatCurrency(amount: number) {
@@ -37,9 +40,9 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return null;
   const canManage = canManageDealerMembership(dealer.role);
-  const { status } = await searchParams;
-  const activeFilter: StatusFilter = ["pending", "offered", "sold"].includes(status ?? "")
-    ? (status as StatusFilter)
+  const input = parsePagination(await searchParams);
+  const activeFilter: StatusFilter = ["pending", "offered", "accepted", "rejected", "sold", "archived"].includes(input.status ?? "")
+    ? (input.status as StatusFilter)
     : "all";
 
   const [applications, offers] = await Promise.all([
@@ -58,16 +61,28 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
     all: applications.length,
     pending: applications.filter((application) => application.status === "pending").length,
     offered: applications.filter((application) => application.status === "offered").length,
+    accepted: applications.filter((application) => application.status === "accepted").length,
+    rejected: applications.filter((application) => application.status === "rejected").length,
     sold: applications.filter((application) => application.status === "sold").length,
+    archived: applications.filter((application) => application.status === "archived").length,
   };
-  const filteredApplications = activeFilter === "all"
+  const statusFilteredApplications = activeFilter === "all"
     ? applications
     : applications.filter((application) => application.status === activeFilter);
-  const filters: Array<{ key: StatusFilter; label: string }> = [
-    { key: "all", label: "Tümü" },
-    { key: "pending", label: "Bekleyen" },
-    { key: "offered", label: "Teklif" },
-    { key: "sold", label: "Alındı" },
+  const query = input.q.toLocaleLowerCase("tr-TR");
+  const filteredApplications = statusFilteredApplications
+    .filter((application) => !query || [application.reference_code, application.owner_name, application.owner_email, application.brand, application.model]
+      .some((value) => value?.toLocaleLowerCase("tr-TR").includes(query)))
+    .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
+  const pageCount = Math.max(1, Math.ceil(filteredApplications.length / input.pageSize));
+  const visibleApplications = filteredApplications.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
+  const statusOptions = [
+    { value: "pending", label: `Bekleyen (${counts.pending})` },
+    { value: "offered", label: `Teklif (${counts.offered})` },
+    { value: "accepted", label: `Kabul (${counts.accepted})` },
+    { value: "rejected", label: `Ret (${counts.rejected})` },
+    { value: "sold", label: `Satıldı (${counts.sold})` },
+    { value: "archived", label: `Arşiv (${counts.archived})` },
   ];
 
   return (
@@ -85,24 +100,9 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
       <PanelSection
         className="mt-4"
         title="Araç kuyruğu"
-        description={`${filteredApplications.length} kayıt gösteriliyor`}
+        description={`${visibleApplications.length} / ${filteredApplications.length} kayıt gösteriliyor`}
         icon={SlidersHorizontal}
-        meta={
-          <nav className="ops-filter-tabs" aria-label="Başvuru durumu filtresi">
-            {filters.map((filter) => (
-              <Link
-                key={filter.key}
-                href={filter.key === "all" ? "/dealer/applications" : `/dealer/applications?status=${filter.key}`}
-                className="ops-filter-tab"
-                data-active={activeFilter === filter.key ? "true" : "false"}
-                aria-current={activeFilter === filter.key ? "page" : undefined}
-              >
-                {filter.label}
-                <span>{counts[filter.key]}</span>
-              </Link>
-            ))}
-          </nav>
-        }
+        meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={statusOptions} />}
         contentClassName="ops-section-flush"
       >
         <DataTable>
@@ -118,25 +118,25 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
               </tr>
             </TableHead>
             <TableBody>
-              {filteredApplications.length === 0 ? (
+              {visibleApplications.length === 0 ? (
                 <TableEmptyState colSpan={6} message="Bu durumda başvuru bulunmuyor." />
               ) : (
-                filteredApplications.map((application) => {
+                visibleApplications.map((application) => {
                   const latestOffer = latestOfferByApplication.get(application.id);
                   return (
                     <TableRow key={application.id}>
-                      <TableCell className="whitespace-nowrap font-bold text-[var(--ops-text)]">
+                      <TableCell data-label="Araç sahibi" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                         {application.owner_name ?? "-"}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{application.brand} {application.model}</TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell data-label="Araç" className="whitespace-nowrap">{application.brand} {application.model}</TableCell>
+                      <TableCell data-label="Yıl / KM" className="whitespace-nowrap">
                         {application.model_year ?? "-"} / {application.km ?? "-"} km
                       </TableCell>
-                      <TableCell className="whitespace-nowrap font-bold text-[var(--ops-text)]">
+                      <TableCell data-label="Son teklif" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                         {latestOffer ? formatCurrency(latestOffer) : "-"}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap"><StatusBadge status={application.status} /></TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
+                      <TableCell data-label="Durum" className="whitespace-nowrap"><StatusBadge status={application.status} /></TableCell>
+                      <TableCell data-label="İşlem" className="whitespace-nowrap text-right">
                         <div className="inline-flex items-center gap-2">
                           <Link
                             href={`/dealer/applications/${application.id}`}
@@ -146,7 +146,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                             Görüntüle
                             <ArrowUpRight size={14} aria-hidden="true" />
                           </Link>
-                          {canManage && application.status !== "sold" ? (
+                          {canManage && application.status === "accepted" ? (
                             <SoldButtonForm applicationId={application.id} />
                           ) : null}
                         </div>
@@ -158,6 +158,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
             </TableBody>
           </Table>
         </DataTable>
+        <PaginationNav pathname="/dealer/applications" page={input.page} pageCount={pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
       </PanelSection>
     </div>
   );

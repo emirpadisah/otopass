@@ -1,3 +1,4 @@
+-- LEGACY BASELINE ONLY. Apply supabase/migrations with Supabase CLI for every environment.
 -- Core schema for Otopass
 create extension if not exists pgcrypto;
 

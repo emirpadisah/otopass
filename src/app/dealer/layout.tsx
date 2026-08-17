@@ -17,6 +17,7 @@ const navItems: AppShellNavItem[] = [
   { href: "/dealer", label: "Genel Bakış", icon: "dashboard" },
   { href: "/dealer/applications", label: "Başvurular", icon: "applications" },
   { href: "/dealer/profile", label: "Profil", icon: "store" },
+  { href: "/dealer/security", label: "Güvenlik", icon: "settings" },
 ];
 
 export default async function DealerLayout({ children }: { children: ReactNode }) {

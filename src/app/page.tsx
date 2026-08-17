@@ -183,9 +183,6 @@ export default function Home() {
               <span className="vc-section-kicker">Sistem faydaları</span>
               <h2>Operasyonunuza özel avantajlar</h2>
               <p>Daha az takip yükü, daha hızlı karar ve herkes için net bir çalışma düzeni.</p>
-              <nav className="vc-pill-nav" aria-label="Fayda başlıkları">
-                <a href="#fayda-basvuru">Başvuru toplama</a><a href="#fayda-teklif">Teklif yönetimi</a><a href="#fayda-kontrol">Erişim kontrolü</a>
-              </nav>
             </div>
 
             <div className="vc-benefit-grid">
@@ -230,7 +227,7 @@ export default function Home() {
               <h2>Doğru kişiye doğru çalışma alanı</h2>
               <p>Tek veri akışı, her kullanıcı için sadeleştirilmiş bir deneyime dönüşür.</p>
             </div>
-            <div className="vc-role-grid">
+            <div className="vc-role-grid" tabIndex={0} aria-label="Kullanıcı rollerini yatay kaydırarak inceleyin">
               {roles.map(({ role, title, text, icon: Icon, metric }) => (
                 <article className="vc-role-card" key={role} data-reveal>
                   <div className="vc-role-visual"><Icon size={38} /><span>{metric}</span></div>

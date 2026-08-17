@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -16,9 +17,14 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000"),
   title: "OtoPass | Araç Alım Operasyonunu Tek Akışta Yönetin",
   description:
     "Müşteri başvurusundan galeri teklifine kadar araç alım sürecini tek merkezden yöneten operasyon platformu.",
+  alternates: { canonical: "/" },
+  openGraph: { title: "OtoPass", description: "Araç alım operasyonunu tek güvenli akışta yönetin.", type: "website", locale: "tr_TR", url: "/" },
+  twitter: { card: "summary_large_image", title: "OtoPass", description: "Araç alım operasyonunu tek güvenli akışta yönetin." },
+  manifest: "/manifest.webmanifest",
 };
 
 const themeBootstrapScript = `
@@ -37,15 +43,16 @@ const themeBootstrapScript = `
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="tr" className="theme-dark" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body className={`${plusJakarta.variable} ${jetBrainsMono.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>

@@ -1,53 +1,38 @@
-import { createHash } from "crypto";
+import { createHmac } from "crypto";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { getLocalLatestFormSubmit, registerLocalFormSubmit } from "@/lib/local/repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
-const COOLDOWN_SECONDS = 30;
+export type RateLimitRule = { scope: string; limit: number; windowSeconds: number };
 
-function hashIp(ip: string): string {
-  return createHash("sha256").update(ip).digest("hex");
+function secret(): string {
+  const value = process.env.RATE_LIMIT_HMAC_SECRET?.trim();
+  if (value) return value;
+  if (process.env.NODE_ENV === "production") throw new Error("RATE_LIMIT_HMAC_SECRET is required in production.");
+  return "otopass-development-rate-limit-secret";
 }
 
-export async function checkFormCooldown(ip: string, dealerSlug: string): Promise<boolean> {
-  const ipHash = hashIp(ip || "unknown");
+export function hashRateLimitKey(value: string): string {
+  return createHmac("sha256", secret()).update(value).digest("hex");
+}
 
+export async function consumeRateLimit(key: string, rule: RateLimitRule): Promise<boolean> {
+  const keyHash = hashRateLimitKey(key || "unknown");
   if (isLocalDataMode()) {
-    const createdAt = await getLocalLatestFormSubmit(ipHash, dealerSlug);
-    if (!createdAt) return true;
-    return (Date.now() - new Date(createdAt).getTime()) / 1000 >= COOLDOWN_SECONDS;
+    const dealerSlug = rule.scope.startsWith("public-form:") ? rule.scope.slice("public-form:".length) : rule.scope;
+    const lastSubmit = await getLocalLatestFormSubmit(keyHash, dealerSlug);
+    const allowed = !lastSubmit || Date.now() - new Date(lastSubmit).getTime() >= rule.windowSeconds * 1000;
+    if (allowed) await registerLocalFormSubmit(keyHash, dealerSlug);
+    return allowed;
   }
 
   const supabase = createSupabaseServiceClient();
-
-  const { data, error } = await supabase
-    .from("form_rate_limits")
-    .select("created_at")
-    .eq("ip_hash", ipHash)
-    .eq("dealer_slug", dealerSlug)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return true;
-
-  const seconds = (Date.now() - new Date(data.created_at).getTime()) / 1000;
-  return seconds >= COOLDOWN_SECONDS;
-}
-
-export async function registerFormSubmit(ip: string, dealerSlug: string): Promise<void> {
-  const ipHash = hashIp(ip || "unknown");
-
-  if (isLocalDataMode()) {
-    await registerLocalFormSubmit(ipHash, dealerSlug);
-    return;
-  }
-
-  const supabase = createSupabaseServiceClient();
-  const { error } = await supabase.from("form_rate_limits").insert({
-    ip_hash: ipHash,
-    dealer_slug: dealerSlug,
+  const { data, error } = await supabase.rpc("consume_rate_limit", {
+    p_scope: rule.scope,
+    p_key_hash: keyHash,
+    p_limit: rule.limit,
+    p_window_seconds: rule.windowSeconds,
   });
   if (error) throw error;
+  return data === true;
 }

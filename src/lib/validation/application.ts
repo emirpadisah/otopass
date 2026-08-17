@@ -1,128 +1,105 @@
-﻿import type { ApplicationInput } from "@/lib/types";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { z } from "zod";
+import type { ApplicationInput } from "@/lib/types";
 
-const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_FILES = 10;
+export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+export const MAX_FILES = 10;
+export const PRIVACY_NOTICE_VERSION = "2026-08-17";
 
-function assertMaxLength(value: string | null, maxLength: number, label: string): void {
-  if (value && value.length > maxLength) {
-    throw new Error(`${label} en fazla ${maxLength} karakter olabilir.`);
-  }
+export type PhotoDescriptor = {
+  name: string;
+  contentType: (typeof ACCEPTED_IMAGE_TYPES)[number];
+  size: number;
+};
+
+const nullableText = (max: number) =>
+  z.union([z.string().trim().max(max), z.null(), z.undefined()]).transform((value) =>
+    typeof value === "string" && value.length > 0 ? value : null
+  );
+
+const nullableInteger = (min: number, max: number) =>
+  z.union([z.number().int(), z.string(), z.null(), z.undefined()]).transform((value, context) => {
+    if (value === null || value === undefined || value === "") return null;
+    const parsed = typeof value === "number" ? value : Number(value);
+    if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+      context.addIssue({ code: "custom", message: "Sayısal alan geçersiz aralıkta." });
+      return z.NEVER;
+    }
+    return parsed;
+  });
+
+const applicationSchema = z.object({
+  dealer_slug: z.string().trim().min(1).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  owner_name: z.string().trim().min(2, "Ad soyad zorunludur.").max(120),
+  owner_phone: z.string().trim().min(10, "Telefon zorunludur.").max(32),
+  owner_email: z.string().trim().toLowerCase().email("Geçerli bir e-posta adresi girin.").max(254),
+  brand: z.string().trim().min(1, "Marka zorunludur.").max(80),
+  model: z.string().trim().min(1, "Model zorunludur.").max(80),
+  vehicle_package: nullableText(100),
+  model_year: nullableInteger(1950, new Date().getFullYear() + 1),
+  km: nullableInteger(0, 10_000_000),
+  fuel_type: nullableText(50),
+  transmission: nullableText(50),
+  tramer_info: nullableText(2000),
+  damage_info: nullableText(2000),
+  privacy_acknowledged: z.boolean().refine(Boolean, "Aydınlatma metnini onaylamalısınız."),
+  marketing_consent: z.boolean().default(false),
+});
+
+function normalizePhone(value: string): string {
+  const phone = parsePhoneNumberFromString(value, "TR");
+  if (!phone?.isValid()) throw new Error("Geçerli bir telefon numarası girin.");
+  return phone.number;
+}
+
+export function parseApplicationPayload(input: unknown): ApplicationInput {
+  const result = applicationSchema.safeParse(input);
+  if (!result.success) throw new Error(result.error.issues[0]?.message ?? "Başvuru bilgileri geçersiz.");
+  return { ...result.data, owner_phone: normalizePhone(result.data.owner_phone) };
 }
 
 export function parseApplicationInput(formData: FormData): ApplicationInput {
-  const dealer_slug = String(formData.get("dealer_slug") ?? "").trim();
-  const brand = String(formData.get("brand") ?? "").trim();
-  const model = String(formData.get("model") ?? "").trim();
-  const vehicle_package = toNullableText(formData.get("vehicle_package"));
-  const owner_name = toNullableText(formData.get("owner_name"));
-  const owner_phone = toNullableText(formData.get("owner_phone"));
-  const fuel_type = toNullableText(formData.get("fuel_type"));
-  const transmission = toNullableText(formData.get("transmission"));
-  const tramer_info = toNullableText(formData.get("tramer_info"));
-  const damage_info = toNullableText(formData.get("damage_info"));
-  const model_year = toNullableNumber(formData.get("model_year"));
-  const km = toNullableNumber(formData.get("km"));
-
-  if (!dealer_slug) throw new Error("Galeri slug bilgisi zorunludur.");
-  if (!brand || !model) throw new Error("Marka ve model zorunludur.");
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(dealer_slug) || dealer_slug.length > 64) {
-    throw new Error("Galeri bağlantısı geçersiz.");
-  }
-  assertMaxLength(brand, 80, "Marka");
-  assertMaxLength(model, 80, "Model");
-  assertMaxLength(vehicle_package, 100, "Araç paketi");
-  assertMaxLength(owner_name, 120, "Araç sahibi adı");
-  assertMaxLength(owner_phone, 32, "Telefon");
-  assertMaxLength(fuel_type, 50, "Yakıt tipi");
-  assertMaxLength(transmission, 50, "Vites");
-  assertMaxLength(tramer_info, 2000, "Tramer bilgisi");
-  assertMaxLength(damage_info, 2000, "Hasar bilgisi");
-  if (owner_phone) {
-    const digitCount = owner_phone.replace(/\D/g, "").length;
-    if (digitCount < 10 || digitCount > 15) {
-      throw new Error("Telefon numarası 10-15 rakam içermelidir.");
-    }
-  }
-  if (model_year !== null && (model_year < 1950 || model_year > new Date().getFullYear() + 1)) {
-    throw new Error("Model yılı geçersiz aralıkta.");
-  }
-  if (model_year !== null && !Number.isInteger(model_year)) throw new Error("Model yılı tam sayı olmalıdır.");
-  if (km !== null && (!Number.isInteger(km) || km < 0 || km > 10_000_000)) {
-    throw new Error("KM değeri 0 ile 10.000.000 arasında tam sayı olmalıdır.");
-  }
-
-  return {
-    dealer_slug,
-    owner_name,
-    owner_phone,
-    brand,
-    model,
-    vehicle_package,
-    model_year,
-    km,
-    fuel_type,
-    transmission,
-    tramer_info,
-    damage_info,
-  };
+  return parseApplicationPayload({
+    dealer_slug: String(formData.get("dealer_slug") ?? ""),
+    owner_name: String(formData.get("owner_name") ?? ""),
+    owner_phone: String(formData.get("owner_phone") ?? ""),
+    owner_email: String(formData.get("owner_email") ?? ""),
+    brand: String(formData.get("brand") ?? ""),
+    model: String(formData.get("model") ?? ""),
+    vehicle_package: formData.get("vehicle_package"),
+    model_year: formData.get("model_year"),
+    km: formData.get("km"),
+    fuel_type: formData.get("fuel_type"),
+    transmission: formData.get("transmission"),
+    tramer_info: formData.get("tramer_info"),
+    damage_info: formData.get("damage_info"),
+    privacy_acknowledged: formData.get("privacy_acknowledged") === "on",
+    marketing_consent: formData.get("marketing_consent") === "on",
+  });
 }
 
-function toNullableText(value: FormDataEntryValue | null): string | null {
-  const text = String(value ?? "").trim();
-  return text.length === 0 ? null : text;
-}
-
-function toNullableNumber(value: FormDataEntryValue | null): number | null {
-  if (value === null) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-  const number = Number(raw);
-  if (!Number.isFinite(number)) throw new Error("Sayısal alan geçersiz.");
-  return number;
+export function validatePhotoDescriptors(input: unknown): PhotoDescriptor[] {
+  const result = z.array(z.object({
+    name: z.string().trim().min(1).max(180),
+    contentType: z.enum(ACCEPTED_IMAGE_TYPES),
+    size: z.number().int().positive().max(MAX_FILE_SIZE),
+  })).max(MAX_FILES).safeParse(input);
+  if (!result.success) throw new Error(result.error.issues[0]?.message ?? "Fotoğraf listesi geçersiz.");
+  return result.data;
 }
 
 export function validatePhotoFiles(files: File[]): void {
-  if (files.length > MAX_FILES) throw new Error(`En fazla ${MAX_FILES} fotoğraf yüklenebilir.`);
-  for (const file of files) {
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error("Her fotoğraf en fazla 10 MB olabilir.");
-    }
-    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-      throw new Error("Sadece JPG, PNG veya WEBP dosyaları kabul edilir.");
-    }
-  }
+  validatePhotoDescriptors(files.map((file) => ({ name: file.name, contentType: file.type, size: file.size })));
 }
 
 export async function validatePhotoContent(files: File[]): Promise<void> {
   for (const file of files) {
     const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-    const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-    const isPng =
-      bytes[0] === 0x89 &&
-      bytes[1] === 0x50 &&
-      bytes[2] === 0x4e &&
-      bytes[3] === 0x47 &&
-      bytes[4] === 0x0d &&
-      bytes[5] === 0x0a &&
-      bytes[6] === 0x1a &&
-      bytes[7] === 0x0a;
-    const isWebp =
-      bytes[0] === 0x52 &&
-      bytes[1] === 0x49 &&
-      bytes[2] === 0x46 &&
-      bytes[3] === 0x46 &&
-      bytes[8] === 0x57 &&
-      bytes[9] === 0x45 &&
-      bytes[10] === 0x42 &&
-      bytes[11] === 0x50;
-
-    const contentMatchesType =
-      (file.type === "image/jpeg" && isJpeg) ||
-      (file.type === "image/png" && isPng) ||
-      (file.type === "image/webp" && isWebp);
-
-    if (!contentMatchesType) {
+    const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+    const webp = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && bytes[8] === 0x57;
+    if (!((file.type === "image/jpeg" && jpeg) || (file.type === "image/png" && png) || (file.type === "image/webp" && webp))) {
       throw new Error("Fotoğraf içeriği dosya türüyle eşleşmiyor.");
     }
   }

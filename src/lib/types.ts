@@ -5,6 +5,10 @@ export type UserRole =
   | "dealer_manager"
   | "dealer_viewer";
 
+export type DealerRole = "owner" | "manager" | "viewer";
+export type ApplicationStatus = "pending" | "offered" | "accepted" | "rejected" | "sold" | "archived";
+export type OfferStatus = "pending" | "accepted" | "rejected";
+
 export type AuthRedirectTarget = "/admin" | "/dealer" | "/login";
 
 export type DealerMembership = {
@@ -14,8 +18,9 @@ export type DealerMembership = {
 
 export type ApplicationInput = {
   dealer_slug: string;
-  owner_name: string | null;
-  owner_phone: string | null;
+  owner_name: string;
+  owner_phone: string;
+  owner_email: string;
   brand: string;
   model: string;
   vehicle_package: string | null;
@@ -25,6 +30,24 @@ export type ApplicationInput = {
   transmission: string | null;
   tramer_info: string | null;
   damage_info: string | null;
+  privacy_acknowledged: boolean;
+  marketing_consent: boolean;
+};
+
+export type PaginationInput = {
+  q?: string;
+  status?: string;
+  page: number;
+  pageSize: number;
+  sort?: string;
+};
+
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 };
 
 export type ActionResponse = {

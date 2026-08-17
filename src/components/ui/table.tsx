@@ -3,7 +3,7 @@ import { Inbox } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export function DataTable({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("table-shell overflow-x-auto ui-scrollbar", className)} {...props} />;
+  return <div className={cn("table-shell responsive-table overflow-x-auto ui-scrollbar", className)} {...props} />;
 }
 
 export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {

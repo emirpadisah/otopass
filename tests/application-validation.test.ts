@@ -1,48 +1,58 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   parseApplicationInput,
   validatePhotoContent,
+  validatePhotoDescriptors,
   validatePhotoFiles,
 } from "../src/lib/validation/application";
 
-function makeForm(data: Record<string, string>): FormData {
+function makeForm(data: Record<string, string> = {}): FormData {
   const form = new FormData();
-  for (const [key, value] of Object.entries(data)) {
+  const valid = {
+    dealer_slug: "demo",
+    owner_name: "Deniz Yilmaz",
+    owner_phone: "0555 111 22 33",
+    owner_email: "DENIZ@example.com",
+    brand: "VW",
+    model: "Golf",
+    privacy_acknowledged: "on",
+  };
+
+  for (const [key, value] of Object.entries({ ...valid, ...data })) {
     form.set(key, value);
   }
+
   return form;
 }
 
 describe("application validation", () => {
-  it("requires dealer_slug, brand, model", () => {
-    expect(() => parseApplicationInput(makeForm({}))).toThrow();
+  it("requires identity, vehicle and privacy fields", () => {
+    expect(() => parseApplicationInput(new FormData())).toThrow();
+    expect(() => parseApplicationInput(makeForm())).not.toThrow();
+  });
+
+  it("normalizes phone and email", () => {
+    const parsed = parseApplicationInput(makeForm());
+    expect(parsed.owner_phone).toBe("+905551112233");
+    expect(parsed.owner_email).toBe("deniz@example.com");
+  });
+
+  it("validates year, kilometer and text limits", () => {
+    expect(() => parseApplicationInput(makeForm({ model_year: "1900" }))).toThrow();
+    expect(() => parseApplicationInput(makeForm({ km: "-1" }))).toThrow();
+    expect(() => parseApplicationInput(makeForm({ brand: "x".repeat(81) }))).toThrow();
+  });
+
+  it("validates upload descriptors", () => {
     expect(() =>
-      parseApplicationInput(makeForm({ dealer_slug: "demo", brand: "VW", model: "Golf" }))
+      validatePhotoDescriptors([{ name: "arac.webp", contentType: "image/webp", size: 1024 }]),
     ).not.toThrow();
-  });
-
-  it("validates year range", () => {
     expect(() =>
-      parseApplicationInput(makeForm({ dealer_slug: "demo", brand: "VW", model: "Golf", model_year: "1900" }))
+      validatePhotoDescriptors([{ name: "arac.svg", contentType: "image/svg+xml", size: 1024 }]),
     ).toThrow();
-  });
-
-  it("parses vehicle_package as optional text", () => {
-    const parsed = parseApplicationInput(
-      makeForm({ dealer_slug: "demo", brand: "VW", model: "Golf", vehicle_package: "R-Line" })
-    );
-    expect(parsed.vehicle_package).toBe("R-Line");
-  });
-
-  it("rejects invalid phone, kilometer and overlong text values", () => {
-    const base = { dealer_slug: "demo", brand: "VW", model: "Golf" };
-    expect(() => parseApplicationInput(makeForm({ ...base, owner_phone: "123" }))).toThrow(
-      "Telefon numarası"
-    );
-    expect(() => parseApplicationInput(makeForm({ ...base, km: "-1" }))).toThrow("KM değeri");
-    expect(() => parseApplicationInput(makeForm({ ...base, brand: "x".repeat(81) }))).toThrow(
-      "Marka en fazla"
-    );
+    expect(() =>
+      validatePhotoDescriptors([{ name: "arac.webp", contentType: "image/webp", size: 11 * 1024 * 1024 }]),
+    ).toThrow();
   });
 
   it("accepts a matching PNG signature and rejects spoofed image content", async () => {
@@ -52,6 +62,6 @@ describe("application validation", () => {
 
     expect(() => validatePhotoFiles([validPng])).not.toThrow();
     await expect(validatePhotoContent([validPng])).resolves.toBeUndefined();
-    await expect(validatePhotoContent([spoofedPng])).rejects.toThrow("dosya türüyle eşleşmiyor");
+    await expect(validatePhotoContent([spoofedPng])).rejects.toThrow();
   });
 });

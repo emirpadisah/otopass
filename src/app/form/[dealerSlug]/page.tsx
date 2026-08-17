@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock3, Link2, Shield } from "lucide-react";
 import { ThemeToggle } from "@/components/ui";
+import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { FormClient } from "./FormClient";
 
@@ -59,7 +60,11 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
           <ThemeToggle className="shrink-0" />
         </header>
 
-        <FormClient dealerSlug={dealerSlug} />
+        <FormClient
+          dealerSlug={dealerSlug}
+          localMode={isLocalDataMode()}
+          turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null}
+        />
       </main>
 
       <aside className="glass-highlight flex flex-col p-5 sm:p-6 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">

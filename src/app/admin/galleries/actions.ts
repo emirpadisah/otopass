@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth/session";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { createLocalDealer } from "@/lib/local/repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getCurrentUserRoles } from "@/lib/auth/roles";
 
 function slugify(input: string): string {
   return input
@@ -22,11 +23,49 @@ function slugify(input: string): string {
     .slice(0, 64);
 }
 
+export async function updateDealerAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
+  const actor = await requireUser();
+  await requireAdminAccess();
+  const dealerId = String(formData.get("dealerId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const legalName = String(formData.get("legalName") ?? "").trim() || null;
+  const contactEmail = String(formData.get("contactEmail") ?? "").trim() || null;
+  const privacyEmail = String(formData.get("privacyEmail") ?? "").trim() || null;
+  const logoUrl = String(formData.get("logoUrl") ?? "").trim() || null;
+  const brandColor = String(formData.get("brandColor") ?? "").trim() || null;
+  const isActive = formData.get("isActive") === "on";
+  if (!dealerId || !name || name.length > 120) return { ok: false, code: "VALIDATION", message: "Galeri bilgileri geçersiz." };
+  if ([contactEmail, privacyEmail].some((email) => email && !/^\S+@\S+\.\S+$/.test(email))) return { ok: false, code: "VALIDATION", message: "E-posta adreslerini kontrol edin." };
+  if (brandColor && !/^#[0-9a-f]{6}$/i.test(brandColor)) return { ok: false, code: "VALIDATION", message: "Marka rengi #RRGGBB biçiminde olmalıdır." };
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase.from("dealers").update({ name, legal_name: legalName, contact_email: contactEmail, privacy_contact_email: privacyEmail, logo_url: logoUrl, brand_color: brandColor, is_active: isActive, deactivated_at: isActive ? null : new Date().toISOString() }).eq("id", dealerId);
+  if (error) return { ok: false, code: "UPDATE_FAILED", message: "Galeri güncellenemedi." };
+  await supabase.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: dealerId, action: "ADMIN_DEALER_UPDATED", metadata: { is_active: isActive } });
+  revalidatePath("/admin/galleries");
+  revalidatePath(`/admin/galleries/${dealerId}`);
+  revalidatePath("/admin/users");
+  return { ok: true, code: "DEALER_UPDATED", message: "Galeri bilgileri güncellendi." };
+}
+
+export async function deleteDealerAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
+  const actor = await requireUser();
+  await requireAdminAccess();
+  const roles = await getCurrentUserRoles();
+  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme yalnız super admin tarafından yapılabilir." };
+  const dealerId = String(formData.get("dealerId") ?? "").trim();
+  const supabase = createSupabaseServiceClient();
+  await supabase.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: dealerId, action: "ADMIN_DEALER_DELETE_REQUESTED", metadata: { target_dealer_id: dealerId } });
+  const { error } = await supabase.from("dealers").delete().eq("id", dealerId);
+  if (error) return { ok: false, code: "DELETE_FAILED", message: "Galeri silinemedi." };
+  revalidatePath("/admin/galleries");
+  return { ok: true, code: "DEALER_DELETED", message: "Galeri kalıcı olarak silindi." };
+}
+
 export async function createDealerAction(
   _prevState: ActionResponse,
   formData: FormData
 ): Promise<ActionResponse> {
-  await requireUser();
+  const actor = await requireUser();
   await requireAdminAccess();
 
   const name = String(formData.get("name") ?? "").trim();
@@ -67,17 +106,28 @@ export async function createDealerAction(
   }
 
   const supabase = createSupabaseServiceClient();
-  const { error } = await supabase.from("dealers").insert({
+  const { data: dealer, error } = await supabase.from("dealers").insert({
     name,
     slug,
     contact_email: contactEmail || null,
-  });
+  }).select("id").single();
 
   if (error) {
     if (error.code === "23505") {
       return { ok: false, code: "DUPLICATE", message: "Bu slug zaten kullanılıyor." };
     }
     return { ok: false, code: "INSERT_FAILED", message: error.message || "Galeri oluşturulamadı." };
+  }
+
+  const { error: auditError } = await supabase.from("activity_log").insert({
+    actor_user_id: actor.id,
+    dealer_id: dealer.id,
+    action: "ADMIN_DEALER_CREATED",
+    metadata: { target_dealer_id: dealer.id, slug },
+  });
+  if (auditError) {
+    await supabase.from("dealers").delete().eq("id", dealer.id);
+    return { ok: false, code: "AUDIT_FAILED", message: "Galeri audit kaydı oluşturulamadı." };
   }
 
   revalidatePath("/admin/galleries");

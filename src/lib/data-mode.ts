@@ -11,6 +11,12 @@ function hasSupabaseEnvironment(): boolean {
 export function getDataMode(): DataMode {
   const requestedMode = process.env.OTOPASS_DATA_MODE?.trim().toLowerCase();
 
+  if (process.env.NODE_ENV === "production") {
+    if (requestedMode === "local") throw new Error("Production ortamında local veri modu kullanılamaz.");
+    if (!hasSupabaseEnvironment()) throw new Error("Production için Supabase ortam değişkenleri zorunludur.");
+    return "supabase";
+  }
+
   if (requestedMode === "local") return "local";
   if (requestedMode === "supabase") return "supabase";
 

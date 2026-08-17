@@ -25,7 +25,7 @@ export default function LoginPage() {
   const localAuthDisabled = isLocalDataMode() && !isLocalUserAuthEnabled();
 
   return (
-    <div className="mx-auto grid min-h-screen w-full max-w-[1180px] items-center gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+    <main className="mx-auto grid min-h-screen w-full max-w-[1180px] items-center gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
       <section className="glass-highlight p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <span
@@ -76,6 +76,6 @@ export default function LoginPage() {
         </header>
         <LoginForm disabled={localAuthDisabled} />
       </section>
-    </div>
+    </main>
   );
 }

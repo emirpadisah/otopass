@@ -1,59 +1,53 @@
 # Otopass
 
-Next.js application for vehicle intake and dealer offer workflow. Public vehicle intake data can
-run in a self-contained local mode, while panel authentication uses Supabase for production.
+Otopass, galeri bazlı araç başvurusu, teklif ve satış operasyonlarını yöneten Next.js 16 uygulamasıdır. Production veri ve kimlik doğrulama katmanı Supabase; dağıtım Vercel; e-posta Resend; bot koruması Cloudflare Turnstile; hata izleme Sentry üzerinde çalışır.
 
-## Local quick start
+## Yerel geliştirme
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-No environment file is required for the public vehicle intake demo. Local records are persisted in
-`.local-data/` and that folder is ignored by Git. Local user authentication is disabled by default;
-existing local users and sessions are ignored, and new local data stores do not seed user accounts.
-Admin and dealer panel access requires Supabase configuration.
+Public demo varsayılan olarak local veri modunda `/form/test-galeri` adresinde çalışır. Kayıtlar Git tarafından izlenmeyen `.local-data/` dizininde tutulur. Local kullanıcı ve panel oturumları devre dışıdır; admin ve galeri paneli Supabase gerektirir.
 
-The dealer's public intake form is available at `/form/test-galeri`.
+## Production kurulumu
 
-## Production model
+1. `.env.example` içindeki değişkenleri Supabase ve Vercel ortamlarında tanımlayın. Production için `OTOPASS_DATA_MODE=supabase` kullanın.
+2. Supabase CLI ile projeyi bağlayıp migration'ları uygulayın:
 
-- User provisioning is admin-only (`/admin/users`)
-- Public signup is disabled
-- Role model is DB-based (`user_roles`)
-- Dealer data access is tenant-scoped through RLS
-- Application photos are private storage objects served via signed URLs
-
-## Supabase production mode
-
-Copy `.env.example` to `.env.local`, set `OTOPASS_DATA_MODE=supabase`, and provide all three
-Supabase credentials:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-OTOPASS_ENABLE_LOCAL_AUTH=false
-OPTIONAL_ENABLE_CAPTCHA=false
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push --linked
 ```
 
-## Setup
+3. Supabase Auth üzerinde public signup'ı kapalı tutun ve uygulama URL'si ile `/auth/callback` adresini izinli redirect listesine ekleyin.
+4. İlk yöneticiyi bir kez oluşturun:
 
-1. Apply `supabase-schema.sql` to your Supabase project.
-2. Create a private storage bucket named `applications`. The upload action also creates it when
-   the configured service role has permission.
-3. Run `npm run dev`.
+```bash
+npm run bootstrap:admin
+```
 
-## Quality gates
+5. Bootstrap secret'larını ortamdan kaldırın. Sonraki kullanıcıları `/admin/users` üzerinden yönetin.
+6. Supabase Dashboard'dan günlük yedek ve PITR'ı etkinleştirin. Aylık geri yükleme testini [production runbook](docs/production-runbook.md) ile kaydedin.
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`
-- `npm run build`
+Eski `supabase-schema.sql` yalnız tarihsel başlangıç şemasıdır. Yeni kurulumlarda ve güncellemelerde tek kaynak `supabase/migrations/` dizinidir.
 
-## Release flow
+## Kalite kapıları
 
-1. Deploy to staging first
-2. Validate admin provisioning, dealer isolation, offer flow
-3. Promote to production
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run test:db
+npm run test:e2e
+npm audit --omit=dev --audit-level=high
+npm run build
+```
+
+RLS testleri Docker üzerinde çalışan local Supabase gerektirir. Playwright masaüstü ve mobil Chromium projelerini, kritik başvuru akışını ve axe erişilebilirlik kontrollerini çalıştırır.
+
+## Dağıtım
+
+`master` dalındaki CI başarılı olduğunda deployment workflow sırasıyla Supabase migration'larını uygular, sabitlenmiş Vercel CLI ile build alır ve production'a dağıtır. Gerekli GitHub secret listesi ve geri alma adımları [production runbook](docs/production-runbook.md) içindedir.

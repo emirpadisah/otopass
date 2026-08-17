@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { ExternalLink, Link2, Mail, Store } from "lucide-react";
+import { ExternalLink, Link2, Store } from "lucide-react";
 import { PanelPageHeader, PanelSection, buttonVariants } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
+import { getDealerForCurrentUser } from "@/lib/supabase/queries";
+import { canManageDealerMembership } from "@/lib/auth/route";
+import { ProfileForm } from "./ProfileForm";
 
 export default async function DealerProfilePage() {
-  const dealer = await getDealerForCurrentUserWithDetails();
+  const [dealer, membership] = await Promise.all([getDealerForCurrentUserWithDetails(), getDealerForCurrentUser()]);
 
   return (
     <div>
@@ -19,14 +22,7 @@ export default async function DealerProfilePage() {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[.8fr_1.2fr]">
         <PanelSection title="Galeri kimliği" description="Sistemde kayıtlı kurumsal bilgiler" icon={Store}>
-          <dl className="ops-info-list">
-            <div className="ops-info-row"><dt>Galeri adı</dt><dd>{dealer?.name ?? "-"}</dd></div>
-            <div className="ops-info-row">
-              <dt>İletişim</dt>
-              <dd className="flex items-center gap-2"><Mail size={14} aria-hidden="true" /> {dealer?.contact_email ?? "-"}</dd>
-            </div>
-            <div className="ops-info-row"><dt>Paylaşım kodu</dt><dd className="mono break-all text-xs">{dealer?.slug ?? "-"}</dd></div>
-          </dl>
+          {dealer ? <ProfileForm dealer={dealer} canManage={canManageDealerMembership(membership?.role ?? "viewer")} /> : <p>Galeri bulunamadı.</p>}
         </PanelSection>
 
         <PanelSection title="Müşteri başvuru kanalı" description="Bu adres galeriniz için ayrılmıştır" icon={Link2}>

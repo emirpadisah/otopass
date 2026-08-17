@@ -21,13 +21,22 @@ export const getCurrentUserRoles = cache(async (): Promise<UserRole[]> => {
   if (userErr || !user) return [];
 
   const serviceClient = createSupabaseServiceClient();
+  const { data: profile } = await serviceClient.from("user_profiles").select("is_active").eq("user_id", user.id).maybeSingle();
+  if (profile?.is_active === false) return [];
   const { data, error } = await serviceClient
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id);
 
   if (error || !data) return [];
-  return data.map((row) => row.role as UserRole);
+  const roles = data.map((row) => row.role as UserRole);
+  if (roles.some((role) => role.startsWith("dealer_"))) {
+    const { data: membership } = await serviceClient.from("dealer_users").select("dealer_id").eq("user_id", user.id).limit(1).maybeSingle();
+    if (!membership) return roles.filter((role) => !role.startsWith("dealer_"));
+    const { data: dealer } = await serviceClient.from("dealers").select("is_active").eq("id", membership.dealer_id).maybeSingle();
+    if (dealer?.is_active === false) return roles.filter((role) => !role.startsWith("dealer_"));
+  }
+  return roles;
 });
 
 export async function resolvePostLoginRoute(): Promise<AuthRedirectTarget> {
@@ -39,6 +48,11 @@ export async function requireAdminAccess(): Promise<void> {
   if (!roles.some((role) => role === "admin" || role === "super_admin")) {
     redirect("/");
   }
+  if (!isLocalDataMode()) {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (data?.currentLevel !== "aal2") redirect("/login/mfa/setup");
+  }
 }
 
 export async function requireDealerAccess(): Promise<void> {
@@ -46,4 +60,9 @@ export async function requireDealerAccess(): Promise<void> {
   if (!hasDealerRole(roles)) {
     redirect("/");
   }
+}
+
+export async function requireSuperAdminAccess(): Promise<void> {
+  const roles = await getCurrentUserRoles();
+  if (!roles.includes("super_admin")) redirect("/admin");
 }

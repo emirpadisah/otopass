@@ -43,7 +43,7 @@ type LocalActivityRecord = {
 };
 
 export type LocalData = {
-  version: 1;
+  version: 1 | 2;
   users: LocalUserRecord[];
   sessions: LocalSessionRecord[];
   dealers: DealerRow[];
@@ -90,7 +90,7 @@ function createSeedData(): LocalData {
   const soldApplicationId = "20000000-0000-4000-8000-000000000003";
 
   return {
-    version: 1,
+    version: 2,
     users: [],
     sessions: [],
     dealers: [
@@ -99,7 +99,14 @@ function createSeedData(): LocalData {
         name: "OtoPass Test Galeri",
         slug: "test-galeri",
         contact_email: "galeri@otopass.local",
+        legal_name: "OtoPass Test Galeri",
+        privacy_contact_email: "galeri@otopass.local",
+        logo_url: null,
+        brand_color: null,
+        is_active: true,
         created_at: isoOffset(-15),
+        updated_at: isoOffset(-15),
+        deactivated_at: null,
       },
     ],
     applications: [
@@ -109,6 +116,7 @@ function createSeedData(): LocalData {
         dealer_slug: "test-galeri",
         owner_name: "Deniz Yılmaz",
         owner_phone: "0555 111 22 33",
+        owner_email: "deniz@example.com",
         brand: "Renault",
         model: "Clio",
         vehicle_package: "Icon",
@@ -119,8 +127,16 @@ function createSeedData(): LocalData {
         tramer_info: "Tramer kaydı bulunmuyor.",
         damage_info: "Sağ arka çamurluk lokal boyalı.",
         photo_paths: [],
+        reference_code: "OTP-DEMO-0001",
         status: "pending",
         created_at: isoOffset(-2),
+        submitted_at: isoOffset(-2),
+        privacy_version: "2026-08-17",
+        privacy_acknowledged_at: isoOffset(-2),
+        marketing_consent: false,
+        updated_at: isoOffset(-2),
+        archived_at: null,
+        purged_at: null,
       },
       {
         id: offeredApplicationId,
@@ -128,6 +144,7 @@ function createSeedData(): LocalData {
         dealer_slug: "test-galeri",
         owner_name: "Ece Kaya",
         owner_phone: "0555 222 33 44",
+        owner_email: "ece@example.com",
         brand: "Toyota",
         model: "Corolla",
         vehicle_package: "Flame X-Pack",
@@ -138,8 +155,16 @@ function createSeedData(): LocalData {
         tramer_info: "8.500 TL kayıt.",
         damage_info: "Ön tampon boyalı.",
         photo_paths: [],
+        reference_code: "OTP-DEMO-0002",
         status: "offered",
         created_at: isoOffset(-4),
+        submitted_at: isoOffset(-4),
+        privacy_version: "2026-08-17",
+        privacy_acknowledged_at: isoOffset(-4),
+        marketing_consent: false,
+        updated_at: isoOffset(-3),
+        archived_at: null,
+        purged_at: null,
       },
       {
         id: soldApplicationId,
@@ -147,6 +172,7 @@ function createSeedData(): LocalData {
         dealer_slug: "test-galeri",
         owner_name: "Mert Aydın",
         owner_phone: "0555 333 44 55",
+        owner_email: "mert@example.com",
         brand: "Fiat",
         model: "Egea",
         vehicle_package: "Urban",
@@ -157,8 +183,16 @@ function createSeedData(): LocalData {
         tramer_info: "12.300 TL kayıt.",
         damage_info: "Sol ön kapı değişen.",
         photo_paths: [],
+        reference_code: "OTP-DEMO-0003",
         status: "sold",
         created_at: isoOffset(-7),
+        submitted_at: isoOffset(-7),
+        privacy_version: "2026-08-17",
+        privacy_acknowledged_at: isoOffset(-7),
+        marketing_consent: false,
+        updated_at: isoOffset(-6),
+        archived_at: null,
+        purged_at: null,
       },
     ],
     offers: [
@@ -171,6 +205,9 @@ function createSeedData(): LocalData {
         notes: "Ekspertiz kontrolü sonrası netleştirilecektir.",
         status: "pending",
         created_at: isoOffset(-3),
+        updated_at: isoOffset(-3),
+        responded_at: null,
+        responded_by: null,
       },
       {
         id: "30000000-0000-4000-8000-000000000002",
@@ -181,6 +218,9 @@ function createSeedData(): LocalData {
         notes: "Satın alma tamamlandı.",
         status: "accepted",
         created_at: isoOffset(-6),
+        updated_at: isoOffset(-6),
+        responded_at: isoOffset(-6),
+        responded_by: null,
       },
     ],
     activity_log: [

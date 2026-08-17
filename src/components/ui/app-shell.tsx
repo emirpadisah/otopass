@@ -6,6 +6,8 @@ import {
   Building2,
   ChevronRight,
   ClipboardList,
+  HandCoins,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -23,7 +25,7 @@ import { ThemeToggle } from "./theme-toggle";
 export type AppShellNavItem = {
   href: string;
   label: string;
-  icon?: "dashboard" | "building" | "users" | "settings" | "applications" | "store";
+  icon?: "dashboard" | "building" | "users" | "settings" | "applications" | "offers" | "audit" | "store";
 };
 
 const navIcons: Record<NonNullable<AppShellNavItem["icon"]>, LucideIcon> = {
@@ -32,6 +34,8 @@ const navIcons: Record<NonNullable<AppShellNavItem["icon"]>, LucideIcon> = {
   users: Users,
   settings: Settings,
   applications: ClipboardList,
+  offers: HandCoins,
+  audit: History,
   store: Store,
 };
 

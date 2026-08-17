@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Mail, Phone, UserRound } from "lucide-react";
 import {
   PanelPageHeader,
   PanelSection,
@@ -12,8 +12,10 @@ import { cn } from "@/lib/cn";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { getDealerApplicationForCurrentUser, getDealerForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerApplicationForCurrentUser, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
+import { OfferDecisionForm } from "./OfferDecisionForm";
+import { SoldButtonForm } from "../SoldButtonForm";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -43,17 +45,20 @@ async function getSignedPhotoUrls(applicationId: string, photoPaths: string[]): 
 
 export default async function DealerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [application, dealer] = await Promise.all([
+  const [application, dealer, offers] = await Promise.all([
     getDealerApplicationForCurrentUser(id),
     getDealerForCurrentUser(),
+    listDealerOffersForCurrentUser(),
   ]);
   if (!application || !dealer) return notFound();
   const canManage = canManageDealerMembership(dealer.role);
+  const currentOffer = offers.find((offer) => offer.application_id === application.id) ?? null;
   const photoUrls = await getSignedPhotoUrls(application.id, application.photo_paths ?? []);
 
   const facts = [
     { label: "Araç sahibi", value: application.owner_name ?? "-", icon: UserRound },
     { label: "Telefon", value: application.owner_phone ?? "-", icon: Phone },
+    { label: "E-posta", value: application.owner_email ?? "-", icon: Mail },
     { label: "Model yılı", value: application.model_year ?? "-", icon: CarFront },
     { label: "Kilometre", value: `${formatNumber(application.km)} km`, icon: CarFront },
     { label: "Paket", value: application.vehicle_package ?? "-", icon: CarFront },
@@ -148,11 +153,30 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         {canManage ? (
           <aside className="xl:sticky xl:top-[102px] xl:self-start">
             <PanelSection
-              title="Teklif oluştur"
-              description="Tutarı ve müşteriye iletilecek notu kaydedin"
+              title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
+              description="Müşteri görüşmesini ve satış kararını kontrollü biçimde ilerletin"
               icon={HandCoins}
             >
-              <OfferForm applicationId={application.id} />
+              {application.status === "pending" || application.status === "rejected" ? (
+                <OfferForm applicationId={application.id} />
+              ) : application.status === "offered" && currentOffer ? (
+                <div className="space-y-4">
+                  <div className="panel-subtle p-4">
+                    <p className="text-xs text-[var(--text-muted)]">Bekleyen teklif</p>
+                    <p className="mt-1 text-xl font-bold">
+                      {new Intl.NumberFormat("tr-TR", { style: "currency", currency: currentOffer.currency, maximumFractionDigits: 0 }).format(currentOffer.amount)}
+                    </p>
+                  </div>
+                  <OfferDecisionForm applicationId={application.id} offerId={currentOffer.id} />
+                </div>
+              ) : application.status === "accepted" ? (
+                <div className="space-y-4">
+                  <div className="status-alert" data-tone="success">Müşteri teklifi kabul etti. Araç devri tamamlandığında satışı kapatın.</div>
+                  <SoldButtonForm applicationId={application.id} />
+                </div>
+              ) : (
+                <div className="status-alert" role="status">Bu başvuruda bekleyen bir işlem bulunmuyor.</div>
+              )}
             </PanelSection>
           </aside>
         ) : null}

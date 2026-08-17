@@ -10,6 +10,10 @@ describe("status badge", () => {
 
     const offeredHtml = renderToStaticMarkup(createElement(StatusBadge, { status: "offered" }));
     expect(offeredHtml).toContain("Teklif Verildi");
+
+    expect(renderToStaticMarkup(createElement(StatusBadge, { status: "accepted" }))).toContain("Kabul Edildi");
+    expect(renderToStaticMarkup(createElement(StatusBadge, { status: "rejected" }))).toContain("Reddedildi");
+    expect(renderToStaticMarkup(createElement(StatusBadge, { status: "archived" }))).toContain("Arşivlendi");
   });
 
   it("renders unknown status as label fallback", () => {

@@ -15,9 +15,21 @@ const statusMap: Record<
     label: "Teklif Verildi",
     className: "bg-[var(--accent-soft)] text-[var(--accent)] border-[color:var(--accent-soft-strong)]",
   },
-  sold: {
-    label: "Alındı",
+  accepted: {
+    label: "Kabul Edildi",
     className: "bg-[color:color-mix(in_srgb,var(--success)_16%,transparent)] text-[var(--success)] border-[color:color-mix(in_srgb,var(--success)_42%,transparent)]",
+  },
+  rejected: {
+    label: "Reddedildi",
+    className: "bg-[color:color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)] border-[color:color-mix(in_srgb,var(--danger)_38%,transparent)]",
+  },
+  sold: {
+    label: "Satıldı",
+    className: "bg-[color:color-mix(in_srgb,var(--success)_16%,transparent)] text-[var(--success)] border-[color:color-mix(in_srgb,var(--success)_42%,transparent)]",
+  },
+  archived: {
+    label: "Arşivlendi",
+    className: "bg-[var(--surface-2)] text-[var(--text-secondary)] border-[var(--border-soft)]",
   },
 };
 

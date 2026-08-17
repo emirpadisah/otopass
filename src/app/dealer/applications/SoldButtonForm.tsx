@@ -14,7 +14,7 @@ function SubmitButton() {
   return (
     <Button type="submit" variant="tonal" size="sm" disabled={pending}>
       <CheckCircle2 size={14} aria-hidden="true" />
-      {pending ? "Güncelleniyor..." : "Alındı Yap"}
+      {pending ? "Güncelleniyor..." : "Satışı Tamamla"}
     </Button>
   );
 }
@@ -23,7 +23,13 @@ export function SoldButtonForm({ applicationId }: { applicationId: string }) {
   const [state, formAction] = useActionState(markApplicationAsSoldAction, initialState);
 
   return (
-    <form action={formAction} className="inline-flex flex-col items-end gap-1">
+    <form
+      action={formAction}
+      className="inline-flex flex-col items-end gap-1"
+      onSubmit={(event) => {
+        if (!window.confirm("Satış işlemini tamamlandı olarak kaydetmek istediğinize emin misiniz?")) event.preventDefault();
+      }}
+    >
       <input type="hidden" name="applicationId" value={applicationId} />
       <SubmitButton />
       {state.message ? (

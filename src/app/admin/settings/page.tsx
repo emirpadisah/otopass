@@ -1,53 +1,25 @@
 import { Check, LockKeyhole, ServerCog, Settings } from "lucide-react";
 import { PanelPageHeader, PanelSection } from "@/components/ui";
 import { getDataMode } from "@/lib/data-mode";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { SettingsForm } from "./SettingsForm";
 
-const envKeys = [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "OPTIONAL_ENABLE_CAPTCHA=false",
-];
-
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
   const dataMode = getDataMode();
-  const securityItems = [
-    dataMode === "local"
-      ? "Başvuru fotoğrafları korumalı yerel dosya alanında tutulur"
-      : "Başvuru fotoğrafları private storage içinde tutulur",
-    "Kullanıcı oluşturma yalnızca admin panelindedir",
-    "İlk girişte şifre değiştirme zorunludur",
-    "Sunucu tarafı doğrulama ve bekleme süresi kontrolü aktiftir",
-  ];
-  const keys = dataMode === "local" ? ["OTOPASS_DATA_MODE=local", ".local-data/otopass.json"] : envKeys;
-
-  return (
-    <div>
-      <PanelPageHeader
-        eyebrow="Yönetim / Sistem"
-        title="Ayarlar ve güvenlik"
-        description="Çalışma modu, güvenlik varsayılanları ve altyapı gereksinimlerini tek görünümden doğrulayın."
-        icon={Settings}
-        meta={<span className="ops-chip"><span className="ops-live-dot" aria-hidden="true" /> {dataMode === "local" ? "Yerel mod" : "Supabase"}</span>}
-      />
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <PanelSection title="Güvenlik varsayılanları" description="Sistem genelinde zorunlu kontroller" icon={LockKeyhole}>
-          <ul className="ops-check-list">
-            {securityItems.map((item) => (
-              <li key={item}><span><Check size={13} aria-hidden="true" /></span><p>{item}</p></li>
-            ))}
-          </ul>
-        </PanelSection>
-
-        <PanelSection title="Çalışma ortamı" description={`Aktif veri modu: ${dataMode === "local" ? "Yerel test verisi" : "Supabase"}`} icon={ServerCog}>
-          <ul className="ops-code-list">
-            {keys.map((key, index) => (
-              <li key={key}><span>{String(index + 1).padStart(2, "0")}</span><code>{key}</code></li>
-            ))}
-          </ul>
-        </PanelSection>
-      </div>
-    </div>
-  );
+  let archiveDays = 365;
+  let purgeDays = 30;
+  let notificationsEnabled = true;
+  if (dataMode === "supabase") {
+    const supabase = createSupabaseServiceClient();
+    const { data } = await supabase.from("app_settings").select("key, value").in("key", ["retention", "public_form"]);
+    for (const setting of data ?? []) {
+      const value = setting.value as Record<string, number | boolean>;
+      if (setting.key === "retention") { archiveDays = Number(value.archive_after_days ?? 365); purgeDays = Number(value.purge_after_days ?? 30); }
+      if (setting.key === "public_form") notificationsEnabled = Boolean(value.notifications_enabled ?? true);
+    }
+  }
+  const securityItems = ["Private Supabase Storage ve imzalı upload", "Admin hesaplarında zorunlu TOTP MFA", "Atomik HMAC rate limit ve Turnstile", "365 + 30 günlük veri yaşam döngüsü"];
+  return <div><PanelPageHeader eyebrow="Yönetim / Sistem" title="Ayarlar ve güvenlik" description="Veri yaşam döngüsünü ve bildirim davranışını yönetin; production kontrollerini doğrulayın." icon={Settings} meta={<span className="ops-chip"><span className="ops-live-dot" /> {dataMode === "local" ? "Yerel mod" : "Supabase"}</span>} />
+    <div className="mt-4 grid gap-4 lg:grid-cols-2"><PanelSection title="Operasyon ayarları" description="Gizli anahtarlar ortam değişkenlerinde kalır" icon={Settings}><SettingsForm archiveDays={archiveDays} purgeDays={purgeDays} notificationsEnabled={notificationsEnabled} /></PanelSection><PanelSection title="Güvenlik varsayılanları" icon={LockKeyhole}><ul className="ops-check-list">{securityItems.map((item) => <li key={item}><span><Check size={13} /></span><p>{item}</p></li>)}</ul></PanelSection><PanelSection title="Production servisleri" description="Dağıtım öncesi ortamda tanımlanır" icon={ServerCog}><ul className="ops-code-list">{["Supabase", "Cloudflare Turnstile", "Resend", "Sentry", "Vercel Cron"].map((item, index) => <li key={item}><span>{String(index + 1).padStart(2, "0")}</span><code>{item}</code></li>)}</ul></PanelSection></div>
+  </div>;
 }

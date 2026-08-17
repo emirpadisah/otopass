@@ -31,10 +31,13 @@ type DealerLinkRow = {
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
 
 export async function getDealerBySlug(slug: string): Promise<DealerRow | null> {
-  if (isLocalDataMode()) return getLocalDealerBySlug(slug);
+  if (isLocalDataMode()) {
+    const dealer = await getLocalDealerBySlug(slug);
+    return dealer?.is_active === false ? null : dealer;
+  }
 
   const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).eq("is_active", true).maybeSingle();
   if (error) throw error;
   return (data as DealerRow | null) ?? null;
 }
@@ -97,6 +100,9 @@ export async function getDealerForCurrentUser() {
   const row = ((data as DealerLinkRow[] | null) ?? [])[0];
   if (!row) return null;
 
+  const { data: activeDealer } = await supabase.from("dealers").select("id").eq("id", row.dealer_id).eq("is_active", true).maybeSingle();
+  if (!activeDealer) return null;
+
   return {
     dealer_id: row.dealer_id,
     role: row.role,
@@ -127,6 +133,7 @@ export async function listDealerApplications(dealerId: string): Promise<Applicat
     .from("applications")
     .select("*")
     .eq("dealer_id", dealerId)
+    .not("submitted_at", "is", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as ApplicationRow[]) ?? [];
@@ -169,6 +176,7 @@ export async function getDealerApplicationForCurrentUser(applicationId: string):
     .select("*")
     .eq("id", applicationId)
     .eq("dealer_id", dealer.dealer_id)
+    .not("submitted_at", "is", null)
     .maybeSingle();
   if (error) throw error;
   return (data as ApplicationRow | null) ?? null;
@@ -180,12 +188,12 @@ export async function listUsersForAdmin() {
   const supabase = createSupabaseServiceClient();
   const { data: profiles, error: profilesError } = await supabase
     .from("user_profiles")
-    .select("user_id, full_name, must_change_password, created_at")
+    .select("user_id, full_name, must_change_password, is_active, created_at")
     .order("created_at", { ascending: false });
   if (profilesError) throw profilesError;
 
   const safeProfiles =
-    (profiles as { user_id: string; full_name: string | null; must_change_password: boolean; created_at: string }[]) ??
+    (profiles as { user_id: string; full_name: string | null; must_change_password: boolean; is_active: boolean; created_at: string }[]) ??
     [];
 
   const userIds = safeProfiles.map((p) => p.user_id);

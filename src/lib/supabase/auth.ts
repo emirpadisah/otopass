@@ -87,6 +87,8 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
         user_id: userId,
         full_name: input.fullName,
         must_change_password: true,
+        is_active: true,
+        deactivated_at: null,
       },
       { onConflict: "user_id" }
     );
@@ -120,14 +122,10 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       metadata: {
         target_user_id: userId,
         role: input.role,
-        email: input.email,
       },
     });
 
-    if (activityLogError) {
-      // User creation succeeded; treat activity log as best effort.
-      console.error("Activity log insert failed:", activityLogError.message);
-    }
+    assertNoSupabaseError(activityLogError, "Kullanıcı audit kaydı oluşturulamadı.");
   } catch (error) {
     if (createdFreshUser && userId) {
       // Keep auth + app tables consistent if downstream inserts fail.

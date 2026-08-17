@@ -26,5 +26,5 @@ export async function markApplicationAsSoldAction(
   revalidatePath("/dealer");
   revalidatePath("/dealer/applications");
   revalidatePath(`/dealer/applications/${applicationId}`);
-  return { ok: true, code: "APPLICATION_SOLD", message: "Başvuru alındı olarak güncellendi." };
+  return { ok: true, code: "APPLICATION_SOLD", message: "Satış tamamlandı olarak kaydedildi." };
 }

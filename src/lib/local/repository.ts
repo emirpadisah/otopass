@@ -88,6 +88,7 @@ export async function listLocalUsersForAdmin() {
       email: user.email,
       full_name: user.full_name,
       must_change_password: user.must_change_password,
+      is_active: true,
       created_at: user.created_at,
       roles: user.roles,
       dealer_ids: user.dealer_ids,
@@ -120,7 +121,14 @@ export async function createLocalDealer(input: {
       name: input.name,
       slug: input.slug,
       contact_email: input.contactEmail,
+      legal_name: input.name,
+      privacy_contact_email: input.contactEmail,
+      logo_url: null,
+      brand_color: null,
+      is_active: true,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deactivated_at: null,
     };
     data.dealers.push(dealer);
     return dealer;
@@ -138,6 +146,7 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       dealer_slug: input.dealer_slug,
       owner_name: input.owner_name ?? null,
       owner_phone: input.owner_phone ?? null,
+      owner_email: input.owner_email ?? null,
       brand: input.brand,
       model: input.model,
       vehicle_package: input.vehicle_package ?? null,
@@ -148,8 +157,16 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       tramer_info: input.tramer_info ?? null,
       damage_info: input.damage_info ?? null,
       photo_paths: input.photo_paths ?? [],
+      reference_code: input.reference_code ?? null,
       status: input.status ?? "pending",
       created_at: input.created_at ?? new Date().toISOString(),
+      submitted_at: input.submitted_at ?? new Date().toISOString(),
+      privacy_version: input.privacy_version ?? null,
+      privacy_acknowledged_at: input.privacy_acknowledged_at ?? null,
+      marketing_consent: input.marketing_consent ?? false,
+      updated_at: input.updated_at ?? new Date().toISOString(),
+      archived_at: input.archived_at ?? null,
+      purged_at: input.purged_at ?? null,
     };
     data.applications.push(application);
     return application;
@@ -177,6 +194,9 @@ export async function createLocalOffer(input: {
       notes: input.notes,
       status: "pending",
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      responded_at: null,
+      responded_by: null,
     };
     data.offers.push(offer);
     application.status = "offered";
@@ -190,7 +210,29 @@ export async function markLocalApplicationAsSold(applicationId: string, dealerId
       (candidate) => candidate.id === applicationId && candidate.dealer_id === dealerId
     );
     if (!application) throw new Error("Başvuru bulunamadı.");
+    if (application.status !== "accepted") throw new Error("Satış için teklif kabul edilmiş olmalıdır.");
     application.status = "sold";
+    application.updated_at = new Date().toISOString();
+  });
+}
+
+export async function respondToLocalOffer(
+  offerId: string,
+  dealerId: string,
+  response: "accepted" | "rejected",
+  note: string | null
+): Promise<void> {
+  await mutateLocalData((data) => {
+    const offer = data.offers.find((candidate) => candidate.id === offerId && candidate.dealer_id === dealerId);
+    if (!offer || offer.status !== "pending") throw new Error("Bekleyen teklif bulunamadı.");
+    const application = data.applications.find((candidate) => candidate.id === offer.application_id);
+    if (!application) throw new Error("Başvuru bulunamadı.");
+    offer.status = response;
+    offer.responded_at = new Date().toISOString();
+    offer.updated_at = new Date().toISOString();
+    if (note) offer.notes = [offer.notes, note].filter(Boolean).join("\n");
+    application.status = response;
+    application.updated_at = new Date().toISOString();
   });
 }
 

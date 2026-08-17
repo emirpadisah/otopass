@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import {
   getLocalSessionUser,
@@ -12,9 +13,12 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { resolvePostLoginRoute } from "@/lib/auth/roles";
 import { validatePasswordPolicy } from "@/lib/validation/password";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { getClientIp } from "@/lib/security/request";
 
 type LoginState = {
   error: string | null;
+  success?: string | null;
 };
 
 type ErrorWithDigest = {
@@ -45,6 +49,10 @@ export async function login(
     if (!email || !password) {
       return { error: "E-posta ve şifre zorunludur." };
     }
+
+    const ip = getClientIp(await headers());
+    const allowed = await consumeRateLimit(`${ip}:${email.toLowerCase()}`, { scope: "login", limit: 5, windowSeconds: 900 });
+    if (!allowed) return { error: "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin." };
 
     if (isLocalDataMode()) {
       if (!isLocalUserAuthEnabled()) {
@@ -104,6 +112,25 @@ export async function login(
     if (isRedirectError(error)) throw error;
     return { error: toErrorMessage(error, "Giriş sırasında beklenmeyen bir hata oluştu.") };
   }
+}
+
+export async function requestPasswordReset(
+  _prevState: LoginState,
+  formData: FormData
+): Promise<LoginState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Geçerli bir e-posta adresi girin." };
+  if (isLocalDataMode()) return { error: "Şifre yenileme Supabase hesaplarında kullanılabilir." };
+  const ip = getClientIp(await headers());
+  const allowed = await consumeRateLimit(`${ip}:${email}`, { scope: "password-reset", limit: 3, windowSeconds: 3600 });
+  if (!allowed) return { error: "Çok fazla yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin." };
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback?next=/login/reset-password`,
+  });
+  if (error) return { error: "Şifre yenileme isteği gönderilemedi." };
+  return { error: null, success: "Hesap mevcutsa şifre yenileme bağlantısı e-posta adresine gönderildi." };
 }
 
 export async function logout(): Promise<void> {
