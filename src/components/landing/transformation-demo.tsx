@@ -61,7 +61,7 @@ export function TransformationDemo() {
         <div className="landing-after" aria-hidden={reveal <= 5}>
           <div className="landing-demo-topline">
             <div>
-              <span className="landing-demo-kicker">OTOPASS İLE</span>
+              <span className="landing-demo-kicker">POL-CAR İLE</span>
               <h3>Tek kayıt, net akış</h3>
             </div>
             <span className="landing-state landing-state-success">
@@ -111,9 +111,9 @@ export function TransformationDemo() {
           max="92"
           value={reveal}
           onChange={(event) => setReveal(Number(event.target.value))}
-          aria-label="OtoPass öncesi ve sonrası karşılaştırmasını göster"
+          aria-label="POL-CAR öncesi ve sonrası karşılaştırmasını göster"
         />
-        <span>OtoPass akışı</span>
+        <span>POL-CAR akışı</span>
       </div>
     </div>
   );

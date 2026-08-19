@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { KeyRound, ShieldCheck, UserCheck } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
-  title: "Giriş | Otopass",
+  title: "Giriş | POL-CAR",
 };
 
 const trustItems = [
@@ -27,17 +28,9 @@ export default function LoginPage() {
   return (
     <main className="mx-auto grid min-h-screen w-full max-w-[1180px] items-center gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
       <section className="glass-highlight p-6 sm:p-8">
-        <div className="flex items-center gap-3">
-          <span
-            className="grid h-10 w-10 place-items-center rounded-[var(--radius-md)] bg-[var(--accent)] text-xs font-extrabold text-white shadow-[0_14px_28px_-18px_var(--accent-shadow)]"
-            aria-hidden="true"
-          >
-            OP
-          </span>
-          <div>
-            <p className="text-sm font-extrabold">OtoPass</p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">Araç alım operasyonu</p>
-          </div>
+        <div>
+          <BrandLogo size="display" preload />
+          <p className="mt-3 text-xs font-bold uppercase text-[var(--text-muted)]">Araç alım operasyonu</p>
         </div>
         <h1 className="text-display mt-4 max-w-xl">Operasyon paneline güvenli erişim.</h1>
         <p className="mt-4 max-w-lg text-base leading-7 text-[var(--text-secondary)]">

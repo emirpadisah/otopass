@@ -18,12 +18,12 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000"),
-  title: "OtoPass | Araç Alım Operasyonunu Tek Akışta Yönetin",
+  title: "POL-CAR | Araç Alım Operasyonunu Tek Akışta Yönetin",
   description:
     "Müşteri başvurusundan galeri teklifine kadar araç alım sürecini tek merkezden yöneten operasyon platformu.",
   alternates: { canonical: "/" },
-  openGraph: { title: "OtoPass", description: "Araç alım operasyonunu tek güvenli akışta yönetin.", type: "website", locale: "tr_TR", url: "/" },
-  twitter: { card: "summary_large_image", title: "OtoPass", description: "Araç alım operasyonunu tek güvenli akışta yönetin." },
+  openGraph: { title: "POL-CAR", description: "Araç alım operasyonunu tek güvenli akışta yönetin.", type: "website", locale: "tr_TR", url: "/", siteName: "POL-CAR" },
+  twitter: { card: "summary_large_image", title: "POL-CAR", description: "Araç alım operasyonunu tek güvenli akışta yönetin." },
   manifest: "/manifest.webmanifest",
 };
 

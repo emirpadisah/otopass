@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { KeyRound, LoaderCircle, ShieldCheck } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button, Field, Input } from "@/components/ui";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -35,7 +36,7 @@ export function MfaSetup({ required = true, redirectTo = "/admin" }: MfaSetupPro
         return;
       }
       for (const factor of factors?.totp ?? []) await supabase.auth.mfa.unenroll({ factorId: factor.id });
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Otopass Yönetim" });
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "POL-CAR Yönetim" });
       if (!active) return;
       if (error || !data.totp) {
         setMessage("MFA kurulumu başlatılamadı. Sayfayı yenileyin.");
@@ -67,6 +68,7 @@ export function MfaSetup({ required = true, redirectTo = "/admin" }: MfaSetupPro
 
   return (
     <section className="panel w-full max-w-xl p-6 sm:p-8">
+      <BrandLogo className="mb-6" size="compact" preload />
       <div className="glass-chip"><ShieldCheck size={14} /> Hesap güvenliği</div>
       <h1 className="text-h1 mt-4">İki adımlı doğrulamayı tamamlayın</h1>
       <p className="mt-2 text-sm text-[var(--text-muted)]">

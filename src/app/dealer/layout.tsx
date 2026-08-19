@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/session";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Galeri Paneli | Otopass",
+  title: "Galeri Paneli | POL-CAR",
   description: "Gelen başvuruları yönetin ve teklif verin.",
 };
 

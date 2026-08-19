@@ -6,7 +6,7 @@ import { logout } from "@/app/login/actions";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Yönetim Paneli | Otopass",
+  title: "Yönetim Paneli | POL-CAR",
   description: "Galerileri, kullanıcıları ve başvuruları yönetin.",
 };
 

@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, LogIn, Menu, ShieldCheck, X } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navItems = [
@@ -14,9 +15,8 @@ const navItems = [
 
 function Brand() {
   return (
-    <Link href="/" className="vc-brand" aria-label="OtoPass ana sayfa">
-      <span className="vc-brand-mark" aria-hidden="true"><span>O</span><i /></span>
-      <span><strong>OTOPASS</strong><small>Araç alım operasyonu</small></span>
+    <Link href="/" className="vc-brand" aria-label="POL-CAR ana sayfa">
+      <BrandLogo size="navigation" preload />
     </Link>
   );
 }
@@ -59,7 +59,7 @@ export function LandingHeader() {
                 <Dialog.Overlay className="vc-menu-overlay" />
                 <Dialog.Content className="vc-menu-content" aria-describedby={undefined}>
                   <div className="vc-menu-head">
-                    <Dialog.Title className="sr-only">OtoPass menüsü</Dialog.Title>
+                    <Dialog.Title className="sr-only">POL-CAR menüsü</Dialog.Title>
                     <Brand />
                     <Dialog.Close className="vc-icon-button" aria-label="Menüyü kapat"><X size={20} aria-hidden="true" /></Dialog.Close>
                   </div>

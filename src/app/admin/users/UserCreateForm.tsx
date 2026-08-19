@@ -38,7 +38,7 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
   return (
     <form action={formAction} className="grid gap-4">
           <Field label="E-posta" labelFor="email">
-            <Input id="email" name="email" type="email" placeholder="ornek@otopass.com" required />
+            <Input id="email" name="email" type="email" placeholder="ornek@pol-car.com" required />
           </Field>
 
           <Field label="Ad Soyad" labelFor="fullName">

@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "./button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -89,14 +90,8 @@ function NavLink({
 function Brand({ brandLabel, title }: { brandLabel: string; title: string }) {
   return (
     <div className="ops-brand">
-      <span className="ops-brand-mark" aria-hidden="true">
-        <span>O</span>
-        <i />
-      </span>
-      <div className="min-w-0">
-        <p className="ops-brand-name">{brandLabel}</p>
-        <p className="truncate text-xs text-[var(--ops-muted)]">{title}</p>
-      </div>
+      <BrandLogo className="ops-brand-logo" size="navigation" />
+      <p className="ops-brand-context"><span>{brandLabel}</span>{title}</p>
     </div>
   );
 }
@@ -176,7 +171,7 @@ function ShellNav({
 }
 
 export function AppShell({
-  brandLabel = "OTOPASS",
+  brandLabel = "POL-CAR",
   sidebarTitle,
   sidebarSubtitle,
   headerTitle,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, Link2, Shield } from "lucide-react";
+import { CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerBySlug } from "@/lib/supabase/queries";
@@ -12,18 +13,18 @@ type PageProps = {
 
 const points = [
   {
-    title: "Hızlı ön değerlendirme",
-    description: "Bilgileriniz galeri ekibine doğrudan iletilir.",
+    title: "Başvurunuzu gönderin",
+    description: "Araç ve iletişim bilgileriniz güvenli biçimde kaydedilir.",
     icon: Clock3,
   },
   {
-    title: "Güvenli veri işleme",
-    description: "Fotoğraflar ve başvuru verileri güvenli şekilde saklanır.",
-    icon: Shield,
+    title: "Galeri incelesin",
+    description: "Yetkili ekip aracınızı ve varsa fotoğrafları değerlendirir.",
+    icon: ShieldCheck,
   },
   {
-    title: "Şeffaf teklif süreci",
-    description: "Galeri geri dönüşü düzenli bir iş akışıyla ilerler.",
+    title: "Geri dönüş alın",
+    description: "Teklif süreci paylaştığınız iletişim bilgileriyle ilerler.",
     icon: CheckCircle2,
   },
 ];
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const dealer = await getDealerBySlug(dealerSlug);
 
   return {
-    title: dealer ? `${dealer.name} Araç Başvurusu | Otopass` : "Araç Başvurusu | Otopass",
+    title: dealer ? `${dealer.name} Araç Başvurusu | POL-CAR` : "Araç Başvurusu | POL-CAR",
     description: "Araç bilgilerinizi güvenli form üzerinden galeri değerlendirmesine gönderin.",
   };
 }
@@ -47,58 +48,65 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto grid min-h-screen w-full max-w-[1380px] gap-4 px-4 py-6 sm:px-6 lg:px-8 xl:grid-cols-[1fr_380px]">
-      <main className="panel p-5 sm:p-7">
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="section-label">{dealer.name}</p>
-            <h1 className="text-h1 mt-2">Araç başvuru formu</h1>
-            <p className="mt-2 max-w-2xl text-sm text-[var(--text-muted)]">
-              Yaklaşık teklif aralığı almak için araç bilgilerinizi ve fotoğraflarınızı gönderin.
-            </p>
+    <div className="intake-page">
+      <header className="intake-topbar">
+        <div className="intake-shell intake-topbar-inner">
+          <BrandLogo size="compact" preload />
+          <div className="intake-dealer-identity">
+            <span>Yetkili araç başvurusu</span>
+            <strong>{dealer.name}</strong>
           </div>
-          <ThemeToggle className="shrink-0" />
-        </header>
-
-        <FormClient
-          dealerSlug={dealerSlug}
-          localMode={isLocalDataMode()}
-          turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null}
-        />
-      </main>
-
-      <aside className="glass-highlight flex flex-col p-5 sm:p-6 xl:sticky xl:top-6 xl:h-[calc(100vh-3rem)]">
-        <div>
-          <p className="section-label">Güvenli Değerleme</p>
-          <h2 className="mt-3 text-2xl font-bold">Aracınız için düzenli ve hızlı teklif süreci.</h2>
-          <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
-            Formu tamamladıktan sonra başvurunuz sistemde kayıt altına alınır ve ilgili galeri
-            tarafından değerlendirilir.
-          </p>
+          <ThemeToggle compact className="ml-auto shrink-0" />
         </div>
+      </header>
 
-        <div className="mt-8 space-y-3">
-          {points.map(({ title, description, icon: Icon }) => (
-            <div key={title} className="panel-subtle flex items-start gap-3 p-4">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[var(--radius-md)] border border-[var(--border-soft)] bg-[var(--accent-soft)] text-[var(--accent)]">
-                <Icon size={15} aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">{title}</p>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">{description}</p>
-              </div>
+      <div className="intake-shell intake-layout">
+        <main className="intake-form-panel panel">
+          <header className="intake-heading">
+            <div>
+              <p className="section-label">Araç ön değerlendirme</p>
+              <h1>Aracınız için teklif talebi oluşturun</h1>
+              <p>Temel bilgileri paylaşın; {dealer.name} ekibi aracınızı inceleyip sizinle iletişime geçsin.</p>
             </div>
-          ))}
-        </div>
+            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> Birkaç dakika</span>
+          </header>
 
-        <div className="panel-subtle mt-auto p-4">
-          <div className="flex items-center gap-2 text-[var(--accent)]">
-            <Link2 size={16} aria-hidden="true" />
-            <span className="text-sm font-bold">Başvuru Linki</span>
+          <FormClient
+            dealerSlug={dealerSlug}
+            localMode={isLocalDataMode()}
+            turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null}
+          />
+        </main>
+
+        <aside className="intake-aside glass-highlight">
+          <div>
+            <p className="section-label">Sonraki adımlar</p>
+            <h2>Başvurunuz nasıl ilerler?</h2>
+            <p>Gönderimden sonra süreç doğrudan galeri ekibine aktarılır.</p>
           </div>
-          <p className="mono mt-2 break-all text-xs text-[var(--text-secondary)]">/form/{dealer.slug}</p>
-        </div>
-      </aside>
+
+          <ol className="intake-process">
+            {points.map(({ title, description, icon: Icon }, index) => (
+              <li key={title}>
+                <span className="intake-process-icon"><Icon size={16} aria-hidden="true" /></span>
+                <div>
+                  <small>0{index + 1}</small>
+                  <strong>{title}</strong>
+                  <p>{description}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="intake-security-note">
+            <ShieldCheck size={17} aria-hidden="true" />
+            <div>
+              <strong>Güvenli veri aktarımı</strong>
+              <p>Bilgileriniz yalnızca başvurunun değerlendirilmesi amacıyla kullanılır.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

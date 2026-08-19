@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { KeyRound, ShieldCheck } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button, Field, Input, ThemeToggle } from "@/components/ui";
 import { changePassword } from "../actions";
 
@@ -22,6 +23,7 @@ export function ChangePasswordForm() {
   return (
     <div className="mx-auto grid min-h-screen w-full max-w-[980px] items-center gap-4 px-4 py-8 sm:px-6 lg:grid-cols-[0.8fr_1fr]">
       <aside className="glass-highlight p-6 sm:p-7">
+        <BrandLogo className="mb-6" size="navigation" preload />
         <div className="grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[var(--border-soft)] bg-[var(--accent-soft)] text-[var(--accent)]">
           <ShieldCheck size={20} aria-hidden="true" />
         </div>

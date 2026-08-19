@@ -96,11 +96,11 @@ function createSeedData(): LocalData {
     dealers: [
       {
         id: dealerId,
-        name: "OtoPass Test Galeri",
+        name: "POL-CAR Test Galeri",
         slug: "test-galeri",
-        contact_email: "galeri@otopass.local",
-        legal_name: "OtoPass Test Galeri",
-        privacy_contact_email: "galeri@otopass.local",
+        contact_email: "galeri@pol-car.local",
+        legal_name: "POL-CAR Test Galeri",
+        privacy_contact_email: "galeri@pol-car.local",
         logo_url: null,
         brand_color: null,
         is_active: true,

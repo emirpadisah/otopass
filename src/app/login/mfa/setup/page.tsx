@@ -4,7 +4,7 @@ import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { requireUser } from "@/lib/auth/session";
 import { MfaSetup } from "./MfaSetup";
 
-export const metadata: Metadata = { title: "MFA Kurulumu | Otopass" };
+export const metadata: Metadata = { title: "MFA Kurulumu | POL-CAR" };
 
 export default async function MfaSetupPage() {
   await requireUser();

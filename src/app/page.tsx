@@ -18,6 +18,7 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { LandingHeader } from "@/components/landing/landing-header";
 import { LandingMotion } from "@/components/landing/landing-motion";
 
@@ -130,9 +131,9 @@ export default function Home() {
         <section className="vc-hero">
           <div className="vc-container vc-hero-inner">
             <div className="vc-hero-copy">
-              <span className="vc-hero-kicker"><Sparkles size={15} /> Galeriler için araç alım platformu</span>
+              <span className="vc-hero-kicker"><Sparkles size={15} /> POL-CAR araç alım platformu</span>
               <h1>Araç alımının <span>kolay, güvenilir ve düzenli</span> yolu</h1>
-              <p>Başvuruyu tek bağlantıda toplayın, araçları ekibinize atayın ve teklif sürecini tek merkezden yönetin.</p>
+              <p>POL-CAR ile başvuruyu tek bağlantıda toplayın, araçları ekibinize atayın ve teklif sürecini tek merkezden yönetin.</p>
               <div className="vc-hero-cta-row">
                 <Link href="/login" className="vc-primary-cta">Operasyonu aç <ArrowRight size={17} /></Link>
                 <a href="#faydalar" className="vc-text-cta">Sistemi incele <ArrowRight size={16} /></a>
@@ -248,7 +249,7 @@ export default function Home() {
         <section className="vc-section vc-experience">
           <div className="vc-container">
             <div className="vc-centered-heading" data-reveal>
-              <span className="vc-section-kicker">OtoPass deneyimi</span>
+              <span className="vc-section-kicker">POL-CAR deneyimi</span>
               <h2>Ekibinizi yavaşlatmayan kontrol</h2>
               <p>Günlük operasyon için gereken temel avantajlar bir arada.</p>
             </div>
@@ -270,11 +271,11 @@ export default function Home() {
 
       <footer className="vc-footer">
         <div className="vc-container vc-footer-grid">
-          <div><Link href="/" className="vc-brand"><span className="vc-brand-mark" aria-hidden="true"><span>O</span><i /></span><span><strong>OTOPASS</strong><small>Araç alım operasyonu</small></span></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
+          <div><Link href="/" className="vc-brand" aria-label="POL-CAR ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
           <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#roller">Kimler için?</a></div>
           <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenli altyapı</a></div>
         </div>
-        <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} OtoPass</span><span>Araç alım operasyon platformu</span></div>
+        <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} POL-CAR</span><span>Araç alım operasyon platformu</span></div>
       </footer>
     </div>
   );

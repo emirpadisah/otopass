@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-for (const path of ["/", "/login"]) {
+for (const path of ["/", "/login", "/form/test-galeri"]) {
   test(`${path} has no automatically detectable accessibility violations`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("body")).toBeVisible();
@@ -26,7 +26,7 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByLabel("Marka").fill("Volkswagen");
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
-  await page.getByRole("button", { name: "Fiyat Teklifi Al" }).click();
+  await page.getByRole("button", { name: "Teklif talebini gönder" }).click();
 
   await expect(page.getByRole("status")).toContainText("Referans");
 });

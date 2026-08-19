@@ -17,6 +17,7 @@ import {
   listLocalUsersForAdmin,
 } from "@/lib/local/repository";
 import type { UserRole } from "@/lib/types";
+import { isMissingColumn } from "./schema-compat";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
@@ -38,8 +39,22 @@ export async function getDealerBySlug(slug: string): Promise<DealerRow | null> {
 
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).eq("is_active", true).maybeSingle();
-  if (error) throw error;
-  return (data as DealerRow | null) ?? null;
+  if (!error) return (data as DealerRow | null) ?? null;
+  if (!isMissingColumn(error, "is_active")) throw error;
+
+  const { data: legacyDealer, error: legacyError } = await supabase.from("dealers").select("*").eq("slug", slug).maybeSingle();
+  if (legacyError) throw legacyError;
+  if (!legacyDealer) return null;
+  return {
+    ...legacyDealer,
+    legal_name: null,
+    privacy_contact_email: null,
+    logo_url: null,
+    brand_color: null,
+    is_active: true,
+    updated_at: legacyDealer.created_at,
+    deactivated_at: null,
+  } as DealerRow;
 }
 
 export async function getDealerById(id: string): Promise<DealerRow | null> {
