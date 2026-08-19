@@ -8,8 +8,8 @@ export const contentType = "image/png";
 
 const heroImage = await readFile(join(process.cwd(), "public/images/otopass-hero-inspection.jpg"));
 const heroDataUrl = `data:image/jpeg;base64,${heroImage.toString("base64")}`;
-const logoImage = await readFile(join(process.cwd(), "public/images/pol-car-logo.jpg"));
-const logoDataUrl = `data:image/jpeg;base64,${logoImage.toString("base64")}`;
+const logoImage = await readFile(join(process.cwd(), "public/images/pol-car-logo-transparent.png"));
+const logoDataUrl = `data:image/png;base64,${logoImage.toString("base64")}`;
 
 export default function OpenGraphImage() {
   return new ImageResponse(

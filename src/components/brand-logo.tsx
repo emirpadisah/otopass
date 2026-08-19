@@ -17,10 +17,10 @@ export function BrandLogo({ className, preload = false, size = "navigation" }: B
     >
       <Image
         className="brand-lockup-image"
-        src="/images/pol-car-logo.jpg"
+        src="/images/pol-car-logo-transparent.png"
         alt=""
-        width={1254}
-        height={1254}
+        width={1548}
+        height={654}
         loading={preload ? "eager" : "lazy"}
         fetchPriority={preload ? "high" : "auto"}
         sizes={size === "display" ? "(max-width: 640px) 72vw, 320px" : "180px"}
