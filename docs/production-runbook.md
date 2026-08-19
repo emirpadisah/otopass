@@ -2,10 +2,20 @@
 
 ## Sorumluluklar
 
-- Supabase: PostgreSQL, Auth, private Storage, günlük yedek ve PITR.
+- Supabase: PostgreSQL, Auth, private Storage ve kullanılan planın desteklediği yedekleme seçenekleri.
 - Vercel: Next.js runtime, Cron ve production deployment.
 - Cloudflare Turnstile: public başvuru bot kontrolü.
 - Sentry: client, server ve edge hata izleme; request ID ile korelasyon.
+
+## Sıfır bütçe dağıtım modu
+
+- GitHub Actions workflow'ları hesap billing kilidi nedeniyle devre dışıdır.
+- `master` push'ları bağlı GitHub deposundan Vercel tarafından doğrudan build edilir.
+- Production öncesi kalite kapısı yerelde `npm run lint`, `npm run typecheck`, `npm test`, `npm audit --omit=dev --audit-level=high` ve `npm run build` komutlarıyla çalıştırılır.
+- Veritabanı testleri Supabase CLI ve Docker hazır olan bir makinede `npm run test:db` ile çalıştırılır.
+- E2E kontrolü `npm run test:e2e` ile yerelde çalıştırılır.
+- Bu mod GitHub Actions maliyeti oluşturmaz ancak zorunlu PR check koruması sağlamaz.
+- PITR ücretli bir Supabase özelliği gerektiriyorsa sıfır bütçeli modda bu güvence sağlanamaz; bu durum production veri kaybı riski olarak kabul edilmelidir.
 
 ## Zorunlu secret'lar
 
@@ -23,19 +33,21 @@ Vercel production ortamı:
 - `CRON_SECRET` (en az 32 rastgele karakter)
 - `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`
 
-GitHub Actions:
+GitHub Actions workflow'ları yeniden etkinleştirilirse:
 
 - `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `SUPABASE_PROJECT_REF`
 - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+Vercel'in yerleşik Git entegrasyonu bu GitHub Actions secret'larına ihtiyaç duymaz.
 
 Secret değerlerini repoya, loglara veya olay kayıtlarına yazmayın. Bootstrap değişkenlerini ilk super admin oluşturulduktan hemen sonra silin.
 
 ## Release kontrolü
 
-1. Pull request CI kontrollerinin tamamının geçtiğini doğrulayın.
+1. Yerel lint, typecheck, unit, audit, build, veritabanı ve E2E kontrollerinin geçtiğini doğrulayın.
 2. Migration içindeki veri düzeltmelerini staging kopyasında çalıştırın; `migration_issues` kayıtlarını inceleyin.
-3. Supabase point-in-time recovery durumunun güncel olduğunu doğrulayın.
-4. `master` merge sonrasında Production Deploy workflow'unu izleyin.
+3. Kullanılan Supabase planında etkin yedek ve recovery seçeneklerini doğrulayın; PITR yoksa veri kaybı riskini kayda alın.
+4. `master` push sonrasında Vercel Git deployment'ını izleyin.
 5. `/api/health` yanıtının `200` ve yalnız genel readiness bilgisi döndürdüğünü doğrulayın.
 6. Public başvuru, teklif, kabul/ret, satış ve admin audit akışlarına smoke test uygulayın.
 
