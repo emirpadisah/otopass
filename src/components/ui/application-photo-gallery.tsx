@@ -1,0 +1,158 @@
+"use client";
+
+import * as Dialog from "@radix-ui/react-dialog";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { useState } from "react";
+
+type ApplicationPhotoGalleryProps = {
+  photos: string[];
+  vehicleLabel: string;
+};
+
+function getPhotoLabel(vehicleLabel: string, index: number) {
+  return `${vehicleLabel} - ${index + 1}. fotoğraf`;
+}
+
+export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPhotoGalleryProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const activePhoto = photos[activeIndex] ?? photos[0];
+
+  if (!activePhoto) return null;
+
+  const selectRelative = (offset: number) => {
+    setActiveIndex((current) => (current + offset + photos.length) % photos.length);
+  };
+
+  return (
+    <>
+      <div className="ops-photo-gallery">
+        <div className="ops-photo-stage">
+          <button
+            type="button"
+            className="ops-photo-main"
+            onClick={() => setDialogOpen(true)}
+            aria-label={`${getPhotoLabel(vehicleLabel, activeIndex)} büyüt`}
+          >
+            <Image
+              key={activePhoto}
+              src={activePhoto}
+              alt={getPhotoLabel(vehicleLabel, activeIndex)}
+              fill
+              sizes="(max-width: 900px) 100vw, 70vw"
+              className="ops-photo-image"
+              unoptimized
+              priority
+            />
+            <span className="ops-photo-expand" aria-hidden="true">
+              <Maximize2 size={17} />
+            </span>
+          </button>
+
+          <span className="ops-photo-counter" aria-live="polite">
+            {String(activeIndex + 1).padStart(2, "0")} / {String(photos.length).padStart(2, "0")}
+          </span>
+
+          {photos.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="ops-photo-nav"
+                data-direction="previous"
+                onClick={() => selectRelative(-1)}
+                aria-label="Önceki fotoğraf"
+                title="Önceki fotoğraf"
+              >
+                <ChevronLeft size={20} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="ops-photo-nav"
+                data-direction="next"
+                onClick={() => selectRelative(1)}
+                aria-label="Sonraki fotoğraf"
+                title="Sonraki fotoğraf"
+              >
+                <ChevronRight size={20} aria-hidden="true" />
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        {photos.length > 1 ? (
+          <div className="ops-photo-thumbnails ui-scrollbar" aria-label="Araç fotoğrafları">
+            {photos.map((photo, index) => (
+              <button
+                key={photo}
+                type="button"
+                className="ops-photo-thumbnail"
+                data-active={index === activeIndex ? "true" : "false"}
+                onClick={() => setActiveIndex(index)}
+                aria-label={`${index + 1}. fotoğrafı göster`}
+                aria-pressed={index === activeIndex}
+              >
+                <Image
+                  src={photo}
+                  alt=""
+                  fill
+                  sizes="110px"
+                  className="object-cover"
+                  unoptimized
+                />
+                <span>{String(index + 1).padStart(2, "0")}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <Dialog.Root open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="ops-photo-dialog-overlay" />
+          <Dialog.Content
+            className="ops-photo-dialog"
+            aria-describedby={undefined}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" && photos.length > 1) selectRelative(-1);
+              if (event.key === "ArrowRight" && photos.length > 1) selectRelative(1);
+            }}
+          >
+            <div className="ops-photo-dialog-toolbar">
+              <div>
+                <Dialog.Title>{vehicleLabel}</Dialog.Title>
+                <span>{activeIndex + 1} / {photos.length}</span>
+              </div>
+              <Dialog.Close className="ops-photo-dialog-close" aria-label="Fotoğraf görüntüleyiciyi kapat" title="Kapat">
+                <X size={20} aria-hidden="true" />
+              </Dialog.Close>
+            </div>
+
+            <div className="ops-photo-dialog-canvas">
+              <Image
+                key={`dialog-${activePhoto}`}
+                src={activePhoto}
+                alt={getPhotoLabel(vehicleLabel, activeIndex)}
+                fill
+                sizes="100vw"
+                className="object-contain"
+                unoptimized
+                priority
+              />
+              {photos.length > 1 ? (
+                <>
+                  <button type="button" className="ops-photo-dialog-nav" data-direction="previous" onClick={() => selectRelative(-1)} aria-label="Önceki fotoğraf">
+                    <ChevronLeft size={24} aria-hidden="true" />
+                  </button>
+                  <button type="button" className="ops-photo-dialog-nav" data-direction="next" onClick={() => selectRelative(1)} aria-label="Sonraki fotoğraf">
+                    <ChevronRight size={24} aria-hidden="true" />
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
+  );
+}

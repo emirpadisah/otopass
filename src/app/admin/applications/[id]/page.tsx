@@ -1,24 +1,163 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, ClipboardList, HandCoins } from "lucide-react";
-import { PanelPageHeader, PanelSection, StatusBadge, buttonVariants } from "@/components/ui";
+import { ArrowLeft, Camera, ClipboardList, HandCoins, ShieldCheck } from "lucide-react";
+import {
+  ApplicationPhotoGallery,
+  PanelPageHeader,
+  PanelSection,
+  StatusBadge,
+  buttonVariants,
+} from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
-export default async function AdminApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+function formatNumber(value: number | null) {
+  if (value === null) return "-";
+  return new Intl.NumberFormat("tr-TR").format(value);
+}
+
+export default async function AdminApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = createSupabaseServiceClient();
   const [{ data: application }, { data: offers }] = await Promise.all([
     supabase.from("applications").select("*").eq("id", id).maybeSingle(),
     supabase.from("offers").select("*").eq("application_id", id).order("created_at", { ascending: false }),
   ]);
+
   if (!application) notFound();
-  const { data: dealer } = await supabase.from("dealers").select("name").eq("id", application.dealer_id).maybeSingle();
-  const photos = await Promise.all(application.photo_paths.map(async (path) => (await supabase.storage.from("applications").createSignedUrl(path, 300)).data?.signedUrl || null));
-  return <div><PanelPageHeader eyebrow="Yönetim / Başvuru" title={`${application.brand} ${application.model}`} description={`${dealer?.name || "Galeri"} · ${application.reference_code}`} icon={ClipboardList} meta={<StatusBadge status={application.status} />} actions={<Link href="/admin/applications" className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}><ArrowLeft size={14} /> Listeye dön</Link>} />
-    <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_360px]"><PanelSection title="Başvuru bilgileri" icon={ClipboardList}><dl className="ops-info-list"><div className="ops-info-row"><dt>Müşteri</dt><dd>{application.owner_name}</dd></div><div className="ops-info-row"><dt>İletişim</dt><dd>{application.owner_email}<br />{application.owner_phone}</dd></div><div className="ops-info-row"><dt>Araç</dt><dd>{application.brand} {application.model} {application.vehicle_package}</dd></div><div className="ops-info-row"><dt>Yıl / KM</dt><dd>{application.model_year || "-"} / {application.km || "-"}</dd></div><div className="ops-info-row"><dt>KVKK sürümü</dt><dd>{application.privacy_version || "-"}</dd></div></dl></PanelSection>
-      <PanelSection title="Teklif geçmişi" icon={HandCoins}>{offers?.length ? <div className="space-y-3">{offers.map((offer) => <div key={offer.id} className="panel-subtle p-4"><div className="flex justify-between gap-3"><strong>{new Intl.NumberFormat("tr-TR", { style: "currency", currency: offer.currency, maximumFractionDigits: 0 }).format(offer.amount)}</strong><StatusBadge status={offer.status} /></div><p className="mt-2 text-xs text-[var(--text-muted)]">{offer.notes || "Not yok"}</p></div>)}</div> : <p className="text-sm text-[var(--text-muted)]">Teklif bulunmuyor.</p>}</PanelSection></div>
-    <PanelSection className="mt-4" title="Fotoğraflar" icon={Camera}>{photos.some(Boolean) ? <div className="ops-photo-grid">{photos.filter((url): url is string => Boolean(url)).map((url, index) => <a key={url} href={url} target="_blank" rel="noreferrer" className="ops-photo"><Image src={url} alt={`Araç fotoğrafı ${index + 1}`} width={900} height={600} unoptimized /></a>)}</div> : <p className="text-sm text-[var(--text-muted)]">Fotoğraf bulunmuyor.</p>}</PanelSection>
-  </div>;
+
+  const { data: dealer } = await supabase
+    .from("dealers")
+    .select("name")
+    .eq("id", application.dealer_id)
+    .maybeSingle();
+  const signedPhotos = await Promise.all(
+    (application.photo_paths ?? []).map(async (path) => {
+      const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
+      return error ? null : data?.signedUrl ?? null;
+    })
+  );
+  const photoUrls = signedPhotos.filter((url): url is string => Boolean(url));
+  const vehicleLabel = `${application.brand} ${application.model}`;
+
+  return (
+    <div>
+      <PanelPageHeader
+        eyebrow="Yönetim / Başvuru"
+        title={vehicleLabel}
+        description={`${dealer?.name || "Galeri"} · ${application.reference_code}`}
+        icon={ClipboardList}
+        meta={
+          <>
+            <StatusBadge status={application.status} />
+            <span className="ops-chip">
+              <Camera size={13} aria-hidden="true" />
+              {photoUrls.length} fotoğraf
+            </span>
+          </>
+        }
+        actions={
+          <Link
+            href="/admin/applications"
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
+          >
+            <ArrowLeft size={14} aria-hidden="true" />
+            Listeye dön
+          </Link>
+        }
+      />
+
+      <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_380px]">
+        <div className="grid min-w-0 content-start gap-4">
+          <PanelSection
+            title="Araç fotoğrafları"
+            description="Başvuru sırasında yüklenen inceleme görselleri"
+            icon={Camera}
+            meta={<span className="ops-chip">{photoUrls.length} dosya</span>}
+          >
+            {photoUrls.length > 0 ? (
+              <ApplicationPhotoGallery photos={photoUrls} vehicleLabel={vehicleLabel} />
+            ) : (
+              <div className="ops-empty-state">
+                <Camera size={20} aria-hidden="true" />
+                <p>Bu başvuruda fotoğraf bulunmuyor.</p>
+              </div>
+            )}
+          </PanelSection>
+
+          <PanelSection
+            title="Ekspertiz notları"
+            description="Müşterinin ilettiği tramer ve hasar beyanı"
+            icon={ShieldCheck}
+          >
+            <dl className="ops-note-list">
+              <div>
+                <dt>Tramer bilgisi</dt>
+                <dd>{application.tramer_info ?? "-"}</dd>
+              </div>
+              <div>
+                <dt>Hasar bilgisi</dt>
+                <dd>{application.damage_info ?? "-"}</dd>
+              </div>
+            </dl>
+          </PanelSection>
+        </div>
+
+        <aside className="grid min-w-0 content-start gap-4">
+          <PanelSection
+            title="Başvuru bilgileri"
+            description="Müşteri, araç ve onay kayıtları"
+            icon={ClipboardList}
+          >
+            <dl className="ops-info-list">
+              <div className="ops-info-row"><dt>Müşteri</dt><dd>{application.owner_name ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Telefon</dt><dd>{application.owner_phone ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>E-posta</dt><dd>{application.owner_email ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Paket</dt><dd>{application.vehicle_package ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Model yılı</dt><dd>{application.model_year ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Kilometre</dt><dd>{formatNumber(application.km)} km</dd></div>
+              <div className="ops-info-row"><dt>Yakıt</dt><dd>{application.fuel_type ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Vites</dt><dd>{application.transmission ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>KVKK sürümü</dt><dd>{application.privacy_version ?? "-"}</dd></div>
+            </dl>
+          </PanelSection>
+
+          <PanelSection
+            title="Teklif geçmişi"
+            description="Bu başvuru için oluşturulan teklifler"
+            icon={HandCoins}
+            meta={offers?.length ? <span className="ops-chip">{offers.length} kayıt</span> : undefined}
+          >
+            {offers?.length ? (
+              <div className="space-y-3">
+                {offers.map((offer) => (
+                  <div key={offer.id} className="panel-subtle p-4">
+                    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                      <strong className="min-w-0 break-words">
+                        {new Intl.NumberFormat("tr-TR", {
+                          style: "currency",
+                          currency: offer.currency,
+                          maximumFractionDigits: 0,
+                        }).format(offer.amount)}
+                      </strong>
+                      <StatusBadge status={offer.status} />
+                    </div>
+                    <p className="mt-2 break-words text-xs text-[var(--text-muted)]">
+                      {offer.notes || "Not yok"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">Teklif bulunmuyor.</p>
+            )}
+          </PanelSection>
+        </aside>
+      </div>
+    </div>
+  );
 }

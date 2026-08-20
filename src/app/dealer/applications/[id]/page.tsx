@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Mail, Phone, UserRound } from "lucide-react";
 import {
+  ApplicationPhotoGallery,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
@@ -101,29 +101,10 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             meta={<span className="ops-chip">{photoUrls.length} dosya</span>}
           >
             {photoUrls.length > 0 ? (
-              <div className="ops-photo-grid">
-                {photoUrls.map((url, index) => (
-                  <a
-                    key={url}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="ops-photo"
-                    aria-label={`${index + 1}. araç fotoğrafını yeni sekmede aç`}
-                  >
-                    <Image
-                      src={url}
-                      alt={`Araç fotoğrafı ${index + 1}`}
-                      width={900}
-                      height={600}
-                      unoptimized
-                      className="h-full w-full object-cover"
-                      priority={index === 0}
-                    />
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                  </a>
-                ))}
-              </div>
+              <ApplicationPhotoGallery
+                photos={photoUrls}
+                vehicleLabel={`${application.brand} ${application.model}`}
+              />
             ) : (
               <div className="ops-empty-state"><Camera size={20} aria-hidden="true" /><p>Bu başvuruda fotoğraf bulunmuyor.</p></div>
             )}

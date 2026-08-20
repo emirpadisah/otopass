@@ -37,7 +37,7 @@ export function PanelPageHeader({
         </div>
       </div>
       {meta || actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="ops-page-actions">
           {meta}
           {actions}
         </div>
@@ -106,14 +106,14 @@ export function PanelSection({
   return (
     <section className={cn("ops-section ops-reveal ops-delay-2", className)}>
       <div className="ops-section-header">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="ops-section-heading">
           {Icon ? <Icon size={17} className="text-[var(--ops-accent)]" aria-hidden="true" /> : null}
           <div className="min-w-0">
             <h2 className="ops-section-title">{title}</h2>
             {description ? <p className="ops-section-description">{description}</p> : null}
           </div>
         </div>
-        {meta ? <div className="shrink-0">{meta}</div> : null}
+        {meta ? <div className="ops-section-meta">{meta}</div> : null}
       </div>
       <div className={cn("ops-section-content", contentClassName)}>{children}</div>
     </section>
