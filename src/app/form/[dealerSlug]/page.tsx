@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Camera, Check, ClipboardCheck, Clock3, PhoneCall, ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode } from "@/lib/data-mode";
@@ -13,19 +13,19 @@ type PageProps = {
 
 const points = [
   {
-    title: "Başvurunuzu gönderin",
-    description: "Araç ve iletişim bilgileriniz güvenli biçimde kaydedilir.",
-    icon: Clock3,
+    title: "Bilgileri paylaşın",
+    description: "İletişim, araç ve kondisyon bilgilerini üç kısa adımda tamamlayın.",
+    icon: ClipboardCheck,
   },
   {
-    title: "Galeri incelesin",
-    description: "Yetkili ekip aracınızı ve varsa fotoğrafları değerlendirir.",
-    icon: ShieldCheck,
+    title: "Fotoğrafları ekleyin",
+    description: "Net fotoğraflar daha hızlı ve isabetli bir ön değerlendirme sağlar.",
+    icon: Camera,
   },
   {
     title: "Geri dönüş alın",
-    description: "Teklif süreci paylaştığınız iletişim bilgileriyle ilerler.",
-    icon: CheckCircle2,
+    description: "Galeri ekibi inceleme sonrasında sizinle doğrudan iletişim kurar.",
+    icon: PhoneCall,
   },
 ];
 
@@ -60,15 +60,28 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
         </div>
       </header>
 
+      <section className="intake-shell intake-intro" aria-labelledby="intake-page-title">
+        <div className="intake-intro-copy">
+          <p className="section-label">POL-CAR araç değerlendirme</p>
+          <h1 id="intake-page-title">Aracınızı 3 kısa adımda değerlendirmeye gönderin.</h1>
+          <p>Temel bilgileri paylaşın; {dealer.name} ekibi aracınızı inceleyip teklif süreci için sizinle iletişime geçsin.</p>
+        </div>
+        <ul className="intake-trust-list" aria-label="Başvuru avantajları">
+          <li><Check size={14} aria-hidden="true" /> Ücretsiz ön değerlendirme</li>
+          <li><ShieldCheck size={14} aria-hidden="true" /> Güvenli veri aktarımı</li>
+          <li><BadgeCheck size={14} aria-hidden="true" /> Satış zorunluluğu yok</li>
+        </ul>
+      </section>
+
       <div className="intake-shell intake-layout">
         <main className="intake-form-panel panel">
           <header className="intake-heading">
             <div>
-              <p className="section-label">Araç ön değerlendirme</p>
-              <h1>Aracınız için teklif talebi oluşturun</h1>
-              <p>Temel bilgileri paylaşın; {dealer.name} ekibi aracınızı inceleyip sizinle iletişime geçsin.</p>
+              <p className="section-label">Güvenli başvuru formu</p>
+              <h2>Teklif talebinizi oluşturun</h2>
+              <p>Her adımda yalnızca değerlendirme için gerekli bilgileri isteyeceğiz.</p>
             </div>
-            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> Birkaç dakika</span>
+            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> Yaklaşık 3 dakika</span>
           </header>
 
           <FormClient
@@ -79,11 +92,13 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
         </main>
 
         <aside className="intake-aside glass-highlight">
-          <div>
-            <p className="section-label">Sonraki adımlar</p>
-            <h2>Başvurunuz nasıl ilerler?</h2>
-            <p>Gönderimden sonra süreç doğrudan galeri ekibine aktarılır.</p>
-          </div>
+          <header>
+            <span className="intake-aside-kicker"><BadgeCheck size={15} aria-hidden="true" /> Yetkili değerlendirme noktası</span>
+            <h2>{dealer.name}</h2>
+            <p>Başvurunuz doğrudan bu galeri ekibinin değerlendirme ekranına iletilir.</p>
+          </header>
+
+          <div className="intake-response-time"><Clock3 size={16} aria-hidden="true" /><span><small>Süreç</small><strong>İnceleme sonrası geri dönüş</strong></span></div>
 
           <ol className="intake-process">
             {points.map(({ title, description, icon: Icon }, index) => (
@@ -101,8 +116,8 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
           <div className="intake-security-note">
             <ShieldCheck size={17} aria-hidden="true" />
             <div>
-              <strong>Güvenli veri aktarımı</strong>
-              <p>Bilgileriniz yalnızca başvurunun değerlendirilmesi amacıyla kullanılır.</p>
+              <strong>Verileriniz kontrol altında</strong>
+              <p>Bilgileriniz yalnızca araç başvurusunun değerlendirilmesi amacıyla kullanılır.</p>
             </div>
           </div>
         </aside>

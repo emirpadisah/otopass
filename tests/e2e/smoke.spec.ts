@@ -23,8 +23,12 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByLabel(/Araç Sahibi Adı/).fill("E2E Kullanici");
   await page.getByLabel("Telefon").fill("0555 111 22 33");
   await page.getByRole("textbox", { name: /^E-posta/ }).fill(`e2e+${testInfo.project.name}@example.com`);
+  await page.getByRole("button", { name: "Devam et" }).click();
+
   await page.getByLabel("Marka").fill("Volkswagen");
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
+  await page.getByRole("button", { name: "Devam et" }).click();
+
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
   await page.getByRole("button", { name: "Teklif talebini gönder" }).click();
 
