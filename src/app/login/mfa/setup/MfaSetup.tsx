@@ -11,11 +11,10 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 type Enrollment = { factorId: string; qrCode: string; secret: string };
 
 type MfaSetupProps = {
-  required?: boolean;
   redirectTo?: string;
 };
 
-export function MfaSetup({ required = true, redirectTo = "/admin" }: MfaSetupProps) {
+export function MfaSetup({ redirectTo = "/dealer" }: MfaSetupProps) {
   const router = useRouter();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
@@ -72,7 +71,7 @@ export function MfaSetup({ required = true, redirectTo = "/admin" }: MfaSetupPro
       <div className="glass-chip"><ShieldCheck size={14} /> Hesap güvenliği</div>
       <h1 className="text-h1 mt-4">İki adımlı doğrulamayı tamamlayın</h1>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
-        {required ? "Yönetim paneli için TOTP doğrulaması zorunludur." : "Hesabınızı bir kimlik doğrulayıcı uygulamayla koruyun."}
+        Hesabınızı isteğe bağlı olarak bir kimlik doğrulayıcı uygulamayla koruyun.
       </p>
       <div className="mt-6 panel-subtle p-5 text-center">
         {busy && !enrollment ? <LoaderCircle className="mx-auto animate-spin text-[var(--accent)]" /> : null}

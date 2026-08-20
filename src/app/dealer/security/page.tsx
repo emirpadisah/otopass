@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Hesap Güvenliği | POL-CAR" };
 export default function DealerSecurityPage() {
   return (
     <div className="mx-auto max-w-2xl py-4">
-      <MfaSetup required={false} redirectTo="/dealer" />
+      <MfaSetup redirectTo="/dealer" />
     </div>
   );
 }

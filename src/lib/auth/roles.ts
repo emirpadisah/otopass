@@ -48,11 +48,6 @@ export async function requireAdminAccess(): Promise<void> {
   if (!roles.some((role) => role === "admin" || role === "super_admin")) {
     redirect("/");
   }
-  if (!isLocalDataMode()) {
-    const supabase = await createSupabaseServerClient();
-    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (data?.currentLevel !== "aal2") redirect("/login/mfa/setup");
-  }
 }
 
 export async function requireDealerAccess(): Promise<void> {
