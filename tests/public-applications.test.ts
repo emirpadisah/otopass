@@ -22,7 +22,7 @@ const payload: LegacyFinalizePayload = {
     dealer_slug: "demo-galeri",
     owner_name: "Deniz Yilmaz",
     owner_phone: "+905551112233",
-    owner_email: "deniz@example.com",
+    owner_email: null,
     brand: "Volkswagen",
     model: "Golf",
     vehicle_package: null,

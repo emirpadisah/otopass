@@ -1,5 +1,5 @@
-import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { z } from "zod";
+import { isTurkishMobileNumber } from "@/lib/phone";
 import type { ApplicationInput } from "@/lib/types";
 
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -32,8 +32,8 @@ const nullableInteger = (min: number, max: number) =>
 const applicationSchema = z.object({
   dealer_slug: z.string().trim().min(1).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   owner_name: z.string().trim().min(2, "Ad soyad zorunludur.").max(120),
-  owner_phone: z.string().trim().min(10, "Telefon zorunludur.").max(32),
-  owner_email: z.string().trim().toLowerCase().email("Geçerli bir e-posta adresi girin.").max(254),
+  owner_phone: z.string().trim().refine(isTurkishMobileNumber, "Telefonu +905xxxxxxxxx biçiminde boşluksuz girin."),
+  owner_email: z.unknown().optional().transform(() => null),
   brand: z.string().trim().min(1, "Marka zorunludur.").max(80),
   model: z.string().trim().min(1, "Model zorunludur.").max(80),
   vehicle_package: nullableText(100),
@@ -46,16 +46,10 @@ const applicationSchema = z.object({
   privacy_acknowledged: z.boolean().refine(Boolean, "Aydınlatma metnini onaylamalısınız."),
 });
 
-function normalizePhone(value: string): string {
-  const phone = parsePhoneNumberFromString(value, "TR");
-  if (!phone?.isValid()) throw new Error("Geçerli bir telefon numarası girin.");
-  return phone.number;
-}
-
 export function parseApplicationPayload(input: unknown): ApplicationInput {
   const result = applicationSchema.safeParse(input);
   if (!result.success) throw new Error(result.error.issues[0]?.message ?? "Başvuru bilgileri geçersiz.");
-  return { ...result.data, owner_phone: normalizePhone(result.data.owner_phone) };
+  return result.data;
 }
 
 export function parseApplicationInput(formData: FormData): ApplicationInput {
@@ -63,7 +57,6 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
     dealer_slug: String(formData.get("dealer_slug") ?? ""),
     owner_name: String(formData.get("owner_name") ?? ""),
     owner_phone: String(formData.get("owner_phone") ?? ""),
-    owner_email: String(formData.get("owner_email") ?? ""),
     brand: String(formData.get("brand") ?? ""),
     model: String(formData.get("model") ?? ""),
     vehicle_package: formData.get("vehicle_package"),

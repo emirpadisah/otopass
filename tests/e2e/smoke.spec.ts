@@ -18,11 +18,11 @@ for (const path of ["/", "/login", "/form/test-galeri"]) {
   });
 }
 
-test("public application can be submitted in local demo mode", async ({ page }, testInfo) => {
+test("public application can be submitted in local demo mode", async ({ page }) => {
   await page.goto("/form/test-galeri");
   await page.getByLabel(/Araç Sahibi Adı/).fill("E2E Kullanici");
   await page.getByLabel("Telefon").fill("0555 111 22 33");
-  await page.getByRole("textbox", { name: /^E-posta/ }).fill(`e2e+${testInfo.project.name}@example.com`);
+  await expect(page.getByLabel("Telefon")).toHaveValue("+905551112233");
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByLabel("Marka").fill("Volkswagen");

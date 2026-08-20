@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Button, Field, Input, Textarea } from "@/components/ui";
+import { formatTurkishMobileInput } from "@/lib/phone";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, MAX_FILE_SIZE } from "@/lib/validation/application";
 
@@ -45,7 +46,7 @@ const formSteps = [
   { label: "Kondisyon", shortDescription: "Notlar ve fotoğraflar", icon: Wrench },
 ] as const;
 const stepFieldIds = [
-  ["owner_name", "owner_phone", "owner_email"],
+  ["owner_name", "owner_phone"],
   ["brand", "model"],
   [],
 ] as const;
@@ -73,7 +74,6 @@ function toApplicationPayload(formData: FormData, dealerSlug: string) {
     dealer_slug: dealerSlug,
     owner_name: String(formData.get("owner_name") ?? ""),
     owner_phone: String(formData.get("owner_phone") ?? ""),
-    owner_email: String(formData.get("owner_email") ?? ""),
     brand: String(formData.get("brand") ?? ""),
     model: String(formData.get("model") ?? ""),
     vehicle_package: String(formData.get("vehicle_package") ?? ""),
@@ -346,9 +346,22 @@ export function FormClient({
                 headingRef={(element) => { stepHeadingRefs.current[0] = element; }}
               />
               <div className="intake-field-grid intake-contact-grid">
-                <Field className="intake-field-wide" label="Araç Sahibi Adı *" labelFor="owner_name"><Input id="owner_name" name="owner_name" autoComplete="name" placeholder="Ad Soyad" required /></Field>
-                <Field label="Telefon *" labelFor="owner_phone" description="Örn. 05xx xxx xx xx"><Input id="owner_phone" name="owner_phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="05xx xxx xx xx" required /></Field>
-                <Field label="E-posta *" labelFor="owner_email"><Input id="owner_email" name="owner_email" type="email" autoComplete="email" placeholder="ornek@mail.com" required /></Field>
+                <Field label="Araç Sahibi Adı *" labelFor="owner_name"><Input id="owner_name" name="owner_name" autoComplete="name" placeholder="Ad Soyad" required /></Field>
+                <Field label="Telefon *" labelFor="owner_phone" description="+905551112233 biçiminde, boşluksuz">
+                  <Input
+                    id="owner_phone"
+                    name="owner_phone"
+                    type="tel"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    defaultValue="+90"
+                    maxLength={32}
+                    pattern="[+]905[0-9]{9}"
+                    title="Telefonu +905551112233 biçiminde boşluksuz girin."
+                    onInput={(event) => { event.currentTarget.value = formatTurkishMobileInput(event.currentTarget.value); }}
+                    required
+                  />
+                </Field>
               </div>
             </section>
 

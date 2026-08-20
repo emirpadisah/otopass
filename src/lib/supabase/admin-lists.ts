@@ -18,7 +18,7 @@ export async function listAdminApplications(input: PaginationInput): Promise<Pag
   let query = supabase.from("applications").select("*", { count: "exact" }).not("submitted_at", "is", null);
   if (input.status) query = query.eq("status", input.status);
   const q = safeSearchTerm(input.q || "");
-  if (q) query = query.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
+  if (q) query = query.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
   const { data, count, error } = await query.order("created_at", { ascending: input.sort === "oldest" }).range(from, from + input.pageSize - 1);
   if (error) throw error;
   const rows = data ?? [];

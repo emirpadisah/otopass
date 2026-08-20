@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
+  WhatsAppPhoneLink,
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -71,7 +72,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
     : applications.filter((application) => application.status === activeFilter);
   const query = input.q.toLocaleLowerCase("tr-TR");
   const filteredApplications = statusFilteredApplications
-    .filter((application) => !query || [application.reference_code, application.owner_name, application.owner_email, application.brand, application.model]
+    .filter((application) => !query || [application.reference_code, application.owner_name, application.owner_phone, application.owner_email, application.brand, application.model]
       .some((value) => value?.toLocaleLowerCase("tr-TR").includes(query)))
     .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
   const pageCount = Math.max(1, Math.ceil(filteredApplications.length / input.pageSize));
@@ -127,6 +128,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                     <TableRow key={application.id}>
                       <TableCell data-label="Araç sahibi" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                         {application.owner_name ?? "-"}
+                        <WhatsAppPhoneLink phone={application.owner_phone} className="mt-1 font-normal" />
                       </TableCell>
                       <TableCell data-label="Araç" className="whitespace-nowrap">{application.brand} {application.model}</TableCell>
                       <TableCell data-label="Yıl / KM" className="whitespace-nowrap">

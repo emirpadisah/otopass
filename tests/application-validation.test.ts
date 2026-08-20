@@ -5,14 +5,14 @@ import {
   validatePhotoDescriptors,
   validatePhotoFiles,
 } from "../src/lib/validation/application";
+import { formatTurkishMobileInput, getWhatsAppUrl } from "../src/lib/phone";
 
 function makeForm(data: Record<string, string> = {}): FormData {
   const form = new FormData();
   const valid = {
     dealer_slug: "demo",
     owner_name: "Deniz Yilmaz",
-    owner_phone: "0555 111 22 33",
-    owner_email: "DENIZ@example.com",
+    owner_phone: "+905551112233",
     brand: "VW",
     model: "Golf",
     privacy_acknowledged: "on",
@@ -31,10 +31,18 @@ describe("application validation", () => {
     expect(() => parseApplicationInput(makeForm())).not.toThrow();
   });
 
-  it("normalizes phone and email", () => {
+  it("accepts a strict Turkish mobile number without email", () => {
     const parsed = parseApplicationInput(makeForm());
     expect(parsed.owner_phone).toBe("+905551112233");
-    expect(parsed.owner_email).toBe("deniz@example.com");
+    expect(parsed.owner_email).toBeNull();
+    expect(() => parseApplicationInput(makeForm({ owner_phone: "0555 111 22 33" }))).toThrow();
+  });
+
+  it("formats phone input and creates WhatsApp links", () => {
+    expect(formatTurkishMobileInput("0555 111 22 33")).toBe("+905551112233");
+    expect(formatTurkishMobileInput("+905551112233")).toBe("+905551112233");
+    expect(getWhatsAppUrl("0555 111 22 33")).toBe("https://wa.me/905551112233");
+    expect(getWhatsAppUrl("+905551112233")).toBe("https://wa.me/905551112233");
   });
 
   it("validates year, kilometer and text limits", () => {

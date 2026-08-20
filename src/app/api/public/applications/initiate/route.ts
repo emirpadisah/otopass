@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     const captchaValid = await verifyTurnstile(parsed.turnstileToken, ip);
     if (!captchaValid) return NextResponse.json({ error: "Doğrulama tamamlanamadı.", requestId }, { status: 400 });
 
-    const allowed = await consumeRateLimit(`${ip}:${application.owner_email}`, {
+    const allowed = await consumeRateLimit(`${ip}:${application.owner_phone}`, {
       scope: `public-form:${application.dealer_slug}`,
       limit: 3,
       windowSeconds: 300,

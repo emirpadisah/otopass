@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
+  WhatsAppPhoneLink,
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -57,8 +58,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
 
   const facts = [
     { label: "Araç sahibi", value: application.owner_name ?? "-", icon: UserRound },
-    { label: "Telefon", value: application.owner_phone ?? "-", icon: Phone },
-    { label: "E-posta", value: application.owner_email ?? "-", icon: Mail },
+    { label: "Telefon", value: <WhatsAppPhoneLink phone={application.owner_phone} />, icon: Phone },
     { label: "Model yılı", value: application.model_year ?? "-", icon: CarFront },
     { label: "Kilometre", value: `${formatNumber(application.km)} km`, icon: CarFront },
     { label: "Paket", value: application.vehicle_package ?? "-", icon: CarFront },

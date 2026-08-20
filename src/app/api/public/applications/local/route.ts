@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     validatePhotoFiles(files);
     await validatePhotoContent(files);
 
-    const allowed = await consumeRateLimit(`${getClientIp(request.headers)}:${application.owner_email}`, {
+    const allowed = await consumeRateLimit(`${getClientIp(request.headers)}:${application.owner_phone}`, {
       scope: `public-form:${application.dealer_slug}`,
       limit: 1,
       windowSeconds: 30,

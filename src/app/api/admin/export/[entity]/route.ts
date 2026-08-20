@@ -28,8 +28,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ enti
     do {
       const data = await listAdminApplications({ ...input, page, pageSize: 100 });
       pageCount = Math.min(data.pageCount, 100);
-      if (page === 1) rows.push(["Referans", "Galeri", "Ad Soyad", "E-posta", "Telefon", "Araç", "Durum", "Tarih"]);
-      for (const item of data.items) rows.push([item.reference_code, item.dealer_name, item.owner_name, item.owner_email, item.owner_phone, `${item.brand} ${item.model}`, item.status, item.created_at]);
+      if (page === 1) rows.push(["Referans", "Galeri", "Ad Soyad", "Telefon", "Araç", "Durum", "Tarih"]);
+      for (const item of data.items) rows.push([item.reference_code, item.dealer_name, item.owner_name, item.owner_phone, `${item.brand} ${item.model}`, item.status, item.created_at]);
       page += 1;
     } while (page <= pageCount);
   } else if (entity === "offers") {

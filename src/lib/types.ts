@@ -20,7 +20,7 @@ export type ApplicationInput = {
   dealer_slug: string;
   owner_name: string;
   owner_phone: string;
-  owner_email: string;
+  owner_email: string | null;
   brand: string;
   model: string;
   vehicle_package: string | null;

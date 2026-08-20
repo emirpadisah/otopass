@@ -3,7 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type ApplicationPhotoGalleryProps = {
   photos: string[];
@@ -17,6 +17,8 @@ function getPhotoLabel(vehicleLabel: string, index: number) {
 export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPhotoGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const swipeStartRef = useRef<{ pointerId: number; x: number } | null>(null);
+  const suppressExpandRef = useRef(false);
   const activePhoto = photos[activeIndex] ?? photos[0];
 
   if (!activePhoto) return null;
@@ -25,14 +27,47 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
     setActiveIndex((current) => (current + offset + photos.length) % photos.length);
   };
 
+  const beginSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    if (photos.length < 2 || (event.pointerType === "mouse" && event.button !== 0)) return;
+    if ((event.target as HTMLElement).closest(".ops-photo-nav, .ops-photo-dialog-nav")) return;
+    swipeStartRef.current = { pointerId: event.pointerId, x: event.clientX };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const finishSwipe = (event: ReactPointerEvent<HTMLElement>, suppressExpand: boolean) => {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+
+    const distance = event.clientX - start.x;
+    if (Math.abs(distance) < 48) return;
+    if (suppressExpand) {
+      suppressExpandRef.current = true;
+      window.setTimeout(() => { suppressExpandRef.current = false; }, 0);
+    }
+    selectRelative(distance > 0 ? -1 : 1);
+  };
+
   return (
     <>
       <div className="ops-photo-gallery">
-        <div className="ops-photo-stage">
+        <div
+          className="ops-photo-stage"
+          role="group"
+          aria-roledescription="carousel"
+          aria-label={`${vehicleLabel} fotoğrafları`}
+          onPointerDown={beginSwipe}
+          onPointerUp={(event) => finishSwipe(event, true)}
+          onPointerCancel={() => { swipeStartRef.current = null; }}
+        >
           <button
             type="button"
             className="ops-photo-main"
-            onClick={() => setDialogOpen(true)}
+            onClick={() => {
+              if (suppressExpandRef.current) return;
+              setDialogOpen(true);
+            }}
             aria-label={`${getPhotoLabel(vehicleLabel, activeIndex)} büyüt`}
           >
             <Image
@@ -44,6 +79,7 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
               className="ops-photo-image"
               unoptimized
               priority
+              draggable={false}
             />
             <span className="ops-photo-expand" aria-hidden="true">
               <Maximize2 size={17} />
@@ -128,7 +164,15 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
               </Dialog.Close>
             </div>
 
-            <div className="ops-photo-dialog-canvas">
+            <div
+              className="ops-photo-dialog-canvas"
+              role="group"
+              aria-roledescription="carousel"
+              aria-label={`${vehicleLabel} tam ekran fotoğrafları`}
+              onPointerDown={beginSwipe}
+              onPointerUp={(event) => finishSwipe(event, false)}
+              onPointerCancel={() => { swipeStartRef.current = null; }}
+            >
               <Image
                 key={`dialog-${activePhoto}`}
                 src={activePhoto}
@@ -138,6 +182,7 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
                 className="object-contain"
                 unoptimized
                 priority
+                draggable={false}
               />
               {photos.length > 1 ? (
                 <>
