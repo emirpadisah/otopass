@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Copy, ExternalLink, Globe2, LoaderCircle, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
-import { Button, Field, Input } from "@/components/ui";
+import { Button, ConfirmSubmitButton, Field, Input } from "@/components/ui";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import type { ActionResponse } from "@/lib/types";
 import { addDealerDomainAction, refreshDealerDomainAction, removeDealerDomainAction } from "./domain-actions";
@@ -70,6 +70,7 @@ export function DealerDomainManager({
   const [removeState, removeAction, removing] = useActionState(removeDealerDomainAction, initialState);
   const records = domain ? [...parseRecords(domain.verification), ...parseRecords(domain.dns_records)] : [];
   const busy = adding || refreshing || removing;
+  const removeFormId = "remove-dealer-domain";
 
   useEffect(() => {
     if (addState.ok || refreshState.ok || removeState.ok) {
@@ -146,12 +147,21 @@ export function DealerDomainManager({
               Bağlantıyı kontrol et
             </Button>
           </form>
-          <form action={removeAction} onSubmit={(event) => {
-            if (!window.confirm("Özel alan adı bağlantısını kaldırmak istediğinize emin misiniz?")) event.preventDefault();
-          }}>
-            <Button type="submit" size="sm" variant="ghost" disabled={busy} className="text-[var(--danger)]">
+          <form id={removeFormId} action={removeAction}>
+            <ConfirmSubmitButton
+              formId={removeFormId}
+              title="Özel alan adı bağlantısını kaldır?"
+              description={`${domain.hostname} adresi artık müşteri formuna yönlenmeyecek.`}
+              confirmLabel="Bağlantıyı kaldır"
+              details={["Vercel alan adı kaydı kaldırılır", "Ana POL-CAR form adresi çalışmaya devam eder"]}
+              tone="danger"
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              className="text-[var(--danger)]"
+            >
               <Trash2 size={15} aria-hidden="true" /> Kaldır
-            </Button>
+            </ConfirmSubmitButton>
           </form>
         </div>
       ) : null}

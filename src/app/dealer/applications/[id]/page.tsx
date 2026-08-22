@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
+  ApplicationDeleteButton,
   OfferShareCard,
   PanelPageHeader,
   PanelSection,
@@ -16,10 +17,11 @@ import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
-import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentUser, listDealerOffersForApplicationCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 import { OfferDecisionForm } from "./OfferDecisionForm";
 import { SoldButtonForm } from "../SoldButtonForm";
+import { deleteDealerApplicationAction } from "./delete-actions";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -35,7 +37,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
   const [application, dealer, offers] = await Promise.all([
     getDealerApplicationForCurrentUser(id),
     getDealerForCurrentUser(),
-    listDealerOffersForCurrentUser(),
+    listDealerOffersForApplicationCurrentUser(id),
   ]);
   if (!application || !dealer) return notFound();
   const canManage = canManageDealerMembership(dealer.role);
@@ -72,13 +74,23 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
           </>
         }
         actions={
-          <Link
-            href="/dealer/applications"
-            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
-            Listeye dön
-          </Link>
+          <>
+            {canManage ? (
+              <ApplicationDeleteButton
+                action={deleteDealerApplicationAction}
+                applicationId={application.id}
+                referenceCode={application.reference_code}
+                vehicleLabel={`${application.brand} ${application.model}`}
+              />
+            ) : null}
+            <Link
+              href="/dealer/applications"
+              className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              Listeye dön
+            </Link>
+          </>
         }
       />
 

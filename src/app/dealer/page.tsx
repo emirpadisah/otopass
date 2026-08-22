@@ -24,7 +24,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { canManageDealerMembership } from "@/lib/auth/route";
-import { getDealerForCurrentUser, listDealerApplications, listDealerOffers } from "@/lib/supabase/queries";
+import { getDealerDashboardData, getDealerForCurrentUser } from "@/lib/supabase/queries";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("tr-TR", {
@@ -46,15 +46,9 @@ export default async function DealerDashboardPage() {
   if (!dealer?.dealer_id) return null;
   const canManage = canManageDealerMembership(dealer.role);
 
-  const [applications, offers] = await Promise.all([
-    listDealerApplications(dealer.dealer_id),
-    listDealerOffers(dealer.dealer_id),
-  ]);
+  const { applications, offers, applicationCount, pendingCount, offeredCount, soldCount, offerCount } = await getDealerDashboardData(dealer.dealer_id);
 
-  const pendingCount = applications.filter((application) => application.status === "pending").length;
-  const offeredCount = applications.filter((application) => application.status === "offered").length;
-  const soldCount = applications.filter((application) => application.status === "sold").length;
-  const total = Math.max(1, applications.length);
+  const total = Math.max(1, applicationCount);
   const totalOfferAmount = offers.reduce((sum, offer) => sum + offer.amount, 0);
   const averageOfferAmount = offers.length ? Math.round(totalOfferAmount / offers.length) : null;
   const recentOffers = offers.slice(0, 8);
@@ -87,10 +81,10 @@ export default async function DealerDashboardPage() {
     },
     {
       label: "Teklif adedi",
-      value: String(offers.length),
+      value: String(offerCount),
       note: "Hesabın toplam teklif sayısı",
       icon: Wallet,
-      progress: Math.min(100, (offers.length / total) * 100),
+      progress: Math.min(100, (offerCount / total) * 100),
     },
   ];
 
@@ -135,7 +129,7 @@ export default async function DealerDashboardPage() {
           title="Son teklifler"
           description="En son oluşturulan fiyat hareketleri"
           icon={HandCoins}
-          meta={<span className="ops-chip">Ort. {averageOfferAmount === null ? "-" : formatCurrency(averageOfferAmount)}</span>}
+          meta={<span className="ops-chip">Son 8 ort. {averageOfferAmount === null ? "-" : formatCurrency(averageOfferAmount)}</span>}
           contentClassName="ops-section-flush"
         >
           <DataTable>

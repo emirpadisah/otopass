@@ -33,18 +33,18 @@ export async function getApplicationPhotoUrls(
   }
 
   const supabase = createSupabaseServiceClient();
-  const signedPhotos = await Promise.all(
-    photoPaths.map(async (path, index) => {
-      const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
-      if (error || !data?.signedUrl) return null;
-
-      const filename = encodeURIComponent(getApplicationPhotoFilename(applicationId, index, path));
-      return {
-        viewUrl: data.signedUrl,
-        downloadUrl: `${data.signedUrl}&download=${filename}`,
-      };
-    }),
-  );
+  const { data, error } = await supabase.storage.from("applications").createSignedUrls(photoPaths, 300);
+  if (error || !data) return { viewUrls: [], downloadUrls: [] };
+  const signedUrlByPath = new Map(data.filter((item) => !item.error && item.path).map((item) => [item.path, item.signedUrl]));
+  const signedPhotos = photoPaths.map((path, index) => {
+    const signedUrl = signedUrlByPath.get(path);
+    if (!signedUrl) return null;
+    const filename = encodeURIComponent(getApplicationPhotoFilename(applicationId, index, path));
+    return {
+      viewUrl: signedUrl,
+      downloadUrl: `${signedUrl}${signedUrl.includes("?") ? "&" : "?"}download=${filename}`,
+    };
+  });
   const availablePhotos = signedPhotos.filter((photo): photo is NonNullable<typeof photo> => Boolean(photo));
 
   return {

@@ -3,8 +3,10 @@ import { safeSearchTerm } from "@/lib/pagination";
 import type { Database } from "./database.types";
 import { createSupabaseServiceClient } from "./service";
 
-type Application = Database["public"]["Tables"]["applications"]["Row"] & { dealer_name: string };
-type Offer = Database["public"]["Tables"]["offers"]["Row"] & { dealer_name: string; application_reference: string | null };
+type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
+type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
+type Application = Pick<ApplicationRow, "id" | "dealer_id" | "reference_code" | "owner_name" | "owner_phone" | "brand" | "model" | "status" | "created_at"> & { dealer_name: string };
+type Offer = Pick<OfferRow, "id" | "application_id" | "dealer_id" | "amount" | "currency" | "status" | "responded_at" | "created_at"> & { dealer_name: string; application_reference: string | null };
 type Activity = Database["public"]["Tables"]["activity_log"]["Row"];
 
 function result<T>(items: T[], count: number | null, input: PaginationInput): PaginatedResult<T> {
@@ -15,7 +17,7 @@ function result<T>(items: T[], count: number | null, input: PaginationInput): Pa
 export async function listAdminApplications(input: PaginationInput): Promise<PaginatedResult<Application>> {
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
-  let query = supabase.from("applications").select("*", { count: "exact" }).not("submitted_at", "is", null);
+  let query = supabase.from("applications").select("id, dealer_id, reference_code, owner_name, owner_phone, brand, model, status, created_at", { count: "exact" }).not("submitted_at", "is", null);
   if (input.status) query = query.eq("status", input.status);
   const q = safeSearchTerm(input.q || "");
   if (q) query = query.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
@@ -31,7 +33,7 @@ export async function listAdminApplications(input: PaginationInput): Promise<Pag
 export async function listAdminOffers(input: PaginationInput): Promise<PaginatedResult<Offer>> {
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
-  let query = supabase.from("offers").select("*", { count: "exact" });
+  let query = supabase.from("offers").select("id, application_id, dealer_id, amount, currency, status, responded_at, created_at", { count: "exact" });
   if (input.status) query = query.eq("status", input.status);
   const q = safeSearchTerm(input.q || "");
   if (q) query = query.ilike("notes", `%${q}%`);

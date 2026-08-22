@@ -176,6 +176,10 @@ export type Database = {
         Args: { p_application_id: string };
         Returns: ApplicationRow;
       };
+      delete_application_for_current_user: {
+        Args: { p_application_id: string };
+        Returns: string[];
+      };
       finalize_public_application: {
         Args: { p_session_id: string; p_photo_paths: string[] };
         Returns: ApplicationRow;

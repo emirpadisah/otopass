@@ -5,7 +5,7 @@ import { ImagePlus, LoaderCircle, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
-import { Button } from "@/components/ui";
+import { Button, ConfirmDialog } from "@/components/ui";
 
 type DealerLogoManagerProps = {
   dealerName: string;
@@ -55,7 +55,7 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
   }
 
   async function removeLogo() {
-    if (!logoSrc || pending || !window.confirm("Galeri logosunu kaldırmak istediğinize emin misiniz?")) return;
+    if (!logoSrc || pending) return;
     setPending(true);
     setMessage(null);
     try {
@@ -105,9 +105,15 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
               {logoSrc ? "Logoyu değiştir" : "Logo yükle"}
             </Button>
             {logoSrc ? (
-              <Button type="button" size="sm" variant="secondary" onClick={removeLogo} disabled={pending} aria-label="Galeri logosunu kaldır">
-                <Trash2 size={15} aria-hidden="true" /> Kaldır
-              </Button>
+              <ConfirmDialog
+                trigger={<Button type="button" size="sm" variant="secondary" disabled={pending} aria-label="Galeri logosunu kaldır"><Trash2 size={15} aria-hidden="true" /> Kaldır</Button>}
+                title="Galeri logosunu kaldır?"
+                description="Müşteri formu ve teklif görsellerinde yeniden varsayılan POL-CAR logosu kullanılacak."
+                confirmLabel="Logoyu kaldır"
+                tone="danger"
+                disabled={pending}
+                onConfirm={removeLogo}
+              />
             ) : null}
           </div>
         ) : null}

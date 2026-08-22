@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSupabaseServerClient } from "./server";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
@@ -16,13 +17,24 @@ import {
   listLocalDealers,
   listLocalUsersForAdmin,
 } from "@/lib/local/repository";
-import type { UserRole } from "@/lib/types";
+import type { ApplicationStatus, PaginatedResult, PaginationInput, UserRole } from "@/lib/types";
 import { isMissingColumn, isMissingRelation } from "./schema-compat";
+import { safeSearchTerm } from "@/lib/pagination";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
 type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
 type DealerDomainRow = Database["public"]["Tables"]["dealer_domains"]["Row"];
+type DealerApplicationListRow = Pick<ApplicationRow,
+  "id" | "reference_code" | "owner_name" | "owner_phone" | "brand" | "model" | "model_year" | "km" | "status" | "created_at"
+>;
+type DealerDashboardApplication = Pick<ApplicationRow, "id" | "brand" | "model">;
+type DealerDashboardOffer = Pick<OfferRow, "id" | "application_id" | "amount" | "created_at">;
+
+export type DealerApplicationPage = PaginatedResult<DealerApplicationListRow> & {
+  statusCounts: Record<ApplicationStatus, number>;
+  latestOfferByApplication: Record<string, number>;
+};
 
 type DealerLinkRow = {
   dealer_id: string;
@@ -67,7 +79,7 @@ export async function getDealerById(id: string): Promise<DealerRow | null> {
   return (data as DealerRow | null) ?? null;
 }
 
-export async function getCurrentUserId(): Promise<string | null> {
+export const getCurrentUserId = cache(async (): Promise<string | null> => {
   if (isLocalDataMode()) return getLocalCurrentUserId();
 
   const supabase = await createSupabaseServerClient();
@@ -77,7 +89,7 @@ export async function getCurrentUserId(): Promise<string | null> {
   } = await supabase.auth.getUser();
   if (error) throw error;
   return user?.id ?? null;
-}
+});
 
 export async function getUserRoles(userId: string): Promise<UserRole[]> {
   if (isLocalDataMode()) return getLocalUserRoles(userId);
@@ -97,7 +109,7 @@ export async function listDealers(): Promise<DealerRow[]> {
   return (data as DealerRow[]) ?? [];
 }
 
-export async function getDealerForCurrentUser() {
+export const getDealerForCurrentUser = cache(async () => {
   if (isLocalDataMode()) return getLocalDealerForCurrentUser();
 
   const userId = await getCurrentUserId();
@@ -123,7 +135,7 @@ export async function getDealerForCurrentUser() {
     dealer_id: row.dealer_id,
     role: row.role,
   };
-}
+});
 
 export async function getDealerForCurrentUserWithDetails() {
   if (isLocalDataMode()) return getLocalDealerForCurrentUserWithDetails();
@@ -169,6 +181,118 @@ export async function listDealerApplications(dealerId: string): Promise<Applicat
   return (data as ApplicationRow[]) ?? [];
 }
 
+const APPLICATION_STATUSES: ApplicationStatus[] = ["pending", "offered", "accepted", "rejected", "sold", "archived"];
+
+function emptyStatusCounts(): Record<ApplicationStatus, number> {
+  return { pending: 0, offered: 0, accepted: 0, rejected: 0, sold: 0, archived: 0 };
+}
+
+export async function listDealerApplicationPage(
+  dealerId: string,
+  input: PaginationInput,
+): Promise<DealerApplicationPage> {
+  const activeStatus = APPLICATION_STATUSES.includes(input.status as ApplicationStatus)
+    ? input.status as ApplicationStatus
+    : null;
+  const q = safeSearchTerm(input.q || "");
+  const from = (input.page - 1) * input.pageSize;
+
+  if (isLocalDataMode()) {
+    const applications = await listLocalDealerApplications(dealerId);
+    const counts = emptyStatusCounts();
+    applications.forEach((application) => { counts[application.status as ApplicationStatus] += 1; });
+    const normalizedQuery = q.toLocaleLowerCase("tr-TR");
+    const filtered = applications
+      .filter((application) => !activeStatus || application.status === activeStatus)
+      .filter((application) => !normalizedQuery || [application.reference_code, application.owner_name, application.owner_phone, application.owner_email, application.brand, application.model]
+        .some((value) => value?.toLocaleLowerCase("tr-TR").includes(normalizedQuery)))
+      .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
+    const items = filtered.slice(from, from + input.pageSize).map((application) => ({
+      id: application.id,
+      reference_code: application.reference_code,
+      owner_name: application.owner_name,
+      owner_phone: application.owner_phone,
+      brand: application.brand,
+      model: application.model,
+      model_year: application.model_year,
+      km: application.km,
+      status: application.status,
+      created_at: application.created_at,
+    }));
+    const visibleIds = new Set(items.map((item) => item.id));
+    const offers = await listLocalDealerOffers(dealerId);
+    const latestOfferByApplication: Record<string, number> = {};
+    offers.forEach((offer) => {
+      if (visibleIds.has(offer.application_id) && latestOfferByApplication[offer.application_id] === undefined) {
+        latestOfferByApplication[offer.application_id] = offer.amount;
+      }
+    });
+    return {
+      items,
+      total: filtered.length,
+      page: input.page,
+      pageSize: input.pageSize,
+      pageCount: Math.max(1, Math.ceil(filtered.length / input.pageSize)),
+      statusCounts: counts,
+      latestOfferByApplication,
+    };
+  }
+
+  const supabase = createSupabaseServiceClient();
+  let pageQuery = supabase
+    .from("applications")
+    .select("id, reference_code, owner_name, owner_phone, brand, model, model_year, km, status, created_at", { count: "exact" })
+    .eq("dealer_id", dealerId)
+    .not("submitted_at", "is", null);
+  if (activeStatus) pageQuery = pageQuery.eq("status", activeStatus);
+  if (q) pageQuery = pageQuery.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
+
+  const [pageResult, ...statusResults] = await Promise.all([
+    pageQuery.order("created_at", { ascending: input.sort === "oldest" }).range(from, from + input.pageSize - 1),
+    ...APPLICATION_STATUSES.map((status) => supabase
+      .from("applications")
+      .select("*", { count: "exact", head: true })
+      .eq("dealer_id", dealerId)
+      .eq("status", status)
+      .not("submitted_at", "is", null)),
+  ]);
+  const { data, count, error } = pageResult;
+  if (error) throw error;
+
+  const items = (data ?? []) as DealerApplicationListRow[];
+  const counts = emptyStatusCounts();
+  statusResults.forEach((statusResult, index) => {
+    if (statusResult.error) throw statusResult.error;
+    counts[APPLICATION_STATUSES[index]] = statusResult.count ?? 0;
+  });
+  const latestOfferByApplication: Record<string, number> = {};
+  if (items.length > 0) {
+    const { data: offers, error: offersError } = await supabase
+      .from("offers")
+      .select("application_id, amount, created_at")
+      .eq("dealer_id", dealerId)
+      .in("application_id", items.map((item) => item.id))
+      .order("created_at", { ascending: false });
+    if (offersError) throw offersError;
+    (offers ?? []).forEach((offer) => {
+      if (latestOfferByApplication[offer.application_id] === undefined) {
+        latestOfferByApplication[offer.application_id] = offer.amount;
+      }
+    });
+  }
+
+  const total = count ?? 0;
+  return {
+    items,
+    total,
+    page: input.page,
+    pageSize: input.pageSize,
+    pageCount: Math.max(1, Math.ceil(total / input.pageSize)),
+    statusCounts: counts,
+    latestOfferByApplication,
+  };
+}
+
 export async function listDealerApplicationsForCurrentUser(): Promise<ApplicationRow[]> {
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return [];
@@ -192,6 +316,79 @@ export async function listDealerOffersForCurrentUser(): Promise<OfferRow[]> {
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return [];
   return listDealerOffers(dealer.dealer_id);
+}
+
+export async function listDealerOffersForApplicationCurrentUser(applicationId: string): Promise<OfferRow[]> {
+  const dealer = await getDealerForCurrentUser();
+  if (!dealer?.dealer_id) return [];
+  if (isLocalDataMode()) {
+    return (await listLocalDealerOffers(dealer.dealer_id)).filter((offer) => offer.application_id === applicationId);
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("dealer_id", dealer.dealer_id)
+    .eq("application_id", applicationId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as OfferRow[] | null) ?? [];
+}
+
+export async function getDealerDashboardData(dealerId: string): Promise<{
+  applications: DealerDashboardApplication[];
+  offers: DealerDashboardOffer[];
+  applicationCount: number;
+  pendingCount: number;
+  offeredCount: number;
+  soldCount: number;
+  offerCount: number;
+}> {
+  if (isLocalDataMode()) {
+    const [applications, offers] = await Promise.all([
+      listLocalDealerApplications(dealerId),
+      listLocalDealerOffers(dealerId),
+    ]);
+    const recentOffers = offers.slice(0, 8);
+    const recentApplicationIds = new Set(recentOffers.map((offer) => offer.application_id));
+    return {
+      applications: applications.filter((application) => recentApplicationIds.has(application.id)).map(({ id, brand, model }) => ({ id, brand, model })),
+      offers: recentOffers.map(({ id, application_id, amount, created_at }) => ({ id, application_id, amount, created_at })),
+      applicationCount: applications.length,
+      pendingCount: applications.filter((application) => application.status === "pending").length,
+      offeredCount: applications.filter((application) => application.status === "offered").length,
+      soldCount: applications.filter((application) => application.status === "sold").length,
+      offerCount: offers.length,
+    };
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const [applicationsCount, pendingCount, offeredCount, soldCount, offersCount, recentOffers] = await Promise.all([
+    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).not("submitted_at", "is", null),
+    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "pending").not("submitted_at", "is", null),
+    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "offered").not("submitted_at", "is", null),
+    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "sold").not("submitted_at", "is", null),
+    supabase.from("offers").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId),
+    supabase.from("offers").select("id, application_id, amount, created_at").eq("dealer_id", dealerId).order("created_at", { ascending: false }).limit(8),
+  ]);
+  const failedCount = [applicationsCount, pendingCount, offeredCount, soldCount, offersCount].find((result) => result.error);
+  if (failedCount?.error) throw failedCount.error;
+  if (recentOffers.error) throw recentOffers.error;
+  const applicationIds = [...new Set((recentOffers.data ?? []).map((offer) => offer.application_id))];
+  const applicationResult = applicationIds.length > 0
+    ? await supabase.from("applications").select("id, brand, model").in("id", applicationIds)
+    : { data: [], error: null };
+  if (applicationResult.error) throw applicationResult.error;
+  return {
+    applications: (applicationResult.data ?? []) as DealerDashboardApplication[],
+    offers: (recentOffers.data ?? []) as DealerDashboardOffer[],
+    applicationCount: applicationsCount.count ?? 0,
+    pendingCount: pendingCount.count ?? 0,
+    offeredCount: offeredCount.count ?? 0,
+    soldCount: soldCount.count ?? 0,
+    offerCount: offersCount.count ?? 0,
+  };
 }
 
 export async function getDealerApplicationForCurrentUser(applicationId: string): Promise<ApplicationRow | null> {

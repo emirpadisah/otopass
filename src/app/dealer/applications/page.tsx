@@ -20,13 +20,13 @@ import {
 import { cn } from "@/lib/cn";
 import { parsePagination } from "@/lib/pagination";
 import { canManageDealerMembership } from "@/lib/auth/route";
-import { getDealerForCurrentUser, listDealerApplications, listDealerOffers } from "@/lib/supabase/queries";
+import { getDealerForCurrentUser, listDealerApplicationPage } from "@/lib/supabase/queries";
 import { SoldButtonForm } from "./SoldButtonForm";
 
 type StatusFilter = "all" | "pending" | "offered" | "accepted" | "rejected" | "sold" | "archived";
 
 type PageProps = {
-  searchParams: Promise<{ q?: string; status?: string; page?: string; pageSize?: string; sort?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string; pageSize?: string; sort?: string; deleted?: string; cleanup?: string }>;
 };
 
 function formatCurrency(amount: number) {
@@ -41,42 +41,15 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
   const dealer = await getDealerForCurrentUser();
   if (!dealer?.dealer_id) return null;
   const canManage = canManageDealerMembership(dealer.role);
-  const input = parsePagination(await searchParams);
+  const rawParams = await searchParams;
+  const input = parsePagination(rawParams);
   const activeFilter: StatusFilter = ["pending", "offered", "accepted", "rejected", "sold", "archived"].includes(input.status ?? "")
     ? (input.status as StatusFilter)
     : "all";
 
-  const [applications, offers] = await Promise.all([
-    listDealerApplications(dealer.dealer_id),
-    listDealerOffers(dealer.dealer_id),
-  ]);
-
-  const latestOfferByApplication = new Map<string, number>();
-  for (const offer of offers) {
-    if (!latestOfferByApplication.has(offer.application_id)) {
-      latestOfferByApplication.set(offer.application_id, offer.amount);
-    }
-  }
-
-  const counts = {
-    all: applications.length,
-    pending: applications.filter((application) => application.status === "pending").length,
-    offered: applications.filter((application) => application.status === "offered").length,
-    accepted: applications.filter((application) => application.status === "accepted").length,
-    rejected: applications.filter((application) => application.status === "rejected").length,
-    sold: applications.filter((application) => application.status === "sold").length,
-    archived: applications.filter((application) => application.status === "archived").length,
-  };
-  const statusFilteredApplications = activeFilter === "all"
-    ? applications
-    : applications.filter((application) => application.status === activeFilter);
-  const query = input.q.toLocaleLowerCase("tr-TR");
-  const filteredApplications = statusFilteredApplications
-    .filter((application) => !query || [application.reference_code, application.owner_name, application.owner_phone, application.owner_email, application.brand, application.model]
-      .some((value) => value?.toLocaleLowerCase("tr-TR").includes(query)))
-    .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
-  const pageCount = Math.max(1, Math.ceil(filteredApplications.length / input.pageSize));
-  const visibleApplications = filteredApplications.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
+  const data = await listDealerApplicationPage(dealer.dealer_id, { ...input, status: activeFilter === "all" ? undefined : activeFilter });
+  const counts = { all: Object.values(data.statusCounts).reduce((sum, count) => sum + count, 0), ...data.statusCounts };
+  const visibleApplications = data.items;
   const statusOptions = [
     { value: "pending", label: `Bekleyen (${counts.pending})` },
     { value: "offered", label: `Teklif (${counts.offered})` },
@@ -95,13 +68,21 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
           ? "Araçları önceliğine göre inceleyin, teklif verin ve satın alma durumunu güncelleyin."
           : "Atanan araçları ve mevcut teklif durumlarını güvenli, salt okunur görünümde inceleyin."}
         icon={ClipboardList}
-        meta={<span className="ops-chip">{applications.length} toplam başvuru</span>}
+        meta={<span className="ops-chip">{counts.all} toplam başvuru</span>}
       />
+
+      {rawParams.deleted === "1" ? (
+        <div className="status-alert mt-4" data-tone={rawParams.cleanup === "pending" ? "warning" : "success"} role="status">
+          {rawParams.cleanup === "pending"
+            ? "Başvuru silindi. Tamamlanamayan fotoğraf temizliği teknik izlemeye kaydedildi."
+            : "Başvuru, ilişkili teklifler ve fotoğraflar kalıcı olarak silindi."}
+        </div>
+      ) : null}
 
       <PanelSection
         className="mt-4"
         title="Araç kuyruğu"
-        description={`${visibleApplications.length} / ${filteredApplications.length} kayıt gösteriliyor`}
+        description={`${visibleApplications.length} / ${data.total} kayıt gösteriliyor`}
         icon={SlidersHorizontal}
         meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={statusOptions} />}
         contentClassName="ops-section-flush"
@@ -123,7 +104,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                 <TableEmptyState colSpan={6} message="Bu durumda başvuru bulunmuyor." />
               ) : (
                 visibleApplications.map((application) => {
-                  const latestOffer = latestOfferByApplication.get(application.id);
+                  const latestOffer = data.latestOfferByApplication[application.id];
                   return (
                     <TableRow key={application.id}>
                       <TableCell data-label="Araç sahibi" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
@@ -160,7 +141,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
             </TableBody>
           </Table>
         </DataTable>
-        <PaginationNav pathname="/dealer/applications" page={input.page} pageCount={pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
+        <PaginationNav pathname="/dealer/applications" page={data.page} pageCount={data.pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
       </PanelSection>
     </div>
   );

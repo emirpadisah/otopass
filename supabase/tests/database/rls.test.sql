@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(23);
+select plan(30);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -28,7 +28,9 @@ values ('00000000-0000-4000-8000-000000000201', 'apply.dealer-a.test', 'verified
 insert into public.applications(id, dealer_id, dealer_slug, brand, model, reference_code, submitted_at)
 values
   ('00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Test', 'Car', 'OTP-TEST-1', now()),
-  ('00000000-0000-4000-8000-000000000302', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Test', 'Car 2', 'OTP-TEST-2', now());
+  ('00000000-0000-4000-8000-000000000302', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Test', 'Car 2', 'OTP-TEST-2', now()),
+  ('00000000-0000-4000-8000-000000000303', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Delete', 'Own', 'OTP-DELETE-1', now()),
+  ('00000000-0000-4000-8000-000000000304', '00000000-0000-4000-8000-000000000202', 'dealer-b', 'Delete', 'Other', 'OTP-DELETE-2', now());
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000101', true);
@@ -45,11 +47,12 @@ select is_empty(
 );
 select results_eq(
   $$ select id from public.applications order by id $$,
-  $$ values ('00000000-0000-4000-8000-000000000301'::uuid), ('00000000-0000-4000-8000-000000000302'::uuid) $$,
+  $$ values ('00000000-0000-4000-8000-000000000301'::uuid), ('00000000-0000-4000-8000-000000000302'::uuid), ('00000000-0000-4000-8000-000000000303'::uuid) $$,
   'viewer reads own dealer applications'
 );
 select is_empty($$ update public.applications set status = 'sold' where id = '00000000-0000-4000-8000-000000000301' returning id $$, 'viewer cannot update application directly');
 select throws_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000301', 100000, 'TRY', null) $$, 'FORBIDDEN', 'viewer cannot create an offer through RPC');
+select throws_ok($$ select public.delete_application_for_current_user('00000000-0000-4000-8000-000000000303') $$, 'FORBIDDEN', 'viewer cannot delete an application');
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000102', true);
 select ok(public.current_user_can_manage_dealer('00000000-0000-4000-8000-000000000201'), 'manager can manage own dealer');
@@ -66,9 +69,15 @@ select lives_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-00
 select lives_ok($$ select public.respond_to_dealer_offer((select id from public.offers where application_id = '00000000-0000-4000-8000-000000000302' and status = 'pending'), 'rejected', null) $$, 'manager records rejection');
 select is((select status from public.applications where id = '00000000-0000-4000-8000-000000000302'), 'rejected', 'rejection advances application status');
 select lives_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000302', 125000, 'TRY', null) $$, 'rejected application can receive a new offer');
+select lives_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000303', 130000, 'TRY', null) $$, 'manager creates an offer before deletion');
+select lives_ok($$ select public.delete_application_for_current_user('00000000-0000-4000-8000-000000000303') $$, 'manager deletes own dealer application');
+select is_empty($$ select id from public.applications where id = '00000000-0000-4000-8000-000000000303' $$, 'deleted application is removed');
+select is_empty($$ select id from public.offers where application_id = '00000000-0000-4000-8000-000000000303' $$, 'application offers are deleted by cascade');
+select ok(exists(select 1 from public.activity_log where action = 'APPLICATION_DELETED' and application_id is null and metadata->>'application_id' = '00000000-0000-4000-8000-000000000303'), 'deletion audit survives application removal');
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000103', true);
 select throws_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000302', 200000, 'TRY', null) $$, 'FORBIDDEN', 'cross-tenant manager cannot create offer');
+select throws_ok($$ select public.delete_application_for_current_user('00000000-0000-4000-8000-000000000302') $$, 'FORBIDDEN', 'cross-tenant manager cannot delete another dealer application');
 select is_empty($$ select hostname from public.dealer_domains $$, 'cross-tenant manager cannot read another dealer domain');
 
 set local role anon;

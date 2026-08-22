@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { Database } from "@/lib/supabase/database.types";
 import type { UserRole } from "@/lib/types";
 import { getLocalSessionUser } from "./auth";
-import { mutateLocalData, readLocalData } from "./store";
+import { mutateLocalData, readLocalData, removeLocalPhoto } from "./store";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
@@ -214,6 +214,52 @@ export async function markLocalApplicationAsSold(applicationId: string, dealerId
     application.status = "sold";
     application.updated_at = new Date().toISOString();
   });
+}
+
+export async function deleteLocalApplication(
+  applicationId: string,
+  dealerId: string | null,
+  actorUserId: string,
+): Promise<{ photoPaths: string[]; cleanupFailed: boolean }> {
+  const photoPaths = await mutateLocalData((data) => {
+    const applicationIndex = data.applications.findIndex((application) => (
+      application.id === applicationId && (!dealerId || application.dealer_id === dealerId)
+    ));
+    if (applicationIndex < 0) throw new Error("Başvuru bulunamadı.");
+
+    const application = data.applications[applicationIndex];
+    const deletedOfferIds = new Set(
+      data.offers.filter((offer) => offer.application_id === applicationId).map((offer) => offer.id),
+    );
+    data.applications.splice(applicationIndex, 1);
+    data.offers = data.offers.filter((offer) => offer.application_id !== applicationId);
+    data.activity_log.forEach((record) => {
+      if (record.application_id === applicationId) record.application_id = null;
+      if (record.offer_id && deletedOfferIds.has(record.offer_id)) record.offer_id = null;
+    });
+    data.activity_log.push({
+      id: Math.max(0, ...data.activity_log.map((record) => record.id)) + 1,
+      actor_user_id: actorUserId,
+      dealer_id: application.dealer_id,
+      application_id: null,
+      offer_id: null,
+      action: "APPLICATION_DELETED",
+      metadata: {
+        application_id: application.id,
+        reference_code: application.reference_code,
+        vehicle: `${application.brand} ${application.model}`,
+        photo_count: application.photo_paths.length,
+      },
+      created_at: new Date().toISOString(),
+    });
+    return [...application.photo_paths];
+  });
+
+  const cleanupResults = await Promise.allSettled(photoPaths.map((path) => removeLocalPhoto(path)));
+  return {
+    photoPaths,
+    cleanupFailed: cleanupResults.some((result) => result.status === "rejected"),
+  };
 }
 
 export async function respondToLocalOffer(

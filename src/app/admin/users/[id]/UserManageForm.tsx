@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { KeyRound, Save, Trash2 } from "lucide-react";
-import { Button, Field, Input } from "@/components/ui";
+import { Button, ConfirmSubmitButton, Field, Input } from "@/components/ui";
 import type { ActionResponse, UserRole } from "@/lib/types";
 import { deleteUserAction, sendPasswordResetAction, updateUserAction } from "../actions";
 
@@ -18,6 +18,7 @@ export function UserManageForm({ user, dealers, canDelete }: { user: UserData; d
   const [resetState, resetAction, resetPending] = useActionState(sendPasswordResetAction, initial);
   const [deleteState, deleteAction, deletePending] = useActionState(deleteUserAction, initial);
   const role = (user.roles[0] || "dealer_viewer") as UserRole;
+  const deleteFormId = `delete-user-${user.user_id}`;
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <form action={updateAction} className="panel space-y-4 p-5 sm:p-6">
@@ -31,7 +32,7 @@ export function UserManageForm({ user, dealers, canDelete }: { user: UserData; d
       </form>
       <aside className="space-y-4">
         <form action={resetAction} className="panel space-y-4 p-5"><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold">Şifre güvenliği</h2><p className="text-sm text-[var(--text-muted)]">Kullanıcıya tek kullanımlık yenileme bağlantısı gönderir.</p><Message state={resetState} /><Button type="submit" variant="secondary" disabled={resetPending}><KeyRound size={15} /> Bağlantı Gönder</Button></form>
-        {canDelete ? <form action={deleteAction} className="panel space-y-4 border-[var(--danger)] p-5" onSubmit={(event) => { if (!window.confirm("Kullanıcı kalıcı olarak silinecek. Devam edilsin mi?")) event.preventDefault(); }}><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold text-[var(--danger)]">Kalıcı silme</h2><Message state={deleteState} /><Button type="submit" variant="danger" disabled={deletePending}><Trash2 size={15} /> Kullanıcıyı Sil</Button></form> : null}
+        {canDelete ? <form id={deleteFormId} action={deleteAction} className="panel space-y-4 border-[var(--danger)] p-5"><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold text-[var(--danger)]">Kalıcı silme</h2><Message state={deleteState} /><ConfirmSubmitButton formId={deleteFormId} title="Kullanıcıyı kalıcı olarak sil?" description="Hesap, rol ve galeri üyelikleri sistemden kaldırılacak." confirmLabel="Kullanıcıyı kalıcı sil" details={["Kullanıcı artık giriş yapamaz", "Rol ve galeri erişimleri kaldırılır", "Bu işlem geri alınamaz"]} tone="danger" variant="danger" disabled={deletePending}><Trash2 size={15} /> Kullanıcıyı sil</ConfirmSubmitButton></form> : null}
       </aside>
     </div>
   );

@@ -1402,6 +1402,174 @@ html.theme-light .ops-drawer-content {
   animation: ops-photo-overlay-in 180ms ease both;
 }
 
+.ops-confirm-overlay {
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  background: rgba(5, 9, 16, 0.58);
+  backdrop-filter: blur(7px) saturate(105%);
+  -webkit-backdrop-filter: blur(7px) saturate(105%);
+  animation: ops-confirm-overlay-in 160ms ease both;
+}
+
+.ops-confirm-dialog {
+  --ops-text: var(--text-primary);
+  --ops-text-secondary: var(--text-secondary);
+  --ops-muted: var(--text-muted);
+  --ops-line: var(--border-soft);
+  --ops-line-strong: var(--border-strong);
+  --ops-glass-soft: var(--surface-1);
+  --ops-glass-strong: var(--surface-2);
+  --ops-glass-solid: var(--surface-solid);
+  --ops-accent: var(--accent);
+  --ops-accent-strong: var(--accent-strong);
+  --ops-accent-soft: var(--accent-soft);
+  --ops-warning: var(--warning);
+  position: fixed;
+  z-index: 111;
+  top: 50%;
+  left: 50%;
+  width: min(calc(100vw - 32px), 460px);
+  max-height: min(680px, calc(100vh - 32px));
+  transform: translate(-50%, -50%);
+  overflow: auto;
+  border: 1px solid var(--ops-line-strong);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, var(--ops-glass-strong), transparent 54%),
+    color-mix(in srgb, var(--ops-glass-solid) 96%, transparent);
+  padding: 20px;
+  color: var(--ops-text);
+  outline: none;
+  box-shadow: 0 34px 90px -26px rgba(0, 0, 0, 0.54), inset 0 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(125%);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
+  animation: ops-confirm-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ops-confirm-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ops-confirm-icon,
+.ops-confirm-close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--ops-line);
+  border-radius: 7px;
+}
+
+.ops-confirm-icon {
+  background: color-mix(in srgb, var(--warning) 11%, var(--ops-glass-soft));
+  color: var(--warning);
+}
+
+.ops-confirm-dialog[data-tone="danger"] .ops-confirm-icon {
+  border-color: color-mix(in srgb, var(--danger) 25%, var(--ops-line));
+  background: color-mix(in srgb, var(--danger) 10%, var(--ops-glass-soft));
+  color: var(--danger);
+}
+
+.ops-confirm-dialog[data-tone="primary"] .ops-confirm-icon {
+  border-color: color-mix(in srgb, var(--ops-accent) 25%, var(--ops-line));
+  background: var(--ops-accent-soft);
+  color: var(--ops-accent-strong);
+}
+
+.ops-confirm-close {
+  background: var(--ops-glass-soft);
+  color: var(--ops-muted);
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.ops-confirm-close:hover {
+  border-color: var(--ops-line-strong);
+  background: var(--surface-3);
+  color: var(--ops-text);
+}
+
+.ops-confirm-close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ops-confirm-copy {
+  margin-top: 18px;
+}
+
+.ops-confirm-title {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: var(--ops-text);
+  font-size: 1.28rem;
+  line-height: 1.25;
+  font-weight: 780;
+}
+
+.ops-confirm-description {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  color: var(--ops-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ops-confirm-details {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  border: 1px solid var(--ops-line);
+  border-radius: 7px;
+  background: var(--ops-glass-soft);
+  padding: 13px 14px;
+  color: var(--ops-text-secondary);
+  font-size: 12px;
+}
+
+.ops-confirm-details li {
+  position: relative;
+  padding-left: 15px;
+  line-height: 1.45;
+}
+
+.ops-confirm-details li::before {
+  position: absolute;
+  top: 0.58em;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ops-muted);
+  content: "";
+}
+
+.ops-confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ops-confirm-actions button {
+  min-height: 44px;
+}
+
+@keyframes ops-confirm-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ops-confirm-dialog-in {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(0.985); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 .ops-photo-dialog {
   position: fixed;
   z-index: 91;
@@ -1836,6 +2004,12 @@ html.theme-light .ops-drawer-content {
     justify-content: flex-start;
   }
 
+  .ops-confirm-dialog {
+    width: min(calc(100vw - 24px), 460px);
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+
   .ops-section-header {
     align-items: flex-start;
     flex-direction: column;
@@ -1897,6 +2071,12 @@ html.theme-light .ops-drawer-content {
   min-width: 0;
   grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
   gap: 24px;
+}
+
+@media (max-width: 380px) {
+  .ops-confirm-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .dealer-profile-fields {

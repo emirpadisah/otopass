@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Camera, ClipboardList, HandCoins, ScanSearch, ShieldCheck } from "lucide-react";
 import {
   ApplicationPhotoGallery,
+  ApplicationDeleteButton,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
+import { deleteAdminApplicationAction } from "./actions";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -34,12 +36,10 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
 
   if (!application) notFound();
 
-  const { data: dealer } = await supabase
-    .from("dealers")
-    .select("name")
-    .eq("id", application.dealer_id)
-    .maybeSingle();
-  const photoUrls = await getApplicationPhotoUrls(application.id, application.photo_paths ?? []);
+  const [{ data: dealer }, photoUrls] = await Promise.all([
+    supabase.from("dealers").select("name").eq("id", application.dealer_id).maybeSingle(),
+    getApplicationPhotoUrls(application.id, application.photo_paths ?? []),
+  ]);
   const vehicleLabel = `${application.brand} ${application.model}`;
 
   return (
@@ -59,13 +59,21 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
           </>
         }
         actions={
-          <Link
-            href="/admin/applications"
-            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
-            Listeye dön
-          </Link>
+          <>
+            <ApplicationDeleteButton
+              action={deleteAdminApplicationAction}
+              applicationId={application.id}
+              referenceCode={application.reference_code}
+              vehicleLabel={vehicleLabel}
+            />
+            <Link
+              href="/admin/applications"
+              className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              Listeye dön
+            </Link>
+          </>
         }
       />
 
