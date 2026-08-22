@@ -15,19 +15,19 @@ import {
 } from "@/lib/vehicle-condition";
 
 const partGeometry: Record<VehicleBodyPartId, string> = {
-  front_bumper: "M128 42 Q121 42 121 49 L121 67 Q121 74 128 74 H232 Q239 74 239 67 V49 Q239 42 232 42 Z M135 53 H157 L165 63 H134 Z M203 53 H226 L226 63 H195 Z",
-  hood: "M132 86 Q180 67 228 86 Q234 88 235 96 L226 166 Q180 149 134 166 L125 96 Q126 88 132 86 Z",
-  left_front_fender: "M48 95 H73 L79 121 L70 135 H48 Z",
-  right_front_fender: "M312 95 H287 L281 121 L290 135 H312 Z",
-  left_front_door: "M48 153 Q59 158 68 151 L117 224 H48 Z",
-  right_front_door: "M312 153 Q301 158 292 151 L243 224 H312 Z",
-  left_rear_door: "M48 229 H117 V275 L76 292 H48 Z",
-  right_rear_door: "M312 229 H243 V275 L284 292 H312 Z",
-  left_rear_fender: "M48 284 L76 292 Q70 302 78 311 L74 334 H48 Z",
-  right_rear_fender: "M312 284 L284 292 Q290 302 282 311 L286 334 H312 Z",
-  roof: "M139 229 H221 L219 287 H141 Z",
-  trunk: "M128 300 Q180 315 232 300 L239 332 Q180 350 121 332 Z",
-  rear_bumper: "M127 347 Q121 347 121 354 V371 Q121 378 128 378 H232 Q239 378 239 371 V354 Q239 347 232 347 Z M135 356 H157 L161 368 H135 Z M203 356 H225 V368 H199 Z",
+  front_bumper: "M131 38 Q124 38 124 45 L124 63 Q124 70 131 70 H229 Q236 70 236 63 V45 Q236 38 229 38 Z M138 49 H157 L164 59 H137 Z M203 49 H223 V59 H196 Z",
+  hood: "M136 86 Q180 68 224 86 Q230 88 231 96 L224 151 Q180 136 136 151 L129 96 Q130 88 136 86 Z",
+  left_front_fender: "M40 93 H69 L75 116 L67 130 H40 Z",
+  right_front_fender: "M320 93 H291 L285 116 L293 130 H320 Z",
+  left_front_door: "M40 157 Q55 163 67 153 L110 218 H40 Z",
+  right_front_door: "M320 157 Q305 163 293 153 L250 218 H320 Z",
+  left_rear_door: "M40 232 H110 V271 L73 286 H40 Z",
+  right_rear_door: "M320 232 H250 V271 L287 286 H320 Z",
+  left_rear_fender: "M40 299 L72 289 Q67 302 76 313 L70 337 H40 Z",
+  right_rear_fender: "M320 299 L288 289 Q293 302 284 313 L290 337 H320 Z",
+  roof: "M142 171 Q180 157 218 171 L216 283 Q180 296 144 283 Z",
+  trunk: "M132 307 Q180 320 228 307 L235 335 Q180 351 125 335 Z",
+  rear_bumper: "M130 355 Q124 355 124 362 V377 Q124 384 131 384 H229 Q236 384 236 377 V362 Q236 355 229 355 Z M138 364 H157 L161 374 H138 Z M203 364 H222 V374 H199 Z",
 };
 
 const conditionColors: Record<VehicleConditionStatus, string> = {
@@ -187,10 +187,6 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
                 <rect x="137" y="396" width="20" height="8" rx="2" />
                 <rect x="203" y="396" width="20" height="8" rx="2" />
               </g>
-              <path className="vehicle-map-shadow" d="M87 101 L123 88 L138 166 L130 227 L119 292 L101 337 H78 L92 288 L101 226 L82 139 Z" />
-              <path className="vehicle-map-shadow" d="M273 101 L237 88 L222 166 L230 227 L241 292 L259 337 H282 L268 288 L259 226 L278 139 Z" />
-              <path className="vehicle-map-window" d="M134 166 Q180 148 226 166 L216 218 H144 Z" />
-              <path className="vehicle-map-window" d="M141 287 H219 L230 300 Q180 314 130 300 Z" />
               {VEHICLE_BODY_PARTS.map((part) => {
                 const status = getVehicleConditionStatus(condition, part.id);
                 return (
@@ -216,10 +212,10 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
                 );
               })}
               <g className="vehicle-map-wheels" aria-hidden="true">
-                <circle cx="48" cy="142" r="21" />
-                <circle cx="312" cy="142" r="21" />
-                <circle cx="48" cy="285" r="21" />
-                <circle cx="312" cy="285" r="21" />
+                <circle cx="40" cy="142" r="21" />
+                <circle cx="320" cy="142" r="21" />
+                <circle cx="40" cy="286" r="21" />
+                <circle cx="320" cy="286" r="21" />
               </g>
             </svg>
             <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>

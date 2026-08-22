@@ -6300,24 +6300,10 @@ html.theme-dark .vehicle-condition [data-status="replaced"] {
   fill: color-mix(in srgb, var(--text-muted) 14%, transparent);
 }
 
-.vehicle-map-shadow {
-  pointer-events: none;
-  fill: color-mix(in srgb, var(--text-muted) 9%, var(--surface-1));
-  opacity: 0.92;
-}
-
 .vehicle-map-wheels {
   pointer-events: none;
   fill: #f0f1f3;
   stroke: #ffffff;
-  stroke-width: 3;
-  vector-effect: non-scaling-stroke;
-}
-
-.vehicle-map-window {
-  pointer-events: none;
-  fill: #f7f7f8;
-  stroke: #f0f1f3;
   stroke-width: 3;
   vector-effect: non-scaling-stroke;
 }
