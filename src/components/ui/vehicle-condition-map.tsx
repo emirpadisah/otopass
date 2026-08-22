@@ -17,17 +17,17 @@ import {
 const partGeometry: Record<VehicleBodyPartId, string> = {
   front_bumper: "M131 38 Q124 38 124 45 L124 63 Q124 70 131 70 H229 Q236 70 236 63 V45 Q236 38 229 38 Z M138 49 H157 L164 59 H137 Z M203 49 H223 V59 H196 Z",
   hood: "M136 86 Q180 68 224 86 Q230 88 231 96 L224 151 Q180 136 136 151 L129 96 Q130 88 136 86 Z",
-  left_front_fender: "M40 93 H69 L75 116 L67 130 H40 Z",
-  right_front_fender: "M320 93 H291 L285 116 L293 130 H320 Z",
-  left_front_door: "M40 157 Q55 163 67 153 L110 218 H40 Z",
-  right_front_door: "M320 157 Q305 163 293 153 L250 218 H320 Z",
-  left_rear_door: "M40 232 H110 V271 L73 286 H40 Z",
-  right_rear_door: "M320 232 H250 V271 L287 286 H320 Z",
-  left_rear_fender: "M40 299 L72 289 Q67 302 76 313 L70 337 H40 Z",
-  right_rear_fender: "M320 299 L288 289 Q293 302 284 313 L290 337 H320 Z",
+  left_front_fender: "M58 93 H80 L84 116 L74 126 H58 Z",
+  right_front_fender: "M302 93 H280 L276 116 L286 126 H302 Z",
+  left_front_door: "M58 169 H76 L111 219 H58 Z",
+  right_front_door: "M302 169 H284 L249 219 H302 Z",
+  left_rear_door: "M58 236 H111 V270 L76 283 H58 Z",
+  right_rear_door: "M302 236 H249 V270 L284 283 H302 Z",
+  left_rear_fender: "M58 310 L76 296 L84 315 L80 339 H58 Z",
+  right_rear_fender: "M302 310 L284 296 L276 315 L280 339 H302 Z",
   roof: "M142 171 Q180 157 218 171 L216 283 Q180 296 144 283 Z",
   trunk: "M132 307 Q180 320 228 307 L235 335 Q180 351 125 335 Z",
-  rear_bumper: "M130 355 Q124 355 124 362 V377 Q124 384 131 384 H229 Q236 384 236 377 V362 Q236 355 229 355 Z M138 364 H157 L161 374 H138 Z M203 364 H222 V374 H199 Z",
+  rear_bumper: "M130 365 Q124 365 124 372 V387 Q124 394 131 394 H229 Q236 394 236 387 V372 Q236 365 229 365 Z M138 374 H157 L161 384 H138 Z M203 374 H222 V384 H199 Z",
 };
 
 const conditionColors: Record<VehicleConditionStatus, string> = {
@@ -177,15 +177,15 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
             <span className="vehicle-map-direction vehicle-map-direction-front"><i aria-hidden="true" />Ön</span>
             <svg
               className="vehicle-map-svg"
-              viewBox="0 0 360 420"
+              viewBox="0 0 360 440"
               role={readOnly ? "img" : "group"}
               aria-label="Üstten araç kaporta ekspertiz şeması"
             >
               <g className="vehicle-map-guide" aria-hidden="true">
                 <rect x="137" y="20" width="20" height="8" rx="2" />
                 <rect x="203" y="20" width="20" height="8" rx="2" />
-                <rect x="137" y="396" width="20" height="8" rx="2" />
-                <rect x="203" y="396" width="20" height="8" rx="2" />
+                <rect x="137" y="414" width="20" height="8" rx="2" />
+                <rect x="203" y="414" width="20" height="8" rx="2" />
               </g>
               {VEHICLE_BODY_PARTS.map((part) => {
                 const status = getVehicleConditionStatus(condition, part.id);
@@ -212,10 +212,10 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
                 );
               })}
               <g className="vehicle-map-wheels" aria-hidden="true">
-                <circle cx="40" cy="142" r="21" />
-                <circle cx="320" cy="142" r="21" />
-                <circle cx="40" cy="286" r="21" />
-                <circle cx="320" cy="286" r="21" />
+                <circle cx="28" cy="143" r="19" />
+                <circle cx="332" cy="143" r="19" />
+                <circle cx="28" cy="287" r="19" />
+                <circle cx="332" cy="287" r="19" />
               </g>
             </svg>
             <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>
