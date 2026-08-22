@@ -62,15 +62,6 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
   const visibleParts = VEHICLE_BODY_PARTS.filter(
     (part) => !compact || getVehicleConditionStatus(condition, part.id) !== "original",
   );
-  const statusCounts = VEHICLE_CONDITION_STATUSES.reduce<Record<VehicleConditionStatus, number>>(
-    (counts, status) => {
-      counts[status.value] = VEHICLE_BODY_PARTS.filter(
-        (part) => getVehicleConditionStatus(condition, part.id) === status.value,
-      ).length;
-      return counts;
-    },
-    { original: 0, local_paint: 0, painted: 0, replaced: 0 },
-  );
 
   function applyStatus(partId: VehicleBodyPartId) {
     if (readOnly || !onChange) return;
@@ -112,15 +103,6 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
           <span>İşlemli parça</span>
           <strong>{changedCount}<small> / {VEHICLE_BODY_PARTS.length}</small></strong>
         </div>
-      </div>
-
-      <div className="vehicle-condition-metrics" aria-label="Kaporta durum dağılımı">
-        {VEHICLE_CONDITION_STATUSES.map((status) => (
-          <div key={status.value} data-status={status.value}>
-            <span><i aria-hidden="true" />{status.label}</span>
-            <strong>{statusCounts[status.value]}</strong>
-          </div>
-        ))}
       </div>
 
       {!readOnly ? (
