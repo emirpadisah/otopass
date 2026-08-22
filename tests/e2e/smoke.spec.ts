@@ -30,7 +30,7 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();
 
-  await page.getByText("Boyalı", { exact: true }).click();
+  await page.getByRole("group", { name: "Parçaya uygulanacak durum" }).getByText("Boyalı", { exact: true }).click();
   await page.getByRole("button", { name: /Kaput, mevcut durum Orijinal/ }).click();
   await expect(page.getByRole("button", { name: /Kaput, mevcut durum Boyalı/ })).toBeVisible();
   await page.getByLabel(/KVKK aydınlatma metnini/).check();

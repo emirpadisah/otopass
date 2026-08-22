@@ -1,7 +1,7 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronRight, RotateCcw, ScanLine } from "lucide-react";
+import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
 import {
   VEHICLE_BODY_PARTS,
@@ -31,10 +31,17 @@ const partGeometry: Record<VehicleBodyPartId, string> = {
 };
 
 const conditionColors: Record<VehicleConditionStatus, string> = {
-  original: "#aeb8c7",
-  local_paint: "#e4a11b",
-  painted: "#2673d9",
-  replaced: "#dd3344",
+  original: "#9aa6b7",
+  local_paint: "#d69214",
+  painted: "#2166d1",
+  replaced: "#d73545",
+};
+
+const statusDescriptions: Record<VehicleConditionStatus, string> = {
+  original: "İşlem yok",
+  local_paint: "Bölgesel işlem",
+  painted: "Tam boya",
+  replaced: "Parça değişimi",
 };
 
 type VehicleConditionMapProps = {
@@ -47,15 +54,36 @@ type VehicleConditionMapProps = {
 
 export function VehicleConditionMap({ value, onChange, readOnly = false, compact = false, className }: VehicleConditionMapProps) {
   const condition = normalizeVehicleBodyCondition(value);
+  const statusGroupName = useId();
   const [activeStatus, setActiveStatus] = useState<VehicleConditionStatus>("local_paint");
+  const [selectedPart, setSelectedPart] = useState<VehicleBodyPartId | null>(null);
   const changedCount = Object.keys(condition).length;
+  const selectedPartConfig = VEHICLE_BODY_PARTS.find((part) => part.id === selectedPart);
+  const visibleParts = VEHICLE_BODY_PARTS.filter(
+    (part) => !compact || getVehicleConditionStatus(condition, part.id) !== "original",
+  );
+  const statusCounts = VEHICLE_CONDITION_STATUSES.reduce<Record<VehicleConditionStatus, number>>(
+    (counts, status) => {
+      counts[status.value] = VEHICLE_BODY_PARTS.filter(
+        (part) => getVehicleConditionStatus(condition, part.id) === status.value,
+      ).length;
+      return counts;
+    },
+    { original: 0, local_paint: 0, painted: 0, replaced: 0 },
+  );
 
   function applyStatus(partId: VehicleBodyPartId) {
     if (readOnly || !onChange) return;
+    setSelectedPart(partId);
     const next = { ...condition };
     if (activeStatus === "original") delete next[partId];
     else next[partId] = activeStatus;
     onChange(next);
+  }
+
+  function resetCondition() {
+    setSelectedPart(null);
+    onChange?.({});
   }
 
   function handlePartKeyDown(event: React.KeyboardEvent<SVGPathElement>, partId: VehicleBodyPartId) {
@@ -71,128 +99,186 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
       data-compact={compact || undefined}
     >
       <div className="vehicle-condition-summary" aria-live="polite">
-        <span>Kaporta durumu</span>
-        <strong>{changedCount === 0 ? "Tüm parçalar orijinal" : `${changedCount} işlemli parça`}</strong>
+        <div className="vehicle-condition-summary-title">
+          <span className="vehicle-condition-summary-icon" aria-hidden="true">
+            <ScanLine size={17} strokeWidth={1.8} />
+          </span>
+          <div>
+            <span>Ekspertiz özeti</span>
+            <strong>{changedCount === 0 ? "Tüm parçalar orijinal" : `${changedCount} parçada işlem var`}</strong>
+          </div>
+        </div>
+        <div className="vehicle-condition-score">
+          <span>İşlemli parça</span>
+          <strong>{changedCount}<small> / {VEHICLE_BODY_PARTS.length}</small></strong>
+        </div>
+      </div>
+
+      <div className="vehicle-condition-metrics" aria-label="Kaporta durum dağılımı">
+        {VEHICLE_CONDITION_STATUSES.map((status) => (
+          <div key={status.value} data-status={status.value}>
+            <span><i aria-hidden="true" />{status.label}</span>
+            <strong>{statusCounts[status.value]}</strong>
+          </div>
+        ))}
       </div>
 
       {!readOnly ? (
         <fieldset className="vehicle-condition-toolbar">
-          <legend>Uygulanacak durum</legend>
+          <legend className="sr-only">Parçaya uygulanacak durum</legend>
+          <div className="vehicle-condition-toolbar-heading">
+            <span>Parçaya uygulanacak durum</span>
+            {changedCount > 0 ? (
+              <button type="button" className="vehicle-condition-reset" onClick={resetCondition}>
+                <RotateCcw size={14} aria-hidden="true" /> Tümünü sıfırla
+              </button>
+            ) : null}
+          </div>
           <div className="vehicle-condition-statuses">
             {VEHICLE_CONDITION_STATUSES.map((status) => (
               <label key={status.value} data-status={status.value} data-active={activeStatus === status.value || undefined}>
                 <input
                   className="sr-only"
                   type="radio"
-                  name="vehicle-condition-status"
+                  name={statusGroupName}
                   value={status.value}
                   checked={activeStatus === status.value}
                   onChange={() => setActiveStatus(status.value)}
                 />
-                <span aria-hidden="true" />
-                {status.label}
+                <span className="vehicle-condition-status-swatch" aria-hidden="true" />
+                <span className="vehicle-condition-status-copy">
+                  <strong>{status.label}</strong>
+                  <small>{statusDescriptions[status.value]}</small>
+                </span>
+                <Check className="vehicle-condition-status-check" size={15} strokeWidth={2.4} aria-hidden="true" />
               </label>
             ))}
           </div>
-          {changedCount > 0 ? (
-            <button type="button" className="vehicle-condition-reset" onClick={() => onChange?.({})}>
-              <RotateCcw size={14} aria-hidden="true" /> Tümünü orijinal yap
-            </button>
-          ) : null}
         </fieldset>
-      ) : (
-        <div className="vehicle-condition-legend" aria-label="Kaporta durum renkleri">
-          {VEHICLE_CONDITION_STATUSES.map((status) => (
-            <span key={status.value} data-status={status.value}><i aria-hidden="true" />{status.label}</span>
-          ))}
-        </div>
-      )}
+      ) : null}
 
       <div className="vehicle-condition-layout">
-        <div className="vehicle-map-canvas">
-          <span className="vehicle-map-direction vehicle-map-direction-front">Ön</span>
-          <svg
-            className="vehicle-map-svg"
-            viewBox="0 0 360 580"
-            role={readOnly ? "img" : "group"}
-            aria-label="Üstten araç kaporta ekspertiz şeması"
-          >
-            <path
-              className="vehicle-map-shell"
-              d="M180 22 C244 22 286 64 299 122 L306 201 L296 234 L301 405 C300 472 277 533 236 552 Q180 570 124 552 C83 533 60 472 59 405 L64 234 L54 201 L61 122 C74 64 116 22 180 22 Z"
-              fill={compact ? "#eef1f5" : undefined}
-              stroke={compact ? "#8f9bad" : undefined}
-            />
-            <rect className="vehicle-map-wheel" x="48" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-            <rect className="vehicle-map-wheel" x="293" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-            <rect className="vehicle-map-wheel" x="48" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-            <rect className="vehicle-map-wheel" x="293" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-            {VEHICLE_BODY_PARTS.map((part) => {
+        <section className="vehicle-map-panel" aria-label="Araç kaporta şeması">
+          <header className="vehicle-condition-panel-heading">
+            <div>
+              <span>Üst görünüm</span>
+              <strong>{selectedPartConfig?.label ?? "Araç kaporta şeması"}</strong>
+            </div>
+            {!readOnly ? (
+              <span className="vehicle-condition-active-mode" data-status={activeStatus}>
+                <i aria-hidden="true" />{getVehicleConditionLabel(activeStatus)} modu
+              </span>
+            ) : (
+              <span className="vehicle-condition-panel-count">13 parça</span>
+            )}
+          </header>
+
+          <div className="vehicle-map-canvas">
+            <span className="vehicle-map-direction vehicle-map-direction-front"><i aria-hidden="true" />Ön</span>
+            <svg
+              className="vehicle-map-svg"
+              viewBox="0 0 360 580"
+              role={readOnly ? "img" : "group"}
+              aria-label="Üstten araç kaporta ekspertiz şeması"
+            >
+              <line className="vehicle-map-axis" x1="180" y1="12" x2="180" y2="568" />
+              <path
+                className="vehicle-map-shell"
+                d="M180 22 C244 22 286 64 299 122 L306 201 L296 234 L301 405 C300 472 277 533 236 552 Q180 570 124 552 C83 533 60 472 59 405 L64 234 L54 201 L61 122 C74 64 116 22 180 22 Z"
+                fill={compact ? "#eef1f5" : undefined}
+                stroke={compact ? "#8f9bad" : undefined}
+              />
+              <rect className="vehicle-map-wheel" x="48" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+              <rect className="vehicle-map-wheel" x="293" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+              <rect className="vehicle-map-wheel" x="48" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+              <rect className="vehicle-map-wheel" x="293" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+              {VEHICLE_BODY_PARTS.map((part) => {
+                const status = getVehicleConditionStatus(condition, part.id);
+                return (
+                  <path
+                    key={part.id}
+                    className="vehicle-map-part"
+                    data-status={status}
+                    data-selected={selectedPart === part.id || undefined}
+                    d={partGeometry[part.id]}
+                    fill={compact ? conditionColors[status] : undefined}
+                    stroke={compact ? "#f7f8fa" : undefined}
+                    role={readOnly ? undefined : "button"}
+                    tabIndex={readOnly ? undefined : 0}
+                    aria-pressed={readOnly ? undefined : selectedPart === part.id}
+                    aria-label={readOnly ? undefined : `${part.label}: ${getVehicleConditionLabel(status)}. ${getVehicleConditionLabel(activeStatus)} olarak işaretle`}
+                    onClick={() => applyStatus(part.id)}
+                    onKeyDown={(event) => handlePartKeyDown(event, part.id)}
+                  >
+                    <title>{`${part.label}: ${getVehicleConditionLabel(status)}`}</title>
+                  </path>
+                );
+              })}
+              <path
+                className="vehicle-map-window"
+                d="M145 191 Q180 176 215 191 L219 282 Q180 270 141 282 Z"
+                fill={compact ? "#c7ccd5" : undefined}
+                stroke={compact ? "#8994a5" : undefined}
+              />
+              <path
+                className="vehicle-map-window"
+                d="M141 303 Q180 290 219 303 L221 390 Q180 404 139 390 Z"
+                fill={compact ? "#c7ccd5" : undefined}
+                stroke={compact ? "#8994a5" : undefined}
+              />
+            </svg>
+            <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>
+          </div>
+        </section>
+
+        <section className="vehicle-part-panel" aria-label="Kaporta parça raporu">
+          <header className="vehicle-condition-panel-heading">
+            <div>
+              <span>Kontrol listesi</span>
+              <strong>{compact ? "İşlemli parçalar" : "Kaporta parça raporu"}</strong>
+            </div>
+            <span className="vehicle-condition-panel-count">{compact ? changedCount : VEHICLE_BODY_PARTS.length} kayıt</span>
+          </header>
+          <div className="vehicle-part-list" aria-label="Kaporta parçaları">
+            {visibleParts.map((part) => {
               const status = getVehicleConditionStatus(condition, part.id);
-              return (
-                <path
+              const partNumber = VEHICLE_BODY_PARTS.findIndex((item) => item.id === part.id) + 1;
+              const content = (
+                <>
+                  <span className="vehicle-part-index" aria-hidden="true">{String(partNumber).padStart(2, "0")}</span>
+                  <span className="vehicle-part-name">{part.label}</span>
+                  <span className="vehicle-part-status" data-status={status}>
+                    <i aria-hidden="true" />{getVehicleConditionLabel(status)}
+                  </span>
+                  {!readOnly ? <ChevronRight className="vehicle-part-action" size={15} aria-hidden="true" /> : null}
+                </>
+              );
+
+              return readOnly ? (
+                <div key={part.id} className="vehicle-part-row" data-status={status} data-selected={selectedPart === part.id || undefined}>{content}</div>
+              ) : (
+                <button
                   key={part.id}
-                  className="vehicle-map-part"
+                  type="button"
+                  className="vehicle-part-row"
                   data-status={status}
-                  d={partGeometry[part.id]}
-                  fill={compact ? conditionColors[status] : undefined}
-                  stroke={compact ? "#f7f8fa" : undefined}
-                  role={readOnly ? undefined : "button"}
-                  tabIndex={readOnly ? undefined : 0}
-                  aria-label={readOnly ? undefined : `${part.label}: ${getVehicleConditionLabel(status)}. ${getVehicleConditionLabel(activeStatus)} olarak işaretle`}
+                  data-selected={selectedPart === part.id || undefined}
                   onClick={() => applyStatus(part.id)}
-                  onKeyDown={(event) => handlePartKeyDown(event, part.id)}
+                  aria-pressed={selectedPart === part.id}
+                  aria-label={`${part.label}, mevcut durum ${getVehicleConditionLabel(status)}. ${getVehicleConditionLabel(activeStatus)} olarak işaretle`}
                 >
-                  <title>{`${part.label}: ${getVehicleConditionLabel(status)}`}</title>
-                </path>
+                  {content}
+                </button>
               );
             })}
-            <path
-              className="vehicle-map-window"
-              d="M145 191 Q180 176 215 191 L219 282 Q180 270 141 282 Z"
-              fill={compact ? "#c7ccd5" : undefined}
-              stroke={compact ? "#8994a5" : undefined}
-            />
-            <path
-              className="vehicle-map-window"
-              d="M141 303 Q180 290 219 303 L221 390 Q180 404 139 390 Z"
-              fill={compact ? "#c7ccd5" : undefined}
-              stroke={compact ? "#8994a5" : undefined}
-            />
-          </svg>
-          <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>
-        </div>
-
-        <div className="vehicle-part-list" aria-label="Kaporta parçaları">
-          {VEHICLE_BODY_PARTS.filter((part) => !compact || getVehicleConditionStatus(condition, part.id) !== "original").map((part) => {
-            const status = getVehicleConditionStatus(condition, part.id);
-            const content = (
-              <>
-                <span className="vehicle-part-name">{part.label}</span>
-                <span className="vehicle-part-status" data-status={status}>
-                  <i aria-hidden="true" />{getVehicleConditionLabel(status)}
-                </span>
-              </>
-            );
-
-            return readOnly ? (
-              <div key={part.id} className="vehicle-part-row">{content}</div>
-            ) : (
-              <button
-                key={part.id}
-                type="button"
-                className="vehicle-part-row"
-                onClick={() => applyStatus(part.id)}
-                aria-label={`${part.label}, mevcut durum ${getVehicleConditionLabel(status)}. ${getVehicleConditionLabel(activeStatus)} olarak işaretle`}
-              >
-                {content}
-              </button>
-            );
-          })}
-          {compact && changedCount === 0 ? (
-            <div className="vehicle-part-empty">İşlemli kaporta parçası bulunmuyor.</div>
-          ) : null}
-        </div>
+            {compact && changedCount === 0 ? (
+              <div className="vehicle-part-empty">
+                <Check size={18} aria-hidden="true" />
+                İşlemli kaporta parçası bulunmuyor.
+              </div>
+            ) : null}
+          </div>
+        </section>
       </div>
     </div>
   );
