@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { canManageDealerMembership } from "@/lib/auth/route";
+import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
 import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
@@ -116,6 +117,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             >
               <OfferShareCard
                 dealerName={dealerDetails?.name ?? "POL-CAR"}
+                dealerLogoUrl={dealerDetails ? getDealerLogoSrc(dealerDetails) : null}
                 referenceCode={application.reference_code}
                 amount={currentOffer.amount}
                 currency={currentOffer.currency}

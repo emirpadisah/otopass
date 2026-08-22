@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(23);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -23,6 +23,8 @@ insert into public.dealer_users(user_id, dealer_id, role) values
   ('00000000-0000-4000-8000-000000000101', '00000000-0000-4000-8000-000000000201', 'viewer'),
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000201', 'manager'),
   ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000202', 'manager');
+insert into public.dealer_domains(dealer_id, hostname, status)
+values ('00000000-0000-4000-8000-000000000201', 'apply.dealer-a.test', 'verified');
 insert into public.applications(id, dealer_id, dealer_slug, brand, model, reference_code, submitted_at)
 values
   ('00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Test', 'Car', 'OTP-TEST-1', now()),
@@ -32,6 +34,15 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000101', true);
 select ok(public.current_user_has_dealer_access('00000000-0000-4000-8000-000000000201'), 'viewer can read own dealer');
 select isnt(public.current_user_can_manage_dealer('00000000-0000-4000-8000-000000000201'), true, 'viewer cannot manage dealer');
+select results_eq(
+  $$ select hostname from public.dealer_domains $$,
+  $$ values ('apply.dealer-a.test'::text) $$,
+  'viewer reads own dealer domain'
+);
+select is_empty(
+  $$ delete from public.dealer_domains where hostname = 'apply.dealer-a.test' returning id $$,
+  'viewer cannot remove a domain directly'
+);
 select results_eq(
   $$ select id from public.applications order by id $$,
   $$ values ('00000000-0000-4000-8000-000000000301'::uuid), ('00000000-0000-4000-8000-000000000302'::uuid) $$,
@@ -58,6 +69,14 @@ select lives_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-00
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000103', true);
 select throws_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000302', 200000, 'TRY', null) $$, 'FORBIDDEN', 'cross-tenant manager cannot create offer');
+select is_empty($$ select hostname from public.dealer_domains $$, 'cross-tenant manager cannot read another dealer domain');
+
+set local role anon;
+select results_eq(
+  $$ select dealer_slug from public.resolve_dealer_domain('apply.dealer-a.test') $$,
+  $$ values ('dealer-a'::text) $$,
+  'anonymous custom-host resolver only returns a verified active dealer'
+);
 
 select * from finish();
 rollback;

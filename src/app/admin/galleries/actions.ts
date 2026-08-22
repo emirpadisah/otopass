@@ -31,14 +31,13 @@ export async function updateDealerAction(_prevState: ActionResponse, formData: F
   const legalName = String(formData.get("legalName") ?? "").trim() || null;
   const contactEmail = String(formData.get("contactEmail") ?? "").trim() || null;
   const privacyEmail = String(formData.get("privacyEmail") ?? "").trim() || null;
-  const logoUrl = String(formData.get("logoUrl") ?? "").trim() || null;
   const brandColor = String(formData.get("brandColor") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "on";
   if (!dealerId || !name || name.length > 120) return { ok: false, code: "VALIDATION", message: "Galeri bilgileri geçersiz." };
   if ([contactEmail, privacyEmail].some((email) => email && !/^\S+@\S+\.\S+$/.test(email))) return { ok: false, code: "VALIDATION", message: "E-posta adreslerini kontrol edin." };
   if (brandColor && !/^#[0-9a-f]{6}$/i.test(brandColor)) return { ok: false, code: "VALIDATION", message: "Marka rengi #RRGGBB biçiminde olmalıdır." };
   const supabase = createSupabaseServiceClient();
-  const { error } = await supabase.from("dealers").update({ name, legal_name: legalName, contact_email: contactEmail, privacy_contact_email: privacyEmail, logo_url: logoUrl, brand_color: brandColor, is_active: isActive, deactivated_at: isActive ? null : new Date().toISOString() }).eq("id", dealerId);
+  const { error } = await supabase.from("dealers").update({ name, legal_name: legalName, contact_email: contactEmail, privacy_contact_email: privacyEmail, brand_color: brandColor, is_active: isActive, deactivated_at: isActive ? null : new Date().toISOString() }).eq("id", dealerId);
   if (error) return { ok: false, code: "UPDATE_FAILED", message: "Galeri güncellenemedi." };
   await supabase.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: dealerId, action: "ADMIN_DEALER_UPDATED", metadata: { is_active: isActive } });
   revalidatePath("/admin/galleries");

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { DealerLogo } from "@/components/dealer-logo";
+import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 
 type PageProps = { params: Promise<{ dealerSlug: string }> };
@@ -11,16 +13,16 @@ export const metadata: Metadata = { title: "KVKK Aydınlatma Metni | POL-CAR" };
 
 export default async function PrivacyPage({ params }: PageProps) {
   const { dealerSlug } = await params;
-  const dealer = await getDealerBySlug(dealerSlug);
+  const [dealer, requestHeaders] = await Promise.all([getDealerBySlug(dealerSlug), headers()]);
   if (!dealer) notFound();
   const controller = dealer.legal_name || dealer.name;
   const privacyEmail = dealer.privacy_contact_email || dealer.contact_email || "privacy@pol-car.com";
 
   return (
     <main className="legal-page">
-      <Link href={`/form/${dealerSlug}`} className="legal-back"><ArrowLeft size={16} /> Başvuru formuna dön</Link>
+      <Link href={requestHeaders.get("x-custom-domain") ? "/" : `/form/${dealerSlug}`} className="legal-back"><ArrowLeft size={16} /> Başvuru formuna dön</Link>
       <article className="panel legal-document">
-        <header><BrandLogo size="compact" /><ShieldCheck className="mt-5" size={26} aria-hidden="true" /><p className="section-label">Sürüm 2026-08-17</p><h1>KVKK Aydınlatma Metni</h1></header>
+        <header><DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} /><ShieldCheck className="mt-5" size={26} aria-hidden="true" /><p className="section-label">Sürüm 2026-08-17</p><h1>KVKK Aydınlatma Metni</h1></header>
         <p>Bu form üzerinden aktarılan kişisel verilerin veri sorumlusu <strong>{controller}</strong>’dır. POL-CAR, başvuru ve teklif süreçlerinin yürütüldüğü teknik platformu sağlar.</p>
         <h2>İşlenen veriler</h2><p>Kimlik ve iletişim bilgileri, araç özellikleri, hasar/tramer açıklamaları, yüklenen fotoğraflar ve işlem güvenliği kayıtları işlenir.</p>
         <h2>İşleme amacı</h2><p>Başvurunun değerlendirilmesi, fiyat teklifi hazırlanması, müşteriyle iletişim kurulması, güvenliğin sağlanması ve yasal yükümlülüklerin yerine getirilmesi amaçlanır.</p>

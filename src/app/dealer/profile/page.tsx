@@ -1,14 +1,20 @@
 import Link from "next/link";
-import { ExternalLink, Link2, Store } from "lucide-react";
+import { ExternalLink, Globe2, ImageIcon, Link2, Store } from "lucide-react";
 import { PanelPageHeader, PanelSection, buttonVariants } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
-import { getDealerForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerDomainByDealerId, getDealerForCurrentUserWithDetails, getDealerForCurrentUser } from "@/lib/supabase/queries";
 import { canManageDealerMembership } from "@/lib/auth/route";
+import { getDealerLogoSrc } from "@/lib/dealer-branding";
+import { isVercelDomainServiceConfigured } from "@/lib/vercel/domains";
 import { ProfileForm } from "./ProfileForm";
+import { DealerLogoManager } from "./DealerLogoManager";
+import { DealerDomainManager } from "./DealerDomainManager";
 
 export default async function DealerProfilePage() {
   const [dealer, membership] = await Promise.all([getDealerForCurrentUserWithDetails(), getDealerForCurrentUser()]);
+  const domain = dealer ? await getDealerDomainByDealerId(dealer.id) : null;
+  const canManage = canManageDealerMembership(membership?.role ?? "viewer");
+  const brandingSchemaReady = domain !== undefined;
 
   return (
     <div>
@@ -20,29 +26,34 @@ export default async function DealerProfilePage() {
         meta={<span className="ops-chip">Profil aktif</span>}
       />
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[.8fr_1.2fr]">
-        <PanelSection title="Galeri kimliği" description="Sistemde kayıtlı kurumsal bilgiler" icon={Store}>
-          {dealer ? <ProfileForm dealer={dealer} canManage={canManageDealerMembership(membership?.role ?? "viewer")} /> : <p>Galeri bulunamadı.</p>}
+      <div className="mt-4 grid gap-4">
+        <PanelSection title="Galeri markası" description="Logo, kurumsal bilgiler ve müşteri yüzündeki marka görünümü" icon={ImageIcon}>
+          {dealer ? (
+            <div className="dealer-branding-layout">
+              <DealerLogoManager dealerName={dealer.name} initialLogoSrc={getDealerLogoSrc(dealer)} canManage={canManage} serviceAvailable={brandingSchemaReady} />
+              <div className="dealer-profile-fields"><ProfileForm dealer={dealer} canManage={canManage} /></div>
+            </div>
+          ) : <p>Galeri bulunamadı.</p>}
         </PanelSection>
 
-        <PanelSection title="Müşteri başvuru kanalı" description="Bu adres galeriniz için ayrılmıştır" icon={Link2}>
-          <div className="ops-link-display">
-            <div>
-              <p className="ops-eyebrow">Aktif form adresi</p>
-              <p className="mono mt-2 break-all text-sm text-[var(--ops-text)]">
-                {dealer ? `/form/${dealer.slug}` : "/form/<dealer-slug>"}
-              </p>
+        <div className="grid gap-4 xl:grid-cols-[.72fr_1.28fr]">
+          <PanelSection title="Standart başvuru adresi" description="POL-CAR altında daima aktif kalan bağlantı" icon={Link2}>
+            <div className="ops-link-display">
+              <div>
+                <p className="ops-eyebrow">Aktif form adresi</p>
+                <p className="mono mt-2 break-all text-sm text-[var(--ops-text)]">{dealer ? `/form/${dealer.slug}` : "/form/<dealer-slug>"}</p>
+              </div>
+              {dealer ? (
+                <Link href={`/form/${dealer.slug}`} className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex shrink-0")}>
+                  Formu aç <ExternalLink size={14} aria-hidden="true" />
+                </Link>
+              ) : null}
             </div>
-            {dealer ? (
-              <Link
-                href={`/form/${dealer.slug}`}
-                className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex shrink-0")}
-              >
-                Formu aç <ExternalLink size={14} aria-hidden="true" />
-              </Link>
-            ) : null}
-          </div>
-        </PanelSection>
+          </PanelSection>
+          <PanelSection title="Özel alan adı" description="Galerinizin kendi domaininden doğrudan başvuru alın" icon={Globe2}>
+            <DealerDomainManager domain={domain ?? null} canManage={canManage} serviceConfigured={brandingSchemaReady && isVercelDomainServiceConfigured()} />
+          </PanelSection>
+        </div>
       </div>
     </div>
   );

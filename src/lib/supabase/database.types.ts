@@ -58,6 +58,20 @@ type OfferRow = {
   responded_by: string | null;
 };
 
+type DealerDomainRow = {
+  id: string;
+  dealer_id: string;
+  hostname: string;
+  status: "pending" | "misconfigured" | "verified" | "error";
+  verification: Json;
+  dns_records: Json;
+  last_error: string | null;
+  verified_at: string | null;
+  last_checked_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type TableShape<Row, Insert = Partial<Row>, Update = Partial<Insert>> = {
   Row: Row;
   Insert: Insert;
@@ -69,6 +83,10 @@ export type Database = {
   public: {
     Tables: {
       dealers: TableShape<DealerRow, Partial<DealerRow> & Pick<DealerRow, "name" | "slug">>;
+      dealer_domains: TableShape<
+        DealerDomainRow,
+        Partial<DealerDomainRow> & Pick<DealerDomainRow, "dealer_id" | "hostname">
+      >;
       applications: TableShape<
         ApplicationRow,
         Partial<ApplicationRow> & Pick<ApplicationRow, "dealer_id" | "dealer_slug" | "brand" | "model">
@@ -165,6 +183,10 @@ export type Database = {
       admin_update_user_access: {
         Args: { p_user_id: string; p_full_name: string; p_role: string; p_dealer_id: string | null; p_is_active: boolean };
         Returns: undefined;
+      };
+      resolve_dealer_domain: {
+        Args: { p_hostname: string };
+        Returns: { dealer_slug: string }[];
       };
     };
     Enums: Record<string, never>;

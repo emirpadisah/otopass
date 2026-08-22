@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Camera, Check, ClipboardCheck, Clock3, PhoneCall, ShieldCheck } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { DealerLogo } from "@/components/dealer-logo";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode } from "@/lib/data-mode";
+import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { FormClient } from "./FormClient";
 
@@ -41,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DealerPublicFormPage({ params }: PageProps) {
   const { dealerSlug } = await params;
-  const dealer = await getDealerBySlug(dealerSlug);
+  const [dealer, requestHeaders] = await Promise.all([getDealerBySlug(dealerSlug), headers()]);
 
   if (!dealer) {
     notFound();
@@ -51,7 +53,7 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
     <div className="intake-page">
       <header className="intake-topbar">
         <div className="intake-shell intake-topbar-inner">
-          <BrandLogo size="compact" preload />
+          <DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} priority />
           <div className="intake-dealer-identity">
             <span>Yetkili araç başvurusu</span>
             <strong>{dealer.name}</strong>
@@ -86,6 +88,7 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
 
           <FormClient
             dealerSlug={dealerSlug}
+            customDomain={Boolean(requestHeaders.get("x-custom-domain"))}
             localMode={isLocalDataMode()}
             turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null}
           />

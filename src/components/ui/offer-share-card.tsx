@@ -21,6 +21,7 @@ type OfferVehicle = {
 
 type OfferShareCardProps = {
   dealerName: string;
+  dealerLogoUrl?: string | null;
   referenceCode: string | null;
   amount: number;
   currency: string;
@@ -57,6 +58,7 @@ function formatDate(value: string) {
 
 function OfferSheet({
   dealerName,
+  dealerLogoUrl,
   referenceCode,
   amount,
   currency,
@@ -85,8 +87,8 @@ function OfferSheet({
       <header className="offer-sheet-header">
         <div className="offer-sheet-brand">
           <Image
-            src="/images/pol-car-logo-transparent.png"
-            alt="POL-CAR"
+            src={dealerLogoUrl || "/images/pol-car-logo-transparent.png"}
+            alt={dealerLogoUrl ? `${dealerName} logosu` : "POL-CAR"}
             width={1548}
             height={654}
             sizes={exportMode ? "310px" : "(max-width: 640px) 170px, 250px"}

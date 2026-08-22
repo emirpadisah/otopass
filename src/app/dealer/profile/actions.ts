@@ -15,13 +15,12 @@ export async function updateDealerProfileAction(_state: ActionResponse, formData
   const contactEmail = String(formData.get("contactEmail") ?? "").trim() || null;
   const privacyEmail = String(formData.get("privacyEmail") ?? "").trim() || null;
   const legalName = String(formData.get("legalName") ?? "").trim() || null;
-  const logoUrl = String(formData.get("logoUrl") ?? "").trim() || null;
   const brandColor = String(formData.get("brandColor") ?? "").trim() || null;
   if (!name || name.length > 120) return { ok: false, code: "VALIDATION", message: "Galeri adı geçersiz." };
   if ([contactEmail, privacyEmail].some((email) => email && !/^\S+@\S+\.\S+$/.test(email))) return { ok: false, code: "VALIDATION", message: "E-posta adreslerini kontrol edin." };
   if (brandColor && !/^#[0-9a-f]{6}$/i.test(brandColor)) return { ok: false, code: "VALIDATION", message: "Marka rengi #RRGGBB biçiminde olmalıdır." };
   const service = createSupabaseServiceClient();
-  const { error } = await service.from("dealers").update({ name, contact_email: contactEmail, privacy_contact_email: privacyEmail, legal_name: legalName, logo_url: logoUrl, brand_color: brandColor }).eq("id", membership.dealer_id);
+  const { error } = await service.from("dealers").update({ name, contact_email: contactEmail, privacy_contact_email: privacyEmail, legal_name: legalName, brand_color: brandColor }).eq("id", membership.dealer_id);
   if (error) return { ok: false, code: "UPDATE_FAILED", message: "Profil güncellenemedi." };
   await service.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: membership.dealer_id, action: "DEALER_PROFILE_UPDATED", metadata: {} });
   revalidatePath("/dealer/profile");

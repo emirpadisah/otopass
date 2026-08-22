@@ -116,10 +116,12 @@ function FormSectionHeader({
 
 export function FormClient({
   dealerSlug,
+  customDomain,
   localMode,
   turnstileSiteKey,
 }: {
   dealerSlug: string;
+  customDomain: boolean;
   localMode: boolean;
   turnstileSiteKey: string | null;
 }) {
@@ -464,7 +466,7 @@ export function FormClient({
                 ) : null}
 
                 <div className="intake-consent-block">
-                  <label className="checkbox-row intake-consent"><input type="checkbox" name="privacy_acknowledged" required /><span><a href={`/form/${dealerSlug}/privacy`} target="_blank" rel="noreferrer">KVKK aydınlatma metnini</a> okudum ve kabul ediyorum. *</span></label>
+                  <label className="checkbox-row intake-consent"><input type="checkbox" name="privacy_acknowledged" required /><span><a href={customDomain ? "/privacy" : `/form/${dealerSlug}/privacy`} target="_blank" rel="noreferrer">KVKK aydınlatma metnini</a> okudum ve kabul ediyorum. *</span></label>
                   <span><LockKeyhole size={14} aria-hidden="true" /> Bilgileriniz şifreli bağlantı üzerinden iletilir.</span>
                 </div>
 

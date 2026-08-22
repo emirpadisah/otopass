@@ -17,11 +17,12 @@ import {
   listLocalUsersForAdmin,
 } from "@/lib/local/repository";
 import type { UserRole } from "@/lib/types";
-import { isMissingColumn } from "./schema-compat";
+import { isMissingColumn, isMissingRelation } from "./schema-compat";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
 type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
+type DealerDomainRow = Database["public"]["Tables"]["dealer_domains"]["Row"];
 
 type DealerLinkRow = {
   dealer_id: string;
@@ -138,6 +139,20 @@ export async function getDealerForCurrentUserWithDetails() {
     .maybeSingle();
   if (error) throw error;
   return (data as DealerRow | null) ?? null;
+}
+
+export async function getDealerDomainByDealerId(dealerId: string): Promise<DealerDomainRow | null | undefined> {
+  if (isLocalDataMode()) return null;
+
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from("dealer_domains")
+    .select("*")
+    .eq("dealer_id", dealerId)
+    .maybeSingle();
+  if (error && isMissingRelation(error, "dealer_domains")) return undefined;
+  if (error) throw error;
+  return (data as DealerDomainRow | null) ?? null;
 }
 
 export async function listDealerApplications(dealerId: string): Promise<ApplicationRow[]> {
