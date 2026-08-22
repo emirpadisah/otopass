@@ -53,6 +53,7 @@ export async function POST(request: Request) {
       transmission: application.transmission,
       tramer_info: application.tramer_info,
       damage_info: application.damage_info,
+      body_condition: application.body_condition,
       photo_paths: savedPaths,
       reference_code: createReferenceCode(),
       privacy_version: PRIVACY_NOTICE_VERSION,

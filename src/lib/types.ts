@@ -1,3 +1,5 @@
+import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
+
 export type UserRole =
   | "super_admin"
   | "admin"
@@ -30,6 +32,7 @@ export type ApplicationInput = {
   transmission: string | null;
   tramer_info: string | null;
   damage_info: string | null;
+  body_condition: VehicleBodyCondition;
   privacy_acknowledged: boolean;
 };
 

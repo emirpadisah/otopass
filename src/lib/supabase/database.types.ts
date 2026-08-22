@@ -31,6 +31,7 @@ type ApplicationRow = {
   transmission: string | null;
   tramer_info: string | null;
   damage_info: string | null;
+  body_condition: Json;
   photo_paths: string[];
   reference_code: string | null;
   status: string;

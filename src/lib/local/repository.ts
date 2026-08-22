@@ -156,6 +156,7 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       transmission: input.transmission ?? null,
       tramer_info: input.tramer_info ?? null,
       damage_info: input.damage_info ?? null,
+      body_condition: input.body_condition ?? {},
       photo_paths: input.photo_paths ?? [],
       reference_code: input.reference_code ?? null,
       status: input.status ?? "pending",

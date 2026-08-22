@@ -32,6 +32,7 @@ const payload: LegacyFinalizePayload = {
     transmission: "Otomatik",
     tramer_info: null,
     damage_info: null,
+    body_condition: { hood: "painted" },
     privacy_acknowledged: true,
   },
   files: [{

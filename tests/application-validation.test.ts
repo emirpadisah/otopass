@@ -15,6 +15,7 @@ function makeForm(data: Record<string, string> = {}): FormData {
     owner_phone: "+905551112233",
     brand: "VW",
     model: "Golf",
+    body_condition: '{"hood":"painted"}',
     privacy_acknowledged: "on",
   };
 
@@ -35,7 +36,14 @@ describe("application validation", () => {
     const parsed = parseApplicationInput(makeForm());
     expect(parsed.owner_phone).toBe("+905551112233");
     expect(parsed.owner_email).toBeNull();
+    expect(parsed.body_condition).toEqual({ hood: "painted" });
     expect(() => parseApplicationInput(makeForm({ owner_phone: "0555 111 22 33" }))).toThrow();
+  });
+
+  it("rejects unknown body parts and unsupported condition values", () => {
+    expect(() => parseApplicationInput(makeForm({ body_condition: '{"wing":"painted"}' }))).toThrow();
+    expect(() => parseApplicationInput(makeForm({ body_condition: '{"hood":"damaged"}' }))).toThrow();
+    expect(() => parseApplicationInput(makeForm({ body_condition: "not-json" }))).toThrow();
   });
 
   it("formats phone input and creates WhatsApp links", () => {

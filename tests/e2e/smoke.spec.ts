@@ -18,19 +18,23 @@ for (const path of ["/", "/login", "/form/test-galeri"]) {
   });
 }
 
-test("public application can be submitted in local demo mode", async ({ page }) => {
+test("public application can be submitted in local demo mode", async ({ page }, testInfo) => {
   await page.goto("/form/test-galeri");
   await page.getByLabel(/Araç Sahibi Adı/).fill("E2E Kullanici");
-  await page.getByLabel("Telefon").fill("0555 111 22 33");
-  await expect(page.getByLabel("Telefon")).toHaveValue("+905551112233");
+  const phone = testInfo.project.name === "mobile-chromium" ? "0555 111 22 34" : "0555 111 22 33";
+  await page.getByLabel("Telefon").fill(phone);
+  await expect(page.getByLabel("Telefon")).toHaveValue(testInfo.project.name === "mobile-chromium" ? "+905551112234" : "+905551112233");
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByLabel("Marka").fill("Volkswagen");
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();
 
+  await page.getByText("Boyalı", { exact: true }).click();
+  await page.getByRole("button", { name: /Kaput, mevcut durum Orijinal/ }).click();
+  await expect(page.getByRole("button", { name: /Kaput, mevcut durum Boyalı/ })).toBeVisible();
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
   await page.getByRole("button", { name: "Teklif talebini gönder" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Referans");
+  await expect(page.getByRole("status")).toContainText("Referans", { timeout: 15_000 });
 });

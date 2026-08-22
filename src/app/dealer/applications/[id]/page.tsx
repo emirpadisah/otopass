@@ -1,18 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
   WhatsAppPhoneLink,
+  VehicleConditionMap,
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
 import { getDealerApplicationForCurrentUser, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 import { OfferDecisionForm } from "./OfferDecisionForm";
@@ -108,6 +110,14 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             ) : (
               <div className="ops-empty-state"><Camera size={20} aria-hidden="true" /><p>Bu başvuruda fotoğraf bulunmuyor.</p></div>
             )}
+          </PanelSection>
+
+          <PanelSection
+            title="Kaporta ekspertizi"
+            description="Başvuru sahibinin parça bazında ilettiği kaporta durumu"
+            icon={ScanSearch}
+          >
+            <VehicleConditionMap value={normalizeVehicleBodyCondition(application.body_condition)} readOnly />
           </PanelSection>
 
           <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">

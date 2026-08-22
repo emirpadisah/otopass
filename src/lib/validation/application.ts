@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { isTurkishMobileNumber } from "@/lib/phone";
 import type { ApplicationInput } from "@/lib/types";
+import {
+  VEHICLE_BODY_PART_IDS,
+  VEHICLE_NON_ORIGINAL_STATUSES,
+  type VehicleBodyCondition,
+} from "@/lib/vehicle-condition";
 
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -29,6 +34,23 @@ const nullableInteger = (min: number, max: number) =>
     return parsed;
   });
 
+const vehiclePartIds = new Set<string>(VEHICLE_BODY_PART_IDS);
+const bodyConditionSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value ?? {};
+  if (!value.trim()) return {};
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return value;
+  }
+}, z.record(z.string(), z.enum(VEHICLE_NON_ORIGINAL_STATUSES)).superRefine((value, context) => {
+  for (const partId of Object.keys(value)) {
+    if (!vehiclePartIds.has(partId)) {
+      context.addIssue({ code: "custom", path: [partId], message: "Kaporta parçası geçersiz." });
+    }
+  }
+}).transform((value) => value as VehicleBodyCondition));
+
 const applicationSchema = z.object({
   dealer_slug: z.string().trim().min(1).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   owner_name: z.string().trim().min(2, "Ad soyad zorunludur.").max(120),
@@ -43,6 +65,7 @@ const applicationSchema = z.object({
   transmission: nullableText(50),
   tramer_info: nullableText(2000),
   damage_info: nullableText(2000),
+  body_condition: bodyConditionSchema.default({}),
   privacy_acknowledged: z.boolean().refine(Boolean, "Aydınlatma metnini onaylamalısınız."),
 });
 
@@ -66,6 +89,7 @@ export function parseApplicationInput(formData: FormData): ApplicationInput {
     transmission: formData.get("transmission"),
     tramer_info: formData.get("tramer_info"),
     damage_info: formData.get("damage_info"),
+    body_condition: formData.get("body_condition"),
     privacy_acknowledged: formData.get("privacy_acknowledged") === "on",
   });
 }

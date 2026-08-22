@@ -19,10 +19,11 @@ import {
   Wrench,
 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-import { Button, Field, Input, Textarea } from "@/components/ui";
+import { Button, Field, Input, Textarea, VehicleConditionMap } from "@/components/ui";
 import { formatTurkishMobileInput } from "@/lib/phone";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, MAX_FILE_SIZE } from "@/lib/validation/application";
+import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
 
 type PhotoItem = { id: string; file: File; preview: string };
 type SubmissionState = {
@@ -69,7 +70,7 @@ async function compressPhotos(photos: PhotoItem[], onProgress: (value: number) =
   return output;
 }
 
-function toApplicationPayload(formData: FormData, dealerSlug: string) {
+function toApplicationPayload(formData: FormData, dealerSlug: string, bodyCondition: VehicleBodyCondition) {
   return {
     dealer_slug: dealerSlug,
     owner_name: String(formData.get("owner_name") ?? ""),
@@ -83,6 +84,7 @@ function toApplicationPayload(formData: FormData, dealerSlug: string) {
     transmission: String(formData.get("transmission") ?? ""),
     tramer_info: String(formData.get("tramer_info") ?? ""),
     damage_info: String(formData.get("damage_info") ?? ""),
+    body_condition: bodyCondition,
     privacy_acknowledged: formData.get("privacy_acknowledged") === "on",
   };
 }
@@ -130,6 +132,7 @@ export function FormClient({
   const [currentStep, setCurrentStep] = useState(0);
   const [furthestStep, setFurthestStep] = useState(0);
   const [dragActive, setDragActive] = useState(false);
+  const [bodyCondition, setBodyCondition] = useState<VehicleBodyCondition>({});
   const [state, setState] = useState<SubmissionState>({ tone: "idle", message: "", progress: 0 });
 
   useEffect(() => {
@@ -211,7 +214,7 @@ export function FormClient({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        application: toApplicationPayload(formData, dealerSlug),
+        application: toApplicationPayload(formData, dealerSlug, bodyCondition),
         files: compressed.map((file) => ({ name: file.name, contentType: file.type, size: file.size })),
         turnstileToken: captchaToken,
         website: String(formData.get("website") ?? ""),
@@ -251,6 +254,7 @@ export function FormClient({
 
     try {
       const formData = new FormData(event.currentTarget);
+      formData.set("body_condition", JSON.stringify(bodyCondition));
       setState({ tone: "working", message: photos.length ? "Fotoğraflar hazırlanıyor..." : "Başvuru hazırlanıyor...", progress: 5 });
       const compressed = photos.length
         ? await compressPhotos(photos, (progress) => setState({ tone: "working", message: "Fotoğraflar hazırlanıyor...", progress }))
@@ -261,6 +265,7 @@ export function FormClient({
 
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
       setPhotos([]);
+      setBodyCondition({});
       formRef.current?.reset();
       setCaptchaToken("");
       turnstileRef.current?.reset();
@@ -289,6 +294,7 @@ export function FormClient({
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="intake-form">
       <input type="hidden" name="dealer_slug" value={dealerSlug} />
+      <input type="hidden" name="body_condition" value={JSON.stringify(bodyCondition)} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
 
       {state.tone === "success" ? (
@@ -397,6 +403,17 @@ export function FormClient({
                 headingRef={(element) => { stepHeadingRefs.current[2] = element; }}
               />
               <div className="intake-section-content">
+                <section className="intake-inspection" aria-labelledby="body-condition-title">
+                  <header>
+                    <div>
+                      <span>Görsel ekspertiz</span>
+                      <h3 id="body-condition-title">Kaporta parçaları</h3>
+                    </div>
+                    <p>Aracınızda işlem gören parçaları durumuna göre işaretleyin.</p>
+                  </header>
+                  <VehicleConditionMap value={bodyCondition} onChange={setBodyCondition} />
+                </section>
+
                 <div className="intake-field-grid intake-condition-grid">
                   <Field label="Tramer bilgisi" labelFor="tramer_info"><Textarea id="tramer_info" name="tramer_info" rows={3} placeholder="Tutar veya kayıt bilgisi" /></Field>
                   <Field label="Hasar bilgisi" labelFor="damage_info"><Textarea id="damage_info" name="damage_info" rows={3} placeholder="Boya, değişen parça veya diğer notlar" /></Field>

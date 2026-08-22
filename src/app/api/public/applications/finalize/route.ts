@@ -10,6 +10,7 @@ import {
 import { createRequestId } from "@/lib/security/request";
 import { isDuplicateKey, isMissingColumn } from "@/lib/supabase/schema-compat";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import type { Database } from "@/lib/supabase/database.types";
 import {
   ACCEPTED_IMAGE_TYPES,
   MAX_FILES,
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Fotoğraf yüklemesi doğrulanamadı.", requestId }, { status: 400 });
       }
 
-      const legacyInsert = {
+      const legacyInsert: Database["public"]["Tables"]["applications"]["Insert"] = {
         id: payload.applicationId,
         dealer_id: payload.dealer.id,
         dealer_slug: payload.dealer.slug,
@@ -126,13 +127,17 @@ export async function POST(request: Request) {
         transmission: application.transmission,
         tramer_info: application.tramer_info,
         damage_info: application.damage_info,
+        body_condition: application.body_condition,
         photo_paths: payload.files.map((file) => file.path),
       };
       let { error: insertError } = await supabase.from("applications").insert(legacyInsert);
+      if (insertError && isMissingColumn(insertError, "body_condition")) {
+        delete legacyInsert.body_condition;
+        ({ error: insertError } = await supabase.from("applications").insert(legacyInsert));
+      }
       if (insertError && isMissingColumn(insertError, "vehicle_package")) {
-        const { vehicle_package: _vehiclePackage, ...withoutPackage } = legacyInsert;
-        void _vehiclePackage;
-        ({ error: insertError } = await supabase.from("applications").insert(withoutPackage));
+        delete legacyInsert.vehicle_package;
+        ({ error: insertError } = await supabase.from("applications").insert(legacyInsert));
       }
       if (insertError && isDuplicateKey(insertError)) {
         const { data: existing, error: existingError } = await supabase

@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, ClipboardList, HandCoins, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Camera, ClipboardList, HandCoins, ScanSearch, ShieldCheck } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
   WhatsAppPhoneLink,
+  VehicleConditionMap,
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -88,6 +90,14 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
                 <p>Bu başvuruda fotoğraf bulunmuyor.</p>
               </div>
             )}
+          </PanelSection>
+
+          <PanelSection
+            title="Kaporta ekspertizi"
+            description="Başvuru sahibinin parça bazında ilettiği kaporta durumu"
+            icon={ScanSearch}
+          >
+            <VehicleConditionMap value={normalizeVehicleBodyCondition(application.body_condition)} readOnly />
           </PanelSection>
 
           <PanelSection
