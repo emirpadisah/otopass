@@ -19,8 +19,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { DEALER_LOGO_UPDATED_EVENT } from "@/lib/dealer-branding";
 import { Button } from "./button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -215,6 +216,21 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
+
+  useEffect(() => {
+    setActiveBrandLogoSrc(brandLogoSrc);
+  }, [brandLogoSrc]);
+
+  useEffect(() => {
+    function handleDealerLogoUpdated(event: Event) {
+      const logoSrc = (event as CustomEvent<{ logoSrc: string | null }>).detail?.logoSrc;
+      setActiveBrandLogoSrc(logoSrc ?? null);
+    }
+
+    window.addEventListener(DEALER_LOGO_UPDATED_EVENT, handleDealerLogoUpdated);
+    return () => window.removeEventListener(DEALER_LOGO_UPDATED_EVENT, handleDealerLogoUpdated);
+  }, []);
 
   return (
     <div className="ops-shell">
@@ -223,7 +239,7 @@ export function AppShell({
         <aside className="ops-sidebar ui-scrollbar">
           <ShellNav
             brandLabel={brandLabel}
-            brandLogoSrc={brandLogoSrc}
+            brandLogoSrc={activeBrandLogoSrc}
             useDefaultBrandLogo={useDefaultBrandLogo}
             title={sidebarTitle}
             subtitle={sidebarSubtitle}
@@ -258,7 +274,7 @@ export function AppShell({
                     <div className="ops-drawer-nav">
                       <ShellNav
                         brandLabel={brandLabel}
-                        brandLogoSrc={brandLogoSrc}
+                        brandLogoSrc={activeBrandLogoSrc}
                         useDefaultBrandLogo={useDefaultBrandLogo}
                         title={sidebarTitle}
                         subtitle={sidebarSubtitle}
@@ -277,7 +293,7 @@ export function AppShell({
                 <Brand
                   brandLabel={brandLabel}
                   title={sidebarTitle}
-                  brandLogoSrc={brandLogoSrc}
+                  brandLogoSrc={activeBrandLogoSrc}
                   useDefaultBrandLogo={useDefaultBrandLogo}
                 />
               </div>

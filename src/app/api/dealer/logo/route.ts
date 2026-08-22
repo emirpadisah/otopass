@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { requireUser } from "@/lib/auth/session";
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
     action: "DEALER_LOGO_UPDATED",
     metadata: { content_type: image.contentType, size: bytes.byteLength },
   });
+  revalidatePath("/dealer", "layout");
 
   return NextResponse.json({
     ok: true,
@@ -111,5 +113,6 @@ export async function DELETE() {
     action: "DEALER_LOGO_REMOVED",
     metadata: {},
   });
+  revalidatePath("/dealer", "layout");
   return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
 }

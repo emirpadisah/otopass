@@ -5,6 +5,7 @@ import { ImagePlus, LoaderCircle, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ConfirmDialog } from "@/components/ui";
+import { DEALER_LOGO_UPDATED_EVENT } from "@/lib/dealer-branding";
 
 type DealerLogoManagerProps = {
   dealerName: string;
@@ -43,6 +44,9 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
       const result = await response.json() as { error?: string; logoUrl?: string };
       if (!response.ok || !result.logoUrl) throw new Error(result.error || "Logo yüklenemedi.");
       setLogoSrc(result.logoUrl);
+      window.dispatchEvent(new CustomEvent(DEALER_LOGO_UPDATED_EVENT, {
+        detail: { logoSrc: result.logoUrl },
+      }));
       setMessage({ tone: "success", text: "Galeri logosu güncellendi." });
       router.refresh();
     } catch (error) {
@@ -62,6 +66,9 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || "Logo kaldırılamadı.");
       setLogoSrc(null);
+      window.dispatchEvent(new CustomEvent(DEALER_LOGO_UPDATED_EVENT, {
+        detail: { logoSrc: null },
+      }));
       setMessage({ tone: "success", text: "Galeri logosu kaldırıldı." });
       router.refresh();
     } catch (error) {

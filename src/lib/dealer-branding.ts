@@ -1,5 +1,6 @@
 export const DEALER_ASSET_BUCKET = "dealer-assets";
 export const DEALER_LOGO_PREFIX = `${DEALER_ASSET_BUCKET}/`;
+export const DEALER_LOGO_UPDATED_EVENT = "dealer-logo-updated";
 
 export function getManagedDealerLogoPath(value: string | null | undefined): string | null {
   if (!value?.startsWith(DEALER_LOGO_PREFIX)) return null;
