@@ -52,21 +52,21 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
   const visibleApplications = data.items;
   const statusOptions = [
     { value: "pending", label: `Bekleyen (${counts.pending})` },
-    { value: "offered", label: `Teklif (${counts.offered})` },
-    { value: "accepted", label: `Kabul (${counts.accepted})` },
-    { value: "rejected", label: `Ret (${counts.rejected})` },
+    { value: "offered", label: `Teklif verildi (${counts.offered})` },
+    { value: "accepted", label: `Kabul edildi (${counts.accepted})` },
+    { value: "rejected", label: `Reddedildi (${counts.rejected})` },
     { value: "sold", label: `Satıldı (${counts.sold})` },
-    { value: "archived", label: `Arşiv (${counts.archived})` },
+    { value: "archived", label: `Arşivlendi (${counts.archived})` },
   ];
 
   return (
     <div>
       <PanelPageHeader
-        eyebrow="Galeri / Başvuru havuzu"
+        eyebrow="Çalışma alanı / Başvurular"
         title="Başvurular"
         description={canManage
-          ? "Araçları önceliğine göre inceleyin, teklif verin ve satın alma durumunu güncelleyin."
-          : "Atanan araçları ve mevcut teklif durumlarını güvenli, salt okunur görünümde inceleyin."}
+          ? "Araç bilgilerini inceleyin, teklif oluşturun ve müşteri görüşmesinin sonucunu kaydedin."
+          : "Atanan araçları ve mevcut teklif durumlarını salt okunur görünümde inceleyin."}
         icon={ClipboardList}
         meta={<span className="ops-chip">{counts.all} toplam başvuru</span>}
       />
@@ -74,15 +74,15 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
       {rawParams.deleted === "1" ? (
         <div className="status-alert mt-4" data-tone={rawParams.cleanup === "pending" ? "warning" : "success"} role="status">
           {rawParams.cleanup === "pending"
-            ? "Başvuru silindi. Tamamlanamayan fotoğraf temizliği teknik izlemeye kaydedildi."
+            ? "Başvuru silindi. Bazı fotoğraflar arka planda silinmeye devam ediyor."
             : "Başvuru, ilişkili teklifler ve fotoğraflar kalıcı olarak silindi."}
         </div>
       ) : null}
 
       <PanelSection
         className="mt-4"
-        title="Araç kuyruğu"
-        description={`${visibleApplications.length} / ${data.total} kayıt gösteriliyor`}
+        title="Başvuru listesi"
+        description={`${data.total} kayıttan ${visibleApplications.length} tanesi gösteriliyor`}
         icon={SlidersHorizontal}
         meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={statusOptions} />}
         contentClassName="ops-section-flush"
@@ -93,7 +93,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
               <tr>
                 <TableHeaderCell>Araç sahibi</TableHeaderCell>
                 <TableHeaderCell>Araç</TableHeaderCell>
-                <TableHeaderCell>Yıl / KM</TableHeaderCell>
+                <TableHeaderCell>Yıl / km</TableHeaderCell>
                 <TableHeaderCell>Son teklif</TableHeaderCell>
                 <TableHeaderCell>Durum</TableHeaderCell>
                 <TableHeaderCell className="text-right">İşlem</TableHeaderCell>
@@ -101,7 +101,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
             </TableHead>
             <TableBody>
               {visibleApplications.length === 0 ? (
-                <TableEmptyState colSpan={6} message="Bu durumda başvuru bulunmuyor." />
+                <TableEmptyState colSpan={6} message="Seçili filtrelere uygun başvuru bulunamadı." />
               ) : (
                 visibleApplications.map((application) => {
                   const latestOffer = data.latestOfferByApplication[application.id];
@@ -126,7 +126,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                             className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
                             aria-label={`${application.brand} ${application.model} başvurusunu görüntüle`}
                           >
-                            Görüntüle
+                            İncele
                             <ArrowUpRight size={14} aria-hidden="true" />
                           </Link>
                           {canManage && application.status === "accepted" ? (

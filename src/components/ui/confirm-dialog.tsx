@@ -102,7 +102,7 @@ export function ConfirmDialog({
             ) : (
               <Button type="button" variant={confirmVariant} disabled={busy} onClick={() => void handleConfirm()}>
                 {working ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : null}
-                {working ? "İşleniyor..." : confirmLabel}
+                {working ? "İşlem tamamlanıyor..." : confirmLabel}
               </Button>
             )}
           </div>

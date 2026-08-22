@@ -12,11 +12,11 @@ const statusMap: Record<
     className: "bg-[color:color-mix(in_srgb,var(--warning)_16%,transparent)] text-[var(--warning)] border-[color:color-mix(in_srgb,var(--warning)_42%,transparent)]",
   },
   offered: {
-    label: "Teklif Verildi",
+    label: "Teklif verildi",
     className: "bg-[var(--accent-soft)] text-[var(--accent)] border-[color:var(--accent-soft-strong)]",
   },
   accepted: {
-    label: "Kabul Edildi",
+    label: "Kabul edildi",
     className: "bg-[color:color-mix(in_srgb,var(--success)_16%,transparent)] text-[var(--success)] border-[color:color-mix(in_srgb,var(--success)_42%,transparent)]",
   },
   rejected: {

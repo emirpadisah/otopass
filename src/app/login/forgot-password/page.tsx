@@ -4,7 +4,7 @@ import { ArrowLeft, KeyRound } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
-export const metadata: Metadata = { title: "Şifremi Unuttum | POL-CAR" };
+export const metadata: Metadata = { title: "Şifremi unuttum | POL-CAR" };
 
 export default function ForgotPasswordPage() {
   return (
@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
         <BrandLogo className="mb-6" size="compact" preload />
         <KeyRound className="text-[var(--accent)]" size={24} aria-hidden="true" />
         <h1 className="text-h1 mt-4">Şifrenizi yenileyin</h1>
-        <p className="mb-6 mt-2 text-sm text-[var(--text-muted)]">E-posta adresinize tek kullanımlık güvenli bağlantı gönderilir.</p>
+        <p className="mb-6 mt-2 text-sm text-[var(--text-muted)]">Hesabınıza kayıtlı e-posta adresine şifre yenileme bağlantısı gönderilir.</p>
         <ForgotPasswordForm />
       </section>
     </main>

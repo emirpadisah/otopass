@@ -111,7 +111,7 @@ export async function createLocalDealer(input: {
 }): Promise<DealerRow> {
   return mutateLocalData((data) => {
     if (data.dealers.some((dealer) => dealer.slug === input.slug)) {
-      const error = new Error("Bu slug zaten kullanılıyor.") as Error & { code?: string };
+      const error = new Error("Bu başvuru kodu zaten kullanılıyor.") as Error & { code?: string };
       error.code = "23505";
       throw error;
     }

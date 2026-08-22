@@ -157,11 +157,11 @@ function ShellNav({
         <span className="ops-live-dot" aria-hidden="true" />
         <div className="min-w-0">
           <p className="truncate text-xs font-bold text-[var(--ops-text)]">{subtitle ?? "Operasyon alanı"}</p>
-          <p className="mt-0.5 text-[11px] text-[var(--ops-muted)]">Sistem çevrimiçi</p>
+          <p className="mt-0.5 text-[11px] text-[var(--ops-muted)]">Oturum doğrulandı</p>
         </div>
       </div>
 
-      <nav className="mt-6" aria-label="Ana navigasyon">
+      <nav className="mt-6" aria-label="Ana menü">
         <p className="ops-nav-label">Çalışma alanı</p>
         <div className="mt-2 space-y-1">
           {navItems.map((item) => (
@@ -267,7 +267,7 @@ export function AppShell({
                   <Dialog.Content className="ops-drawer-content" aria-describedby={undefined}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <Dialog.Title className="sr-only">{sidebarTitle} menüsü</Dialog.Title>
-                      <span className="ops-nav-label">Navigasyon</span>
+                      <span className="ops-nav-label">Menü</span>
                       <Dialog.Close asChild>
                         <Button variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Menüyü kapat">
                           <X size={18} aria-hidden="true" />

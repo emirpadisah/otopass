@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const savedPaths: string[] = [];
   try {
     if (!isLocalDataMode() || process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "Bu endpoint yalnız local geliştirme içindir.", requestId }, { status: 404 });
+      return NextResponse.json({ error: "Başvuru adresi bulunamadı.", requestId }, { status: 404 });
     }
     const formData = await request.formData();
     if (String(formData.get("website") ?? "").trim()) return NextResponse.json({ ok: true, dropped: true, requestId });

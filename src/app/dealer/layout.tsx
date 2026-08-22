@@ -10,7 +10,7 @@ import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Başvuru Yönetimi",
+  title: "Başvuru yönetimi",
   description: "Gelen başvuruları yönetin ve teklif verin.",
 };
 
@@ -38,7 +38,7 @@ export default async function DealerLayout({ children }: { children: ReactNode }
       brandLogoSrc={getDealerLogoSrc(dealer)}
       useDefaultBrandLogo={false}
       sidebarTitle={dealer.name}
-      sidebarSubtitle="Galeri operasyon alanı"
+      sidebarSubtitle="Başvuru ve teklif yönetimi"
       headerTitle={dealer.name}
       headerSubtitle={
         canManage
@@ -46,7 +46,7 @@ export default async function DealerLayout({ children }: { children: ReactNode }
           : "Atanan başvuruları ve mevcut teklif durumlarını inceleyin."
       }
       navItems={navItems}
-      footerNote="Galeri oturumu aktif"
+      footerNote="Yetkili oturum"
       logoutAction={logout}
     >
       {children}

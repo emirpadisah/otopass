@@ -32,7 +32,7 @@ npm run bootstrap:admin
 5. Bootstrap secret'larını ortamdan kaldırın. Sonraki kullanıcıları `/admin/users` üzerinden yönetin.
 6. Supabase Dashboard'dan günlük yedek ve PITR'ı etkinleştirin. Aylık geri yükleme testini [production runbook](docs/production-runbook.md) ile kaydedin.
 
-Eski `supabase-schema.sql` yalnız tarihsel başlangıç şemasıdır. Yeni kurulumlarda ve güncellemelerde tek kaynak `supabase/migrations/` dizinidir.
+Veritabanı şemasının tek kaynağı `supabase/migrations/` dizinidir.
 
 ## Kalite kapıları
 

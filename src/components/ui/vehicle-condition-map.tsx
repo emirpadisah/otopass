@@ -96,7 +96,7 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
           </span>
           <div>
             <span>Ekspertiz özeti</span>
-            <strong>{changedCount === 0 ? "Tüm parçalar orijinal" : `${changedCount} parçada işlem var`}</strong>
+            <strong>{changedCount === 0 ? "İşlemli parça belirtilmedi" : `${changedCount} parçada işlem var`}</strong>
           </div>
         </div>
         <div className="vehicle-condition-score">
@@ -258,7 +258,7 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
             {compact && changedCount === 0 ? (
               <div className="vehicle-part-empty">
                 <Check size={18} aria-hidden="true" />
-                İşlemli kaporta parçası bulunmuyor.
+                İşlemli kaporta parçası bildirilmedi.
               </div>
             ) : null}
           </div>

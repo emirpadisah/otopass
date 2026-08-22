@@ -36,8 +36,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const dealer = await getDealerBySlug(dealerSlug);
 
   return {
-    title: dealer ? `${dealer.name} Araç Başvurusu | POL-CAR` : "Araç Başvurusu | POL-CAR",
-    description: "Araç bilgilerinizi güvenli form üzerinden galeri değerlendirmesine gönderin.",
+    title: dealer ? `${dealer.name} | Araç başvurusu` : "Araç başvurusu",
+    description: "Araç bilgilerinizi ve fotoğraflarınızı ön değerlendirme için doğrudan galeriye iletin.",
   };
 }
 
@@ -55,7 +55,7 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
         <div className="intake-shell intake-topbar-inner">
           <DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} priority />
           <div className="intake-dealer-identity">
-            <span>Yetkili araç başvurusu</span>
+            <span>Araç ön değerlendirme</span>
             <strong>{dealer.name}</strong>
           </div>
           <ThemeToggle compact className="ml-auto shrink-0" />
@@ -64,14 +64,14 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
 
       <section className="intake-shell intake-intro" aria-labelledby="intake-page-title">
         <div className="intake-intro-copy">
-          <p className="section-label">POL-CAR araç değerlendirme</p>
-          <h1 id="intake-page-title">Aracınızı 3 kısa adımda değerlendirmeye gönderin.</h1>
-          <p>Temel bilgileri paylaşın; {dealer.name} ekibi aracınızı inceleyip teklif süreci için sizinle iletişime geçsin.</p>
+          <p className="section-label">{dealer.name} araç başvurusu</p>
+          <h1 id="intake-page-title">Aracınızı üç kısa adımda ön değerlendirmeye gönderin</h1>
+          <p>Araç ve iletişim bilgilerinizi paylaşın; {dealer.name} ekibi başvurunuzu inceledikten sonra sizinle iletişime geçsin.</p>
         </div>
         <ul className="intake-trust-list" aria-label="Başvuru avantajları">
-          <li><Check size={14} aria-hidden="true" /> Ücretsiz ön değerlendirme</li>
+          <li><Check size={14} aria-hidden="true" /> Bağlayıcı olmayan ön değerlendirme</li>
           <li><ShieldCheck size={14} aria-hidden="true" /> Güvenli veri aktarımı</li>
-          <li><BadgeCheck size={14} aria-hidden="true" /> Satış zorunluluğu yok</li>
+          <li><BadgeCheck size={14} aria-hidden="true" /> Doğrudan galeriye iletim</li>
         </ul>
       </section>
 
@@ -79,11 +79,11 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
         <main className="intake-form-panel panel">
           <header className="intake-heading">
             <div>
-              <p className="section-label">Güvenli başvuru formu</p>
-              <h2>Teklif talebinizi oluşturun</h2>
-              <p>Her adımda yalnızca değerlendirme için gerekli bilgileri isteyeceğiz.</p>
+              <p className="section-label">Araç başvuru formu</p>
+              <h2>Başvurunuzu oluşturun</h2>
+              <p>Her adımda ön değerlendirme için gerekli bilgileri paylaşın.</p>
             </div>
-            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> Yaklaşık 3 dakika</span>
+            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> 3 kısa adım</span>
           </header>
 
           <FormClient
@@ -96,9 +96,9 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
 
         <aside className="intake-aside glass-highlight">
           <header>
-            <span className="intake-aside-kicker"><BadgeCheck size={15} aria-hidden="true" /> Yetkili değerlendirme noktası</span>
+            <span className="intake-aside-kicker"><BadgeCheck size={15} aria-hidden="true" /> Başvurunun gönderileceği galeri</span>
             <h2>{dealer.name}</h2>
-            <p>Başvurunuz doğrudan bu galeri ekibinin değerlendirme ekranına iletilir.</p>
+            <p>Gönderdiğiniz bilgiler doğrudan bu galerinin yetkili ekibine iletilir.</p>
           </header>
 
           <div className="intake-response-time"><Clock3 size={16} aria-hidden="true" /><span><small>Süreç</small><strong>İnceleme sonrası geri dönüş</strong></span></div>

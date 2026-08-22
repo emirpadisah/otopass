@@ -61,10 +61,10 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
   return (
     <div>
       <PanelPageHeader
-        eyebrow="Galeri / Başvuru detayı"
+        eyebrow="Başvurular / Detay"
         title={`${application.brand} ${application.model}`}
         description={canManage
-          ? "Araç verilerini ve görselleri doğrulayın, ardından karar teklifini oluşturun."
+          ? "Araç bilgilerini ve fotoğrafları inceleyin, ardından teklifinizi oluşturun."
           : "Araç verilerini, görselleri ve mevcut başvuru durumunu inceleyin."}
         icon={CarFront}
         meta={
@@ -97,8 +97,8 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
       <div className={cn("mt-4 grid gap-4", canManage && "xl:grid-cols-[minmax(0,1.35fr)_360px]")}>
         <div className="grid min-w-0 gap-4">
           <PanelSection
-            title="Araç görselleri"
-            description="İnceleme için yüklenen güncel fotoğraflar"
+            title="Araç fotoğrafları"
+            description="Başvuru sırasında yüklenen fotoğraflar"
             icon={Camera}
             meta={<span className="ops-chip">{photoUrls.viewUrls.length} dosya</span>}
           >
@@ -114,8 +114,8 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
           </PanelSection>
 
           <PanelSection
-            title="Kaporta ekspertizi"
-            description="Başvuru sahibinin parça bazında ilettiği kaporta durumu"
+            title="Beyan edilen kaporta durumu"
+            description="Başvuru sahibinin parça bazında verdiği bilgiler"
             icon={ScanSearch}
           >
             <VehicleConditionMap value={bodyCondition} readOnly />
@@ -123,8 +123,8 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
 
           {currentOffer ? (
             <PanelSection
-              title="Teklif görseli"
-              description="Müşteriyle paylaşılabilen, başvuru verilerinden otomatik hazırlanan teklif özeti"
+              title="Paylaşılabilir teklif özeti"
+              description="Başvuru ve teklif bilgilerinden otomatik hazırlanan indirilebilir görsel"
               icon={FileImage}
             >
               <OfferShareCard
@@ -152,7 +152,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
           ) : null}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
-            <PanelSection title="Araç ve müşteri" description="Başvuru sırasında iletilen bilgiler" icon={ClipboardCheck}>
+            <PanelSection title="Başvuru bilgileri" description="Müşteri ve araç bilgileri" icon={ClipboardCheck}>
               <dl className="ops-fact-grid">
                 {facts.map(({ label, value, icon: Icon }) => (
                   <div key={label} className="ops-fact">
@@ -163,7 +163,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               </dl>
             </PanelSection>
 
-            <PanelSection title="Ekspertiz notları" description="Tramer ve hasar beyanı" icon={ClipboardCheck}>
+            <PanelSection title="Hasar beyanı" description="Başvuru sahibinin ilettiği tramer ve hasar bilgileri" icon={ClipboardCheck}>
               <dl className="ops-note-list">
                 <div><dt>Tramer bilgisi</dt><dd>{application.tramer_info ?? "-"}</dd></div>
                 <div><dt>Hasar bilgisi</dt><dd>{application.damage_info ?? "-"}</dd></div>
@@ -176,7 +176,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
           <aside className="xl:sticky xl:top-[102px] xl:self-start">
             <PanelSection
               title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
-              description="Müşteri görüşmesini ve satış kararını kontrollü biçimde ilerletin"
+              description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"
               icon={HandCoins}
             >
               {application.status === "pending" || application.status === "rejected" ? (
@@ -184,7 +184,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               ) : application.status === "offered" && currentOffer ? (
                 <div className="space-y-4">
                   <div className="panel-subtle p-4">
-                    <p className="text-xs text-[var(--text-muted)]">Bekleyen teklif</p>
+                    <p className="text-xs text-[var(--text-muted)]">Yanıt bekleyen teklif</p>
                     <p className="mt-1 text-xl font-bold">
                       {new Intl.NumberFormat("tr-TR", { style: "currency", currency: currentOffer.currency, maximumFractionDigits: 0 }).format(currentOffer.amount)}
                     </p>

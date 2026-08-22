@@ -16,7 +16,7 @@ function SubmitButton() {
   return (
     <Button type="submit" className="w-full justify-center" disabled={pending}>
       <HandCoins size={16} aria-hidden="true" />
-      {pending ? "Teklif kaydediliyor..." : "Teklif Oluştur"}
+      {pending ? "Teklif kaydediliyor..." : "Teklif oluştur"}
     </Button>
   );
 }
@@ -33,12 +33,12 @@ export function OfferForm({ applicationId }: { applicationId: string }) {
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="applicationId" value={applicationId} />
 
-      <Field label="Teklif Tutarı (TRY)" labelFor="amount">
+      <Field label="Teklif tutarı (₺)" labelFor="amount">
         <Input id="amount" name="amount" type="number" min={1} required placeholder="Örn. 875000" />
       </Field>
 
-      <Field label="Notlar" labelFor="notes" description="Müşteriye iletilecek kısa açıklama.">
-        <Textarea id="notes" name="notes" rows={4} placeholder="Araç ekspertiz notu, ödeme koşulu vb." />
+      <Field label="Teklif notu" labelFor="notes" description="Müşteriyle paylaşılacak kısa açıklama.">
+        <Textarea id="notes" name="notes" rows={4} placeholder="Değerlendirme notu veya ödeme koşulu" />
       </Field>
 
       {state.message ? (

@@ -31,13 +31,6 @@ function isRedirectError(error: unknown): boolean {
   return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
 }
 
-function toErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-  return fallback;
-}
-
 export async function login(
   _prevState: LoginState,
   formData: FormData
@@ -57,7 +50,7 @@ export async function login(
     if (isLocalDataMode()) {
       if (!isLocalUserAuthEnabled()) {
         await signOutLocalUser();
-        return { error: "Yerel kullanıcı girişi devre dışı. Panel erişimi için Supabase kullanın." };
+        return { error: "Bu ortamda kullanıcı girişi kapalı." };
       }
 
       const user = await signInLocalUser(email, password);
@@ -72,7 +65,7 @@ export async function login(
       const targetRoute = await resolvePostLoginRoute();
       if (targetRoute === "/login") {
         await signOutLocalUser();
-        return { error: "Bu hesaba giriş yetkisi atanmadı. Admin panelinden rol atayın." };
+        return { error: "Bu hesap için erişim yetkisi bulunmuyor. Sistem yöneticinizle iletişime geçin." };
       }
 
       redirect(targetRoute);
@@ -104,13 +97,13 @@ export async function login(
     const targetRoute = await resolvePostLoginRoute();
     if (targetRoute === "/login") {
       await supabase.auth.signOut();
-      return { error: "Bu hesaba giriş yetkisi atanmadı. Admin panelinden rol atayın." };
+      return { error: "Bu hesap için erişim yetkisi bulunmuyor. Sistem yöneticinizle iletişime geçin." };
     }
 
     redirect(targetRoute);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    return { error: toErrorMessage(error, "Giriş sırasında beklenmeyen bir hata oluştu.") };
+    return { error: "Giriş tamamlanamadı. Lütfen yeniden deneyin." };
   }
 }
 
@@ -120,7 +113,7 @@ export async function requestPasswordReset(
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Geçerli bir e-posta adresi girin." };
-  if (isLocalDataMode()) return { error: "Şifre yenileme Supabase hesaplarında kullanılabilir." };
+  if (isLocalDataMode()) return { error: "Bu ortamda şifre yenileme kullanılamıyor." };
   const ip = getClientIp(await headers());
   const allowed = await consumeRateLimit(`${ip}:${email}`, { scope: "password-reset", limit: 3, windowSeconds: 3600 });
   if (!allowed) return { error: "Çok fazla yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin." };
@@ -168,7 +161,7 @@ export async function changePassword(
     if (isLocalDataMode()) {
       if (!isLocalUserAuthEnabled()) {
         await signOutLocalUser();
-        return { error: "Yerel kullanıcı hesapları için şifre değişimi devre dışı." };
+        return { error: "Bu ortamda şifre değişikliği kullanılamıyor." };
       }
 
       const user = await getLocalSessionUser();
@@ -207,6 +200,6 @@ export async function changePassword(
     redirect(await resolvePostLoginRoute());
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    return { error: toErrorMessage(error, "Şifre güncelleme sırasında hata oluştu.") };
+    return { error: "Şifre güncellenemedi. Lütfen yeniden deneyin." };
   }
 }

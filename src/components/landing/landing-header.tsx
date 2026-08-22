@@ -30,7 +30,7 @@ export function LandingHeader() {
           <div>
             <a href="#faydalar">Galeriler için</a>
             <a href="#guven"><ShieldCheck size={13} aria-hidden="true" /> Güvenli altyapı</a>
-            <Link href="/login">Yetkili erişim</Link>
+            <Link href="/login">Hesabınızla giriş</Link>
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@ export function LandingHeader() {
             <ThemeToggle compact />
             <Link href="/login" className="vc-login-link">
               <LogIn size={16} aria-hidden="true" />
-              Panele giriş
+              Giriş yap
             </Link>
           </div>
 
@@ -70,7 +70,7 @@ export function LandingHeader() {
                       </Dialog.Close>
                     ))}
                   </nav>
-                  <Link href="/login" className="vc-mobile-login">Panele giriş <ArrowRight size={16} aria-hidden="true" /></Link>
+                  <Link href="/login" className="vc-mobile-login">Giriş yap <ArrowRight size={16} aria-hidden="true" /></Link>
                 </Dialog.Content>
               </Dialog.Portal>
             </Dialog.Root>

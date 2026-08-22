@@ -9,9 +9,9 @@ describe("status badge", () => {
     expect(pendingHtml).toContain("Beklemede");
 
     const offeredHtml = renderToStaticMarkup(createElement(StatusBadge, { status: "offered" }));
-    expect(offeredHtml).toContain("Teklif Verildi");
+    expect(offeredHtml).toContain("Teklif verildi");
 
-    expect(renderToStaticMarkup(createElement(StatusBadge, { status: "accepted" }))).toContain("Kabul Edildi");
+    expect(renderToStaticMarkup(createElement(StatusBadge, { status: "accepted" }))).toContain("Kabul edildi");
     expect(renderToStaticMarkup(createElement(StatusBadge, { status: "rejected" }))).toContain("Reddedildi");
     expect(renderToStaticMarkup(createElement(StatusBadge, { status: "archived" }))).toContain("Arşivlendi");
   });

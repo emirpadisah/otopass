@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowRight,
   BadgeCheck,
@@ -36,13 +37,16 @@ const journeys = [
     icon: HandCoins,
   },
   {
-    title: "Operasyonu izle",
-    description: "Galeri ağını, kullanıcıları ve tüm hareketi tek merkezde görün.",
+    title: "Yönetim alanına geç",
+    description: "Galerileri, kullanıcıları ve işlem geçmişini yetkiniz kapsamında yönetin.",
     href: "/login",
     icon: Gauge,
-    badge: "Canlı",
   },
 ];
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const benefits = [
   {
@@ -64,7 +68,7 @@ const benefits = [
   {
     id: "fayda-kontrol",
     title: "Her rol için doğru görünüm",
-    description: "Admin, galeri yöneticisi ve görüntüleyici yalnızca görevini tamamlamak için gereken ekran ve işlemlere ulaşır.",
+    description: "Yönetici, galeri yöneticisi ve görüntüleyici yalnızca görevini tamamlamak için gereken ekran ve işlemlere ulaşır.",
     icon: ShieldCheck,
     visual: "access",
     kicker: "Erişim kontrolü",
@@ -80,7 +84,7 @@ const workflow = [
 const roles = [
   { role: "Müşteri", title: "Kolay başvuru", text: "Gereken bilgileri adım adım iletir, eksik alanlarla uğraşmaz.", icon: UserRoundCheck, metric: "Tek form" },
   { role: "Galeri", title: "Odaklı iş listesi", text: "Atanan araçları, teklifleri ve bekleyen işleri tek sırada yönetir.", icon: Building2, metric: "Net kuyruk" },
-  { role: "Admin", title: "Merkezi kontrol", text: "Galeri, kullanıcı ve erişim rollerini tek yönetim alanında tutar.", icon: ChartNoAxesCombined, metric: "Tam görünürlük" },
+  { role: "Yönetici", title: "Merkezi kontrol", text: "Galeri, kullanıcı ve erişim rollerini tek yönetim alanında tutar.", icon: ChartNoAxesCombined, metric: "Tam görünürlük" },
 ];
 
 const experience = [
@@ -112,7 +116,7 @@ function BenefitVisual({ type }: { type: string }) {
   }
   return (
     <div className="vc-benefit-visual vc-access-visual" aria-hidden="true">
-      <div><span><ShieldCheck size={17} /></span><p><strong>Admin</strong><small>Tam kontrol</small></p><Check size={15} /></div>
+      <div><span><ShieldCheck size={17} /></span><p><strong>Yönetici</strong><small>Tam kontrol</small></p><Check size={15} /></div>
       <div><span><Building2 size={17} /></span><p><strong>Galeri</strong><small>Operasyon erişimi</small></p><Check size={15} /></div>
       <div><span><Users size={17} /></span><p><strong>Görüntüleyici</strong><small>Salt okunur</small></p><Check size={15} /></div>
     </div>
@@ -131,21 +135,20 @@ export default function Home() {
         <section className="vc-hero">
           <div className="vc-container vc-hero-inner">
             <div className="vc-hero-copy">
-              <span className="vc-hero-kicker"><Sparkles size={15} /> POL-CAR araç alım platformu</span>
-              <h1>Araç alımının <span>kolay, güvenilir ve düzenli</span> yolu</h1>
-              <p>POL-CAR ile başvuruyu tek bağlantıda toplayın, araçları ekibinize atayın ve teklif sürecini tek merkezden yönetin.</p>
+              <span className="vc-hero-kicker"><Sparkles size={15} /> Araç başvurusu ve teklif yönetimi</span>
+              <h1>Araç başvurularını ve teklif sürecini <span>tek akışta yönetin</span></h1>
+              <p>POL-CAR ile araç, müşteri, ekspertiz ve fotoğraf bilgilerini düzenli biçimde toplayın; teklif kararlarını aynı çalışma alanından yönetin.</p>
               <div className="vc-hero-cta-row">
-                <Link href="/login" className="vc-primary-cta">Operasyonu aç <ArrowRight size={17} /></Link>
-                <a href="#faydalar" className="vc-text-cta">Sistemi incele <ArrowRight size={16} /></a>
+                <Link href="/login" className="vc-primary-cta">Panele giriş yap <ArrowRight size={17} /></Link>
+                <a href="#faydalar" className="vc-text-cta">Faydaları incele <ArrowRight size={16} /></a>
               </div>
             </div>
 
             <div className="vc-journey-wrap">
-              <p>Hemen başlayın</p>
+              <p>Platformu keşfedin</p>
               <div className="vc-journey-grid">
-                {journeys.map(({ title, description, href, icon: Icon, badge }, index) => (
+                {journeys.map(({ title, description, href, icon: Icon }, index) => (
                   <Link href={href} className="vc-journey-card" key={title} style={{ "--vc-order": index } as React.CSSProperties}>
-                    {badge ? <span className="vc-new-badge">{badge}</span> : null}
                     <span className="vc-journey-icon"><Icon size={23} /></span>
                     <span><strong>{title}</strong><small>{description}</small></span>
                     <ArrowRight className="vc-card-arrow" size={17} />
@@ -158,7 +161,7 @@ export default function Home() {
 
         <section className="vc-proof" id="guven">
           <div className="vc-container vc-proof-inner">
-            <div className="vc-proof-heading"><strong>Operasyon güvencesi</strong><span>Her başvuruda aynı standart</span></div>
+            <div className="vc-proof-heading"><strong>Tutarlı işleyiş</strong><span>Her başvuruda aynı veri düzeni</span></div>
             <div className="vc-proof-item"><FileCheck2 size={25} /><span><strong>Eksiksiz veri</strong><small>Yönlendirilmiş form yapısı</small></span></div>
             <div className="vc-proof-item"><ShieldCheck size={25} /><span><strong>Rol bazlı erişim</strong><small>Yetkiye uygun çalışma alanı</small></span></div>
             <div className="vc-proof-item"><Route size={25} /><span><strong>Güncel durum</strong><small>Tek kayıtta süreç takibi</small></span></div>
@@ -182,8 +185,8 @@ export default function Home() {
           <div className="vc-container">
             <div className="vc-centered-heading" data-reveal>
               <span className="vc-section-kicker">Sistem faydaları</span>
-              <h2>Operasyonunuza özel avantajlar</h2>
-              <p>Daha az takip yükü, daha hızlı karar ve herkes için net bir çalışma düzeni.</p>
+              <h2>Günlük iş akışını sadeleştiren araçlar</h2>
+              <p>Daha az manuel takip, daha hızlı inceleme ve ekip genelinde ortak bir çalışma düzeni.</p>
             </div>
 
             <div className="vc-benefit-grid">
@@ -206,7 +209,7 @@ export default function Home() {
           <div className="vc-container">
             <div className="vc-centered-heading" data-reveal>
               <span className="vc-section-kicker">Nasıl çalışır?</span>
-              <h2>Araç alımının kolay hali</h2>
+              <h2>Başvurudan sonuca üç adım</h2>
               <p>Bilgiyi toplayın, kararı verin, sonucu kaydedin.</p>
             </div>
             <ol className="vc-workflow">
@@ -241,8 +244,8 @@ export default function Home() {
 
         <section className="vc-assist" data-reveal>
           <div className="vc-container vc-assist-inner">
-            <div><span>Operasyonunuzu düzenlemeye hazır mısınız?</span><p>Mevcut hesabınızla güvenli panele geçin ve araç alım akışını tek merkezden yönetin.</p></div>
-            <Link href="/login">Panele geçin <ArrowRight size={16} /></Link>
+            <div><span>Çalışma alanınıza geçin</span><p>Yetkili hesabınızla giriş yapın; başvuruları ve teklif süreçlerini kaldığınız yerden yönetin.</p></div>
+            <Link href="/login">Giriş yap <ArrowRight size={16} /></Link>
           </div>
         </section>
 
@@ -250,8 +253,8 @@ export default function Home() {
           <div className="vc-container">
             <div className="vc-centered-heading" data-reveal>
               <span className="vc-section-kicker">POL-CAR deneyimi</span>
-              <h2>Ekibinizi yavaşlatmayan kontrol</h2>
-              <p>Günlük operasyon için gereken temel avantajlar bir arada.</p>
+              <h2>Ekibin çalışma hızına uyum sağlayan kontrol</h2>
+              <p>Başvuru inceleme ve teklif yönetimi için gereken temel araçlar bir arada.</p>
             </div>
             <div className="vc-experience-grid">
               {experience.map(({ title, text, icon: Icon }) => (
@@ -263,7 +266,7 @@ export default function Home() {
 
         <section className="vc-final-cta">
           <div className="vc-container vc-final-cta-inner" data-reveal>
-            <div><span>Tek akış. Net kontrol.</span><h2>Araç alım operasyonunuzu bugün düzenleyin.</h2></div>
+            <div><span>Tek akış. Net kontrol.</span><h2>Araç başvurularını düzenli bir iş akışına taşıyın.</h2></div>
             <Link href="/login" className="vc-primary-cta">Panele giriş yap <ArrowRight size={17} /></Link>
           </div>
         </section>
@@ -273,7 +276,7 @@ export default function Home() {
         <div className="vc-container vc-footer-grid">
           <div><Link href="/" className="vc-brand" aria-label="POL-CAR ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
           <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#roller">Kimler için?</a></div>
-          <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenli altyapı</a></div>
+          <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenlik yaklaşımı</a><Link href="/terms">Kullanım koşulları</Link></div>
         </div>
         <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} POL-CAR</span><span>Araç alım operasyon platformu</span></div>
       </footer>

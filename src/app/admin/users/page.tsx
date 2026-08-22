@@ -21,6 +21,13 @@ import { listDealers, listUsersForAdmin } from "@/lib/supabase/queries";
 import { UserCreateForm } from "./UserCreateForm";
 
 type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string };
+const roleLabels: Record<string, string> = {
+  super_admin: "Süper yönetici",
+  admin: "Yönetici",
+  dealer_owner: "Galeri sahibi",
+  dealer_manager: "Galeri yöneticisi",
+  dealer_viewer: "Görüntüleyici",
+};
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<Params> }) {
   const raw = await searchParams;
@@ -41,20 +48,20 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
       <PanelPageHeader
         eyebrow="Yönetim / Erişim"
         title="Kullanıcılar"
-        description="Rol, galeri üyeliği ve ilk giriş güvenliğini tek erişim dizininden yönetin."
+        description="Kullanıcı rollerini, galeri üyeliklerini ve hesap durumlarını yönetin."
         icon={UsersRound}
         meta={
           <>
             <span className="ops-chip">{filteredUsers.length} kullanıcı</span>
-            <span className="ops-chip">{passwordResetCount} şifre yenileme</span>
+            <span className="ops-chip">{passwordResetCount} ilk giriş bekliyor</span>
           </>
         }
       />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
         <PanelSection
-          title="Erişim dizini"
-          description="Tüm roller ve bağlı galeri üyelikleri"
+          title="Kullanıcı listesi"
+          description="Roller, galeri üyelikleri ve hesap durumları"
           icon={UsersRound}
           meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={[{ value: "active", label: "Aktif" }, { value: "inactive", label: "Pasif" }]} exportHref={`/api/admin/export/users?${exportQuery}`} />}
           contentClassName="ops-section-flush"
@@ -77,7 +84,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                   <TableRow key={user.user_id}>
                     <TableCell data-label="E-posta" className="whitespace-nowrap font-bold text-[var(--ops-text)]">{user.email ?? "-"}</TableCell>
                     <TableCell data-label="Ad soyad" className="whitespace-nowrap font-bold text-[var(--ops-text)]">{user.full_name ?? "-"}</TableCell>
-                    <TableCell data-label="Roller" className="whitespace-nowrap">{user.roles.join(", ") || "-"}</TableCell>
+                    <TableCell data-label="Roller" className="whitespace-nowrap">{user.roles.map((role) => roleLabels[role] ?? role).join(", ") || "-"}</TableCell>
                     <TableCell data-label="Galeri" className="whitespace-nowrap">
                       {user.dealer_ids
                         .map((dealerId) => dealers.find((dealer) => dealer.id === dealerId)?.name)
@@ -100,8 +107,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
 
         <aside className="order-first xl:order-last xl:sticky xl:top-[102px] xl:self-start">
           <PanelSection
-            title="Kullanıcı tanımla"
-            description="Rol ve üyelik tek güvenli adımda atanır"
+            title="Kullanıcı ekle"
+            description="Hesap, rol ve galeri üyeliğini birlikte oluşturun"
             icon={UserPlus}
           >
             <UserCreateForm dealers={dealers.map((dealer) => ({ id: dealer.id, name: dealer.name }))} />

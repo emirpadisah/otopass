@@ -42,9 +42,9 @@ type InitiateResponse = {
 const fuelOptions = ["Benzin", "Dizel", "LPG", "Hibrit", "Elektrik"];
 const transmissionOptions = ["Manuel", "Otomatik", "Yarı Otomatik"];
 const formSteps = [
-  { label: "İletişim", shortDescription: "Size ulaşalım", icon: ContactRound },
-  { label: "Araç", shortDescription: "Temel özellikler", icon: CarFront },
-  { label: "Kondisyon", shortDescription: "Notlar ve fotoğraflar", icon: Wrench },
+  { label: "İletişim", shortDescription: "İletişim bilgileriniz", icon: ContactRound },
+  { label: "Araç", shortDescription: "Araç özellikleri", icon: CarFront },
+  { label: "Kondisyon", shortDescription: "Ekspertiz ve fotoğraflar", icon: Wrench },
 ] as const;
 const stepFieldIds = [
   ["owner_name", "owner_phone"],
@@ -147,7 +147,7 @@ export function FormClient({
     const incoming = Array.from(files);
     const invalid = incoming.find((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_IMAGE_TYPES)[number]) || file.size > MAX_FILE_SIZE);
     if (invalid) {
-      setState({ tone: "danger", message: "Yalnızca 10 MB altındaki JPG, PNG veya WEBP fotoğrafları seçin.", progress: 0 });
+      setState({ tone: "danger", message: "JPG, PNG veya WebP biçiminde, dosya başına en fazla 10 MB olan fotoğrafları seçin.", progress: 0 });
       return;
     }
     if (photos.length + incoming.length > MAX_FILES) {
@@ -190,7 +190,7 @@ export function FormClient({
     for (const fieldId of stepFieldIds[currentStep]) {
       const field = form.elements.namedItem(fieldId);
       if (field instanceof HTMLInputElement && !field.checkValidity()) {
-        setState({ tone: "danger", message: "Devam etmek için zorunlu alanları kontrol edin.", progress: 0 });
+        setState({ tone: "danger", message: "Zorunlu alanları doldurarak devam edin.", progress: 0 });
         field.reportValidity();
         field.focus();
         return;
@@ -231,7 +231,7 @@ export function FormClient({
         contentType: compressed[index].type,
         upsert: false,
       });
-      if (error) throw new Error("Fotoğraf yüklenemedi. Lütfen tekrar deneyin.");
+      if (error) throw new Error("Fotoğraf yüklenemedi. İnternet bağlantınızı kontrol edip yeniden deneyin.");
       setState({ tone: "working", message: `Fotoğraflar yükleniyor (${index + 1}/${compressed.length})`, progress: 25 + Math.round(((index + 1) / Math.max(compressed.length, 1)) * 65) });
     }
 
@@ -273,7 +273,7 @@ export function FormClient({
       turnstileRef.current?.reset();
       setState({
         tone: "success",
-        message: "Başvurunuz galeri ekibine güvenle iletildi.",
+        message: "Başvurunuz galeri ekibine iletildi.",
         progress: 100,
         referenceCode: result.referenceCode,
       });
@@ -306,7 +306,7 @@ export function FormClient({
           <h2 id="intake-success-title">Aracınız değerlendirme sırasına alındı.</h2>
           <p>{state.message} Süreçle ilgili geri dönüş, paylaştığınız iletişim bilgileri üzerinden yapılacak.</p>
           <div className="intake-reference">
-            <span>Başvuru Referansı</span>
+            <span>Başvuru referansı</span>
             <strong>{state.referenceCode || "Oluşturuldu"}</strong>
           </div>
           <div className="intake-success-note"><LockKeyhole size={16} aria-hidden="true" /> Bu kodu başvurunuzla ilgili görüşmelerde kullanabilirsiniz.</div>
@@ -349,13 +349,13 @@ export function FormClient({
               <FormSectionHeader
                 step={1}
                 title="Sizinle nasıl iletişim kuralım?"
-                description="Teklif ve değerlendirme bilgisini iletebilmemiz için güncel iletişim bilgilerinizi girin."
+                description="Başvurunuzla ilgili geri dönüş için güncel iletişim bilgilerinizi girin."
                 icon={ContactRound}
                 headingRef={(element) => { stepHeadingRefs.current[0] = element; }}
               />
               <div className="intake-field-grid intake-contact-grid">
-                <Field label="Araç Sahibi Adı *" labelFor="owner_name"><Input id="owner_name" name="owner_name" autoComplete="name" placeholder="Ad Soyad" required /></Field>
-                <Field label="Telefon *" labelFor="owner_phone" description="+905551112233 biçiminde, boşluksuz">
+                <Field label="Ad soyad *" labelFor="owner_name"><Input id="owner_name" name="owner_name" autoComplete="name" placeholder="Ad soyad" required /></Field>
+                <Field label="Telefon numarası *" labelFor="owner_phone" description="+905551112233 biçiminde ve boşluksuz girin">
                   <Input
                     id="owner_phone"
                     name="owner_phone"
@@ -376,8 +376,8 @@ export function FormClient({
             <section className="intake-section" hidden={currentStep !== 1}>
               <FormSectionHeader
                 step={2}
-                title="Aracınızı tanıyalım"
-                description="Doğru bir ön değerlendirme için marka ve model zorunludur; diğer bilgiler teklif kalitesini artırır."
+                title="Araç bilgilerini paylaşın"
+                description="Marka ve model zorunludur. Diğer bilgiler ön değerlendirmenin daha ayrıntılı yapılmasına yardımcı olur."
                 icon={CarFront}
                 headingRef={(element) => { stepHeadingRefs.current[1] = element; }}
               />
@@ -385,9 +385,9 @@ export function FormClient({
                 <Field label="Marka *" labelFor="brand"><Input id="brand" name="brand" placeholder="Örn. Volkswagen" required /></Field>
                 <Field label="Model *" labelFor="model"><Input id="model" name="model" placeholder="Örn. Golf" required /></Field>
                 <Field label="Paket" labelFor="vehicle_package"><Input id="vehicle_package" name="vehicle_package" placeholder="Örn. Comfortline" /></Field>
-                <Field label="Model Yılı" labelFor="model_year"><Input id="model_year" name="model_year" type="number" min={1950} max={new Date().getFullYear() + 1} inputMode="numeric" placeholder="2022" /></Field>
+                <Field label="Model yılı" labelFor="model_year"><Input id="model_year" name="model_year" type="number" min={1950} max={new Date().getFullYear() + 1} inputMode="numeric" placeholder="2022" /></Field>
                 <Field label="Kilometre" labelFor="km"><Input id="km" name="km" type="number" min={0} max={10_000_000} inputMode="numeric" placeholder="45000" /></Field>
-                <Field label="Yakıt Tipi" labelFor="fuel_type">
+                <Field label="Yakıt tipi" labelFor="fuel_type">
                   <select id="fuel_type" name="fuel_type" className="input-base"><option value="">Seçin</option>{fuelOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select>
                 </Field>
                 <Field label="Vites" labelFor="transmission">
@@ -399,8 +399,8 @@ export function FormClient({
             <section className="intake-section" hidden={currentStep !== 2} aria-labelledby="photos-title">
               <FormSectionHeader
                 step={3}
-                title="Kondisyonu paylaşın"
-                description="Hasar notları ve net araç fotoğrafları, galeri ekibinin daha hızlı değerlendirme yapmasına yardımcı olur."
+                title="Araç kondisyonunu paylaşın"
+                description="Kaporta durumu, hasar notları ve net fotoğraflar başvurunun daha hızlı incelenmesine yardımcı olur."
                 icon={Wrench}
                 headingRef={(element) => { stepHeadingRefs.current[2] = element; }}
               />
@@ -417,8 +417,8 @@ export function FormClient({
                 </section>
 
                 <div className="intake-field-grid intake-condition-grid">
-                  <Field label="Tramer bilgisi" labelFor="tramer_info"><Textarea id="tramer_info" name="tramer_info" rows={3} placeholder="Tutar veya kayıt bilgisi" /></Field>
-                  <Field label="Hasar bilgisi" labelFor="damage_info"><Textarea id="damage_info" name="damage_info" rows={3} placeholder="Boya, değişen parça veya diğer notlar" /></Field>
+                  <Field label="Tramer bilgisi" labelFor="tramer_info"><Textarea id="tramer_info" name="tramer_info" rows={3} placeholder="Varsa tutar ve kayıt ayrıntısı" /></Field>
+                  <Field label="Hasar bilgisi" labelFor="damage_info"><Textarea id="damage_info" name="damage_info" rows={3} placeholder="Varsa hasar ve onarım ayrıntıları" /></Field>
                 </div>
 
                 <div
@@ -433,7 +433,7 @@ export function FormClient({
                     <span className="intake-upload-icon"><UploadCloud size={24} aria-hidden="true" /></span>
                     <span className="intake-upload-copy">
                       <strong id="photos-title">Araç fotoğraflarını buraya bırakın</strong>
-                      <small id="photo-format">JPG, PNG veya WEBP · dosya başına en fazla 10 MB</small>
+                      <small id="photo-format">JPG, PNG veya WebP · en fazla {MAX_FILES} fotoğraf · dosya başına 10 MB</small>
                     </span>
                     <span className="intake-upload-action"><ImagePlus size={15} aria-hidden="true" /> Fotoğraf seç</span>
                     <input id="photos" type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" aria-describedby="photo-format" onChange={(event) => { selectPhotos(event.target.files); event.target.value = ""; }} />
@@ -466,7 +466,7 @@ export function FormClient({
                 ) : null}
 
                 <div className="intake-consent-block">
-                  <label className="checkbox-row intake-consent"><input type="checkbox" name="privacy_acknowledged" required /><span><a href={customDomain ? "/privacy" : `/form/${dealerSlug}/privacy`} target="_blank" rel="noreferrer">KVKK aydınlatma metnini</a> okudum ve kabul ediyorum. *</span></label>
+                  <label className="checkbox-row intake-consent"><input type="checkbox" name="privacy_acknowledged" required /><span><a href={customDomain ? "/privacy" : `/form/${dealerSlug}/privacy`} target="_blank" rel="noreferrer">KVKK aydınlatma metnini</a> okudum ve kişisel verilerimin belirtilen amaçlarla işleneceği konusunda bilgilendirildim. *</span></label>
                   <span><LockKeyhole size={14} aria-hidden="true" /> Bilgileriniz şifreli bağlantı üzerinden iletilir.</span>
                 </div>
 
@@ -498,7 +498,7 @@ export function FormClient({
               ) : (
                 <Button type="submit" size="lg" className="intake-submit" disabled={working}>
                   {working ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
-                  {working ? "Gönderiliyor..." : "Teklif talebini gönder"}
+                  {working ? "Gönderiliyor..." : "Başvuruyu gönder"}
                 </Button>
               )}
             </div>

@@ -45,7 +45,7 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
   return (
     <div>
       <PanelPageHeader
-        eyebrow="Yönetim / Başvuru"
+        eyebrow="Başvurular / Detay"
         title={vehicleLabel}
         description={`${dealer?.name || "Galeri"} · ${application.reference_code}`}
         icon={ClipboardList}
@@ -81,7 +81,7 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
         <div className="grid min-w-0 content-start gap-4">
           <PanelSection
             title="Araç fotoğrafları"
-            description="Başvuru sırasında yüklenen inceleme görselleri"
+            description="Başvuru sırasında yüklenen fotoğraflar"
             icon={Camera}
             meta={<span className="ops-chip">{photoUrls.viewUrls.length} dosya</span>}
           >
@@ -100,16 +100,16 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
           </PanelSection>
 
           <PanelSection
-            title="Kaporta ekspertizi"
-            description="Başvuru sahibinin parça bazında ilettiği kaporta durumu"
+            title="Beyan edilen kaporta durumu"
+            description="Başvuru sahibinin parça bazında verdiği bilgiler"
             icon={ScanSearch}
           >
             <VehicleConditionMap value={normalizeVehicleBodyCondition(application.body_condition)} readOnly />
           </PanelSection>
 
           <PanelSection
-            title="Ekspertiz notları"
-            description="Müşterinin ilettiği tramer ve hasar beyanı"
+            title="Hasar beyanı"
+            description="Başvuru sahibinin ilettiği tramer ve hasar bilgileri"
             icon={ShieldCheck}
           >
             <dl className="ops-note-list">

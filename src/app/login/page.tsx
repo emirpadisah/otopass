@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const trustItems = [
   {
     title: "Yetkili erişim",
-    description: "Hesaplar admin tarafından oluşturulur ve rol bazlı yönlendirilir.",
+    description: "Hesaplar sistem yöneticisi tarafından oluşturulur ve yetkiye göre yönlendirilir.",
     icon: UserCheck,
   },
   {
@@ -32,9 +32,9 @@ export default function LoginPage() {
           <BrandLogo size="display" preload />
           <p className="mt-3 text-xs font-bold uppercase text-[var(--text-muted)]">Araç alım operasyonu</p>
         </div>
-        <h1 className="text-display mt-4 max-w-xl">Operasyon paneline güvenli erişim.</h1>
+        <h1 className="text-display mt-4 max-w-xl">Çalışma alanınıza güvenli erişim</h1>
         <p className="mt-4 max-w-lg text-base leading-7 text-[var(--text-secondary)]">
-          Admin ve galeri ekipleri, araç başvurularını ve teklif kararlarını tek güvenli oturum
+          Yönetim ve galeri ekipleri, araç başvurularını ve teklif kararlarını yetkili hesapları
           üzerinden yönetir.
         </p>
 
@@ -60,7 +60,7 @@ export default function LoginPage() {
               <ShieldCheck size={14} aria-hidden="true" />
               Güvenli oturum
             </div>
-            <h2 className="text-h1 mt-3">Giriş Yap</h2>
+            <h2 className="text-h1 mt-3">Giriş yap</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               Yetkili kullanıcı hesabınızla devam edin.
             </p>

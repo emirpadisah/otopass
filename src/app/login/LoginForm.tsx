@@ -16,7 +16,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
       className="mt-2 w-full justify-center"
       disabled={disabled || pending}
     >
-      {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
+      {pending ? "Giriş yapılıyor..." : "Giriş yap"}
     </Button>
   );
 }
@@ -52,7 +52,7 @@ export function LoginForm({ disabled = false }: { disabled?: boolean }) {
 
       {disabled ? (
         <div className="status-alert" role="status">
-          Yerel kullanıcı hesapları devre dışı. Panel erişimi için Supabase yapılandırması gereklidir.
+          Bu ortamda kullanıcı girişi kapalı. Erişim için sistem yöneticinizle iletişime geçin.
         </div>
       ) : state.error ? (
         <div className="status-alert" data-tone="danger" role="alert">

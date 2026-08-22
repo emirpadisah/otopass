@@ -6,8 +6,8 @@ import { logout } from "@/app/login/actions";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Yönetim Paneli | POL-CAR",
-  description: "Galerileri, kullanıcıları ve başvuruları yönetin.",
+  title: "Yönetim | POL-CAR",
+  description: "Galerileri, kullanıcıları, başvuruları ve teklifleri yönetin.",
 };
 
 const navItems: AppShellNavItem[] = [
@@ -27,12 +27,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <AppShell
       brandLabel="POL-CAR"
-      sidebarTitle="Yönetim Paneli"
-      sidebarSubtitle="Operasyon merkezi"
-      headerTitle="Yönetim Konsolu"
-      headerSubtitle="Kullanıcı, galeri ve başvuru süreçlerini tek noktadan yönetin."
+      sidebarTitle="Yönetim"
+      sidebarSubtitle="Sistem ve erişim yönetimi"
+      headerTitle="Yönetim"
+      headerSubtitle="Galeri, kullanıcı ve başvuru süreçlerini tek noktadan yönetin."
       navItems={navItems}
-      footerNote="Admin oturumu aktif"
+      footerNote="Yetkili oturum"
       logoutAction={logout}
     >
       {children}

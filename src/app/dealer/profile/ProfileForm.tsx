@@ -16,6 +16,6 @@ export function ProfileForm({ dealer, canManage }: { dealer: Dealer; canManage: 
     <Field label="İletişim e-postası" labelFor="contactEmail"><Input id="contactEmail" name="contactEmail" type="email" defaultValue={dealer.contact_email ?? ""} disabled={!canManage} /></Field>
     <Field label="KVKK e-postası" labelFor="privacyEmail"><Input id="privacyEmail" name="privacyEmail" type="email" defaultValue={dealer.privacy_contact_email ?? ""} disabled={!canManage} /></Field>
     {state.message ? <div className="status-alert sm:col-span-2" data-tone={state.ok ? "success" : "danger"}>{state.message}</div> : null}
-    {canManage ? <Button type="submit" disabled={pending} className="sm:col-span-2 sm:w-fit"><Save size={15} /> Profili Kaydet</Button> : null}
+    {canManage ? <Button type="submit" disabled={pending} className="sm:col-span-2 sm:w-fit"><Save size={15} /> Profili kaydet</Button> : null}
   </form>;
 }

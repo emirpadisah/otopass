@@ -33,7 +33,7 @@ function toErrorMessage(error: unknown, fallback: string): string {
       if (maybe.message.toLowerCase().includes(ALREADY_REGISTERED_MARKER)) {
         return "Bu e-posta ile kayıtlı bir kullanıcı zaten var.";
       }
-      return maybe.message;
+      return fallback;
     }
   }
 
@@ -50,7 +50,7 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
 
   if (isLocalDataMode()) {
     if (!isLocalUserAuthEnabled()) {
-      throw new Error("Yerel kullanıcı oluşturma devre dışı. Supabase kullanıcı yönetimini kullanın.");
+      throw new Error("Bu ortamda kullanıcı oluşturma kullanılamıyor.");
     }
 
     await createLocalUser(input);
@@ -125,7 +125,7 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       },
     });
 
-    assertNoSupabaseError(activityLogError, "Kullanıcı audit kaydı oluşturulamadı.");
+    assertNoSupabaseError(activityLogError, "Kullanıcı işlem kaydı oluşturulamadı.");
   } catch (error) {
     if (createdFreshUser && userId) {
       // Keep auth + app tables consistent if downstream inserts fail.

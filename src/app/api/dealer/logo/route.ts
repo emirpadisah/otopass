@@ -37,7 +37,7 @@ async function getContext() {
 }
 
 export async function POST(request: Request) {
-  if (isLocalDataMode()) return NextResponse.json({ error: "Logo yükleme production ortamında kullanılabilir." }, { status: 409 });
+  if (isLocalDataMode()) return NextResponse.json({ error: "Bu ortamda logo yükleme kullanılamıyor." }, { status: 409 });
   const context = await getContext();
   if (!context) return NextResponse.json({ error: "Bu işlem için yetkiniz bulunmuyor." }, { status: 403 });
 
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  if (isLocalDataMode()) return NextResponse.json({ error: "Logo yönetimi production ortamında kullanılabilir." }, { status: 409 });
+  if (isLocalDataMode()) return NextResponse.json({ error: "Bu ortamda logo yönetimi kullanılamıyor." }, { status: 409 });
   const context = await getContext();
   if (!context) return NextResponse.json({ error: "Bu işlem için yetkiniz bulunmuyor." }, { status: 403 });
   const { actor, membership, service } = context;

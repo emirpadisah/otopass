@@ -12,8 +12,8 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <main className="grid min-h-screen place-items-center p-6">
           <section className="panel max-w-md p-8 text-center">
             <h1 className="text-h1">Beklenmeyen bir hata oluştu</h1>
-            <p className="mt-3 text-sm text-[var(--text-muted)]">İşlem kaydedildi. Sayfayı güvenli biçimde yeniden deneyebilirsiniz.</p>
-            <Button className="mt-6" onClick={reset}>Tekrar Dene</Button>
+            <p className="mt-3 text-sm text-[var(--text-muted)]">Sayfa şu anda tamamlanamıyor. Yeniden deneyin; sorun sürerse daha sonra tekrar gelin.</p>
+            <Button className="mt-6" onClick={reset}>Yeniden dene</Button>
           </section>
         </main>
       </body>

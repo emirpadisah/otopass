@@ -15,7 +15,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending}>
       <PlusCircle size={16} aria-hidden="true" />
-      {pending ? "Oluşturuluyor..." : "Galeri Oluştur"}
+      {pending ? "Oluşturuluyor..." : "Galeri oluştur"}
     </Button>
   );
 }
@@ -25,19 +25,19 @@ export function DealerCreateForm() {
 
   return (
     <form action={formAction} className="grid gap-4">
-          <Field label="Galeri Adı" labelFor="name">
+          <Field label="Galeri adı" labelFor="name">
             <Input id="name" name="name" placeholder="Örn. Atlas Oto Galeri" required />
           </Field>
 
           <Field
-            label="Slug"
+            label="Başvuru kodu"
             labelFor="slug"
             description="Boş bırakılırsa galeri adından otomatik üretilir."
           >
             <Input id="slug" name="slug" placeholder="orn-atlas-oto" />
           </Field>
 
-          <Field label="İletişim E-postası" labelFor="contactEmail">
+          <Field label="İletişim e-postası" labelFor="contactEmail">
             <Input id="contactEmail" name="contactEmail" type="email" placeholder="iletisim@galeri.com" />
           </Field>
 

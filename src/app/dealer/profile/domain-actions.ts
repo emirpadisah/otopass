@@ -46,7 +46,7 @@ export async function addDealerDomainAction(
   _state: ActionResponse,
   formData: FormData,
 ): Promise<ActionResponse> {
-  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Alan adı bağlantısı yalnız production ortamında kullanılabilir." };
+  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Bu ortamda alan adı bağlantısı kullanılamıyor." };
   const context = await getDomainActionContext();
   if (!context) return { ok: false, code: "FORBIDDEN", message: "Alan adı yönetme yetkiniz bulunmuyor." };
 
@@ -106,7 +106,7 @@ export async function refreshDealerDomainAction(
 ): Promise<ActionResponse> {
   void _state;
   void _formData;
-  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Alan adı bağlantısı yalnız production ortamında kullanılabilir." };
+  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Bu ortamda alan adı bağlantısı kullanılamıyor." };
   const context = await getDomainActionContext();
   if (!context) return { ok: false, code: "FORBIDDEN", message: "Alan adı yönetme yetkiniz bulunmuyor." };
   const { actor, membership, service } = context;
@@ -150,7 +150,7 @@ export async function removeDealerDomainAction(
 ): Promise<ActionResponse> {
   void _state;
   void _formData;
-  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Alan adı bağlantısı yalnız production ortamında kullanılabilir." };
+  if (isLocalDataMode()) return { ok: false, code: "UNAVAILABLE", message: "Bu ortamda alan adı bağlantısı kullanılamıyor." };
   const context = await getDomainActionContext();
   if (!context) return { ok: false, code: "FORBIDDEN", message: "Alan adı yönetme yetkiniz bulunmuyor." };
   const { actor, membership, service } = context;

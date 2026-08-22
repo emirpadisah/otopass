@@ -93,9 +93,9 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
       </div>
       <div className="dealer-logo-copy">
         <div>
-          <span className="ops-eyebrow">Müşteriye görünen logo</span>
-          <h3>{logoSrc ? "Galeri logosu aktif" : "Henüz logo yüklenmedi"}</h3>
-          <p>Şeffaf arka planlı, yatay PNG veya WebP dosyası en iyi sonucu verir.</p>
+          <span className="ops-eyebrow">Başvuru formunda görünen logo</span>
+          <h3>{logoSrc ? "Logo yayında" : "Henüz logo yüklenmedi"}</h3>
+          <p>En iyi görünüm için şeffaf arka planlı, yatay PNG veya WebP kullanın.</p>
         </div>
         {canManage && serviceAvailable ? (
           <div className="dealer-logo-actions">
@@ -108,7 +108,7 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
                 const file = event.target.files?.[0];
                 if (file) void uploadLogo(file);
               }}
-              aria-label="Galeri logosu seç"
+              aria-label="Logo dosyası seç"
             />
             <Button type="button" size="sm" onClick={() => inputRef.current?.click()} disabled={pending}>
               {pending ? <LoaderCircle className="animate-spin" size={15} aria-hidden="true" /> : logoSrc ? <Upload size={15} aria-hidden="true" /> : <ImagePlus size={15} aria-hidden="true" />}
@@ -116,9 +116,9 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
             </Button>
             {logoSrc ? (
               <ConfirmDialog
-                trigger={<Button type="button" size="sm" variant="secondary" disabled={pending} aria-label="Galeri logosunu kaldır"><Trash2 size={15} aria-hidden="true" /> Kaldır</Button>}
-                title="Galeri logosunu kaldır?"
-                description="Müşteri formu ve teklif görsellerinde logo alanı galeri adıyla gösterilecek."
+                trigger={<Button type="button" size="sm" variant="secondary" disabled={pending} aria-label="Logoyu kaldır"><Trash2 size={15} aria-hidden="true" /> Kaldır</Button>}
+                title="Logo kaldırılsın mı?"
+                description="Başvuru formu ve teklif görsellerinde logo yerine galeri adı gösterilecek."
                 confirmLabel="Logoyu kaldır"
                 tone="danger"
                 disabled={pending}
@@ -128,7 +128,7 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
           </div>
         ) : null}
       </div>
-      {!serviceAvailable ? <div className="status-alert" data-tone="danger" role="status">Logo yükleme hizmeti henüz hazırlanmadı.</div> : null}
+      {!serviceAvailable ? <div className="status-alert" data-tone="danger" role="status">Logo yönetimi şu anda kullanılamıyor.</div> : null}
       {message ? <div className="status-alert dealer-logo-message" data-tone={message.tone} role="status">{message.text}</div> : null}
     </div>
   );

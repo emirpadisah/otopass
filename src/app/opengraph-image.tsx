@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const alt = "POL-CAR araç alım operasyon platformu";
+export const alt = "POL-CAR araç başvurusu ve teklif yönetimi";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -22,7 +22,7 @@ export default function OpenGraphImage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoDataUrl} alt="" width="260" height="260" style={{ position: "absolute", top: -79, left: 0, width: 260, height: 260 }} />
         </div>
-        <div style={{ marginTop: 24, fontSize: 58, fontWeight: 800, lineHeight: 1.08 }}>Araç alım operasyonu, tek güvenli akışta.</div>
+        <div style={{ marginTop: 24, fontSize: 58, fontWeight: 800, lineHeight: 1.08 }}>Araç başvuruları ve teklifler, tek çalışma alanında.</div>
       </div>
     </div>,
     size

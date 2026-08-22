@@ -24,7 +24,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending} aria-disabled={pending}>
       <UserPlus size={16} aria-hidden="true" />
-      {pending ? "Oluşturuluyor..." : "Kullanıcı Oluştur"}
+      {pending ? "Oluşturuluyor..." : "Kullanıcı oluştur"}
     </Button>
   );
 }
@@ -38,15 +38,15 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
   return (
     <form action={formAction} className="grid gap-4">
           <Field label="E-posta" labelFor="email">
-            <Input id="email" name="email" type="email" placeholder="ornek@pol-car.com" required />
+            <Input id="email" name="email" type="email" placeholder="kullanici@firma.com" required />
           </Field>
 
-          <Field label="Ad Soyad" labelFor="fullName">
-            <Input id="fullName" name="fullName" type="text" placeholder="Kullanıcı adı" />
+          <Field label="Ad soyad" labelFor="fullName">
+            <Input id="fullName" name="fullName" type="text" placeholder="Ad soyad" />
           </Field>
 
           <Field
-            label="Geçici Şifre"
+            label="Geçici şifre"
             labelFor="password"
             description="En az 12 karakter, en az bir büyük harf, bir küçük harf ve bir sayı içermelidir."
           >
@@ -64,16 +64,16 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
               <option value="" disabled>
                 Rol seçin
               </option>
-              <option value="admin">Admin</option>
-              <option value="super_admin">Süper Admin</option>
+              <option value="admin">Yönetici</option>
+              <option value="super_admin">Süper yönetici</option>
               <option value="dealer_owner" disabled={dealers.length === 0}>
-                Galeri Sahibi
+                Galeri sahibi
               </option>
               <option value="dealer_manager" disabled={dealers.length === 0}>
-                Galeri Yöneticisi
+                Galeri yöneticisi
               </option>
               <option value="dealer_viewer" disabled={dealers.length === 0}>
-                Galeri Görüntüleyici
+                Görüntüleyici
               </option>
             </Select>
           </Field>
@@ -83,10 +83,10 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
             labelFor="dealerId"
             description={
               dealers.length === 0
-                ? "Önce Galeriler ekranından galeri oluşturun."
+                  ? "Önce Galeriler ekranından bir galeri oluşturun."
                 : roleNeedsDealer
                   ? "Galeri rolleri için bu seçim zorunludur."
-                  : "Admin rolleri için boş bırakabilirsiniz."
+                  : "Yönetici rolleri için boş bırakabilirsiniz."
             }
           >
             <Select

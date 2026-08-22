@@ -77,7 +77,7 @@ export async function POST(request: Request) {
   const requestId = createRequestId(request.headers);
   try {
     if (isLocalDataMode()) {
-      return NextResponse.json({ error: "Local başvurular ayrı endpoint kullanır.", requestId }, { status: 409 });
+      return NextResponse.json({ error: "Başvuru bu ortamda başlatılamıyor.", requestId }, { status: 409 });
     }
 
     const parsed = requestSchema.parse(await request.json());

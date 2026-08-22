@@ -40,15 +40,15 @@ export default async function AdminGalleriesPage({ searchParams }: { searchParam
       <PanelPageHeader
         eyebrow="Yönetim / Galeri ağı"
         title="Galeriler"
-        description="Başvuru kabul edecek işletmeleri oluşturun, kurumsal kimliklerini ve paylaşım adreslerini yönetin."
+        description="Başvuru kabul edecek galerileri oluşturun, hesap durumlarını ve paylaşım adreslerini yönetin."
         icon={Building2}
         meta={<span className="ops-chip">{filteredDealers.length} kayıtlı galeri</span>}
       />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <PanelSection
-          title="Galeri dizini"
-          description="Sistemde başvuru bağlantısı bulunan işletmeler"
+          title="Galeri listesi"
+          description="Sistemde tanımlı galeriler ve başvuru kodları"
           icon={Building2}
           meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={[{ value: "active", label: "Aktif" }, { value: "inactive", label: "Pasif" }]} exportHref={`/api/admin/export/galleries?${exportQuery}`} />}
           contentClassName="ops-section-flush"
@@ -83,8 +83,8 @@ export default async function AdminGalleriesPage({ searchParams }: { searchParam
 
         <aside className="order-first xl:order-last xl:sticky xl:top-[102px] xl:self-start">
           <PanelSection
-            title="Yeni galeri"
-            description="Form ve başvuru adresi tek adımda hazırlanır"
+            title="Galeri ekle"
+            description="Galeri ve standart başvuru adresi birlikte oluşturulur"
             icon={Plus}
           >
             <DealerCreateForm />

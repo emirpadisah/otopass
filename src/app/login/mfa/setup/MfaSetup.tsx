@@ -37,7 +37,7 @@ export function MfaSetup({ redirectTo = "/dealer" }: MfaSetupProps) {
       const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Galeri hesabı" });
       if (!active) return;
       if (error || !data.totp) {
-        setMessage("MFA kurulumu başlatılamadı. Sayfayı yenileyin.");
+        setMessage("İki adımlı doğrulama başlatılamadı. Sayfayı yenileyip tekrar deneyin.");
         setBusy(false);
         return;
       }
@@ -67,7 +67,7 @@ export function MfaSetup({ redirectTo = "/dealer" }: MfaSetupProps) {
   return (
     <section className="panel w-full max-w-xl p-6 sm:p-8">
       <div className="glass-chip"><ShieldCheck size={14} /> Hesap güvenliği</div>
-      <h1 className="text-h1 mt-4">İki adımlı doğrulamayı tamamlayın</h1>
+      <h1 className="text-h1 mt-4">İki adımlı doğrulama</h1>
       <p className="mt-2 text-sm text-[var(--text-muted)]">
         Hesabınızı isteğe bağlı olarak bir kimlik doğrulayıcı uygulamayla koruyun.
       </p>
@@ -80,7 +80,7 @@ export function MfaSetup({ redirectTo = "/dealer" }: MfaSetupProps) {
       {enrollment ? (
         <form onSubmit={verify} className="mt-5 space-y-4">
           <Field label="6 haneli kod" labelFor="code"><Input id="code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" required minLength={6} maxLength={6} /></Field>
-          <Button type="submit" size="lg" className="w-full justify-center" disabled={busy || code.length !== 6}>{busy ? <LoaderCircle className="animate-spin" size={16} /> : <KeyRound size={16} />} Doğrula ve Devam Et</Button>
+          <Button type="submit" size="lg" className="w-full justify-center" disabled={busy || code.length !== 6}>{busy ? <LoaderCircle className="animate-spin" size={16} /> : <KeyRound size={16} />} Doğrula ve devam et</Button>
         </form>
       ) : null}
     </section>

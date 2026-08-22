@@ -31,13 +31,11 @@ export async function updateDealerAction(_prevState: ActionResponse, formData: F
   const legalName = String(formData.get("legalName") ?? "").trim() || null;
   const contactEmail = String(formData.get("contactEmail") ?? "").trim() || null;
   const privacyEmail = String(formData.get("privacyEmail") ?? "").trim() || null;
-  const brandColor = String(formData.get("brandColor") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "on";
   if (!dealerId || !name || name.length > 120) return { ok: false, code: "VALIDATION", message: "Galeri bilgileri geçersiz." };
   if ([contactEmail, privacyEmail].some((email) => email && !/^\S+@\S+\.\S+$/.test(email))) return { ok: false, code: "VALIDATION", message: "E-posta adreslerini kontrol edin." };
-  if (brandColor && !/^#[0-9a-f]{6}$/i.test(brandColor)) return { ok: false, code: "VALIDATION", message: "Marka rengi #RRGGBB biçiminde olmalıdır." };
   const supabase = createSupabaseServiceClient();
-  const { error } = await supabase.from("dealers").update({ name, legal_name: legalName, contact_email: contactEmail, privacy_contact_email: privacyEmail, brand_color: brandColor, is_active: isActive, deactivated_at: isActive ? null : new Date().toISOString() }).eq("id", dealerId);
+  const { error } = await supabase.from("dealers").update({ name, legal_name: legalName, contact_email: contactEmail, privacy_contact_email: privacyEmail, is_active: isActive, deactivated_at: isActive ? null : new Date().toISOString() }).eq("id", dealerId);
   if (error) return { ok: false, code: "UPDATE_FAILED", message: "Galeri güncellenemedi." };
   await supabase.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: dealerId, action: "ADMIN_DEALER_UPDATED", metadata: { is_active: isActive } });
   revalidatePath("/admin/galleries");
@@ -50,7 +48,7 @@ export async function deleteDealerAction(_prevState: ActionResponse, formData: F
   const actor = await requireUser();
   await requireAdminAccess();
   const roles = await getCurrentUserRoles();
-  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme yalnız super admin tarafından yapılabilir." };
+  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme işlemini yalnızca süper yönetici yapabilir." };
   const dealerId = String(formData.get("dealerId") ?? "").trim();
   const supabase = createSupabaseServiceClient();
   await supabase.from("activity_log").insert({ actor_user_id: actor.id, dealer_id: dealerId, action: "ADMIN_DEALER_DELETE_REQUESTED", metadata: { target_dealer_id: dealerId } });
@@ -85,7 +83,7 @@ export async function createDealerAction(
 
   const slug = slugify(slugInput || name);
   if (!slug) {
-    return { ok: false, code: "VALIDATION", message: "Geçerli bir slug üretilemedi." };
+    return { ok: false, code: "VALIDATION", message: "Geçerli bir başvuru kodu oluşturulamadı." };
   }
 
   if (isLocalDataMode()) {
@@ -99,7 +97,7 @@ export async function createDealerAction(
       return {
         ok: false,
         code: code === "23505" ? "DUPLICATE" : "INSERT_FAILED",
-        message: error instanceof Error ? error.message : "Galeri oluşturulamadı.",
+        message: code === "23505" ? "Bu başvuru kodu zaten kullanılıyor." : "Galeri oluşturulamadı. Lütfen yeniden deneyin.",
       };
     }
   }
@@ -113,9 +111,9 @@ export async function createDealerAction(
 
   if (error) {
     if (error.code === "23505") {
-      return { ok: false, code: "DUPLICATE", message: "Bu slug zaten kullanılıyor." };
+      return { ok: false, code: "DUPLICATE", message: "Bu başvuru kodu zaten kullanılıyor." };
     }
-    return { ok: false, code: "INSERT_FAILED", message: error.message || "Galeri oluşturulamadı." };
+    return { ok: false, code: "INSERT_FAILED", message: "Galeri oluşturulamadı. Lütfen yeniden deneyin." };
   }
 
   const { error: auditError } = await supabase.from("activity_log").insert({
@@ -126,7 +124,7 @@ export async function createDealerAction(
   });
   if (auditError) {
     await supabase.from("dealers").delete().eq("id", dealer.id);
-    return { ok: false, code: "AUDIT_FAILED", message: "Galeri audit kaydı oluşturulamadı." };
+    return { ok: false, code: "AUDIT_FAILED", message: "Galeri işlem kaydı oluşturulamadı." };
   }
 
   revalidatePath("/admin/galleries");

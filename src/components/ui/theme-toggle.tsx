@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 
 export function ThemeToggle({ className, compact = false }: { className?: string; compact?: boolean }) {
   const { isReady, theme, toggleTheme } = useTheme();
-  const label = !isReady ? "Tema" : theme === "dark" ? "Açık Tema" : "Koyu Tema";
+  const label = !isReady ? "Tema" : theme === "dark" ? "Açık tema" : "Koyu tema";
   const title = !isReady ? "Tema tercihi hazırlanıyor" : theme === "dark" ? "Açık temaya geç" : "Koyu temaya geç";
 
   return (

@@ -46,8 +46,8 @@ function DnsRecordRow({ record }: { record: DnsRecord }) {
   return (
     <div className="dealer-domain-record">
       <span className="dealer-domain-record-type">{record.type}</span>
-      <div><small>Ad / Host</small><code>{record.name}</code></div>
-      <div><small>Değer / Target</small><code>{record.value}</code></div>
+      <div><small>Kayıt adı</small><code>{record.name}</code></div>
+      <div><small>Hedef değer</small><code>{record.value}</code></div>
       <button type="button" onClick={copyValue} className="dealer-domain-copy" aria-label={`${record.value} değerini kopyala`} title="Değeri kopyala">
         {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
       </button>
@@ -83,7 +83,7 @@ export function DealerDomainManager({
     return (
       <div className="dealer-domain-unavailable" role="status">
         <AlertTriangle size={20} aria-hidden="true" />
-        <div><strong>Alan adı servisi hazırlanıyor</strong><p>Vercel bağlantısı tamamlandığında bu ekrandan domain ekleyebileceksiniz.</p></div>
+        <div><strong>Alan adı yönetimi kullanılamıyor</strong><p>Hizmet yapılandırıldığında bu ekrandan özel alan adınızı bağlayabilirsiniz.</p></div>
       </div>
     );
   }
@@ -93,14 +93,14 @@ export function DealerDomainManager({
       <form action={addAction} className="dealer-domain-connect">
         <div className="dealer-domain-connect-icon"><Globe2 size={24} aria-hidden="true" /></div>
         <div className="min-w-0 flex-1">
-          <Field label="Özel alan adı" labelFor="hostname" description="Domain sağlayıcınızda gösterilecek DNS kayıtlarını tanımlamanız gerekir.">
+          <Field label="Özel alan adı" labelFor="hostname" description="Bağlantıdan sonra gösterilen DNS kayıtlarını alan adı sağlayıcınıza eklemeniz gerekir.">
             <Input id="hostname" name="hostname" type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="basvuru.galeriniz.com" disabled={!canManage || adding} required />
           </Field>
         </div>
         {canManage ? (
           <Button type="submit" disabled={adding} className="dealer-domain-connect-button">
             {adding ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : <Globe2 size={16} aria-hidden="true" />}
-            {adding ? "Ekleniyor..." : "Domaini bağla"}
+            {adding ? "Ekleniyor..." : "Alan adını bağla"}
           </Button>
         ) : null}
         <div className="dealer-domain-state"><StateMessage state={addState} /></div>
@@ -117,7 +117,7 @@ export function DealerDomainManager({
         <div className="min-w-0 flex-1">
           <span className="ops-eyebrow">Bağlı alan adı</span>
           <h3>{domain.hostname}</h3>
-          <p>{domain.status === "verified" ? "SSL aktif, müşteri formu bu alan adında yayında." : "DNS değişikliklerini tamamladıktan sonra bağlantıyı yeniden kontrol edin."}</p>
+          <p>{domain.status === "verified" ? "Güvenli bağlantı aktif; müşteri formu bu adreste yayında." : "DNS kayıtlarını tamamladıktan sonra bağlantıyı yeniden kontrol edin."}</p>
         </div>
         <span className="dealer-domain-badge" data-status={domain.status}>{statusLabels[domain.status]}</span>
         {domain.status === "verified" ? (
@@ -129,7 +129,7 @@ export function DealerDomainManager({
 
       {records.length > 0 && domain.status !== "verified" ? (
         <div className="dealer-domain-dns">
-          <div><h4>DNS kayıtları</h4><p>Bu kayıtları domain sağlayıcınızın DNS paneline aynen ekleyin.</p></div>
+          <div><h4>DNS kayıtları</h4><p>Bu kayıtları alan adı sağlayıcınızın DNS yönetim ekranına aynen ekleyin.</p></div>
           <div className="dealer-domain-records">
             {records.map((record, index) => <DnsRecordRow key={`${record.type}-${record.name}-${index}`} record={record} />)}
           </div>
@@ -153,7 +153,7 @@ export function DealerDomainManager({
               title="Özel alan adı bağlantısını kaldır?"
               description={`${domain.hostname} adresi artık müşteri formuna yönlenmeyecek.`}
               confirmLabel="Bağlantıyı kaldır"
-              details={["Vercel alan adı kaydı kaldırılır", "Standart form adresi çalışmaya devam eder"]}
+              details={["Özel alan adı bağlantısı kaldırılır", "Standart başvuru adresi çalışmaya devam eder"]}
               tone="danger"
               size="sm"
               variant="ghost"
@@ -165,7 +165,7 @@ export function DealerDomainManager({
           </form>
         </div>
       ) : null}
-      {!serviceConfigured ? <div className="status-alert" data-tone="danger">Alan adı doğrulama servisi şu anda kullanılamıyor.</div> : null}
+      {!serviceConfigured ? <div className="status-alert" data-tone="danger">Alan adı doğrulaması şu anda kullanılamıyor.</div> : null}
     </div>
   );
 }

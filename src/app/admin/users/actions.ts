@@ -9,6 +9,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { getDealerById } from "@/lib/supabase/queries";
+import { validatePasswordPolicy } from "@/lib/validation/password";
 
 const DEALER_ROLES: UserRole[] = ["dealer_owner", "dealer_manager", "dealer_viewer"];
 const ALL_ROLES = new Set<UserRole>([
@@ -18,21 +19,6 @@ const ALL_ROLES = new Set<UserRole>([
   "dealer_manager",
   "dealer_viewer",
 ]);
-
-function getActionErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "object" && error !== null && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.length > 0) {
-      return message;
-    }
-  }
-
-  return fallback;
-}
 
 export async function updateUserAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const actor = await requireUser();
@@ -72,7 +58,7 @@ export async function deleteUserAction(_prevState: ActionResponse, formData: For
   const actor = await requireUser();
   await requireAdminAccess();
   const roles = await getCurrentUserRoles();
-  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme yalnız super admin tarafından yapılabilir." };
+  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme işlemini yalnızca süper yönetici yapabilir." };
   const userId = String(formData.get("userId") ?? "").trim();
   if (!userId || userId === actor.id) return { ok: false, code: "SELF_DELETE", message: "Kendi hesabınızı silemezsiniz." };
   const service = createSupabaseServiceClient();
@@ -104,12 +90,22 @@ export async function createUserAction(
     return { ok: false, code: "VALIDATION", message: "Geçerli bir e-posta adresi girin." };
   }
 
+  try {
+    validatePasswordPolicy(password);
+  } catch (error) {
+    return {
+      ok: false,
+      code: "VALIDATION",
+      message: error instanceof Error ? error.message : "Şifre güvenlik koşullarını karşılamıyor.",
+    };
+  }
+
   if (!ALL_ROLES.has(role)) {
     return { ok: false, code: "VALIDATION", message: "Geçersiz kullanıcı rolü." };
   }
 
   if (role === "super_admin" && !(await getCurrentUserRoles()).includes("super_admin")) {
-    return { ok: false, code: "FORBIDDEN", message: "Super admin rolünü yalnız mevcut bir super admin atayabilir." };
+    return { ok: false, code: "FORBIDDEN", message: "Süper yönetici rolünü yalnızca mevcut bir süper yönetici atayabilir." };
   }
 
   if (fullName && fullName.length > 120) {
@@ -149,10 +145,11 @@ export async function createUserAction(
 
     return { ok: true, code: "USER_CREATED", message: "Kullanıcı başarıyla oluşturuldu." };
   } catch (error) {
+    const duplicateUser = error instanceof Error && error.message === "Bu e-posta ile kayıtlı bir kullanıcı zaten var.";
     return {
       ok: false,
-      code: "USER_CREATE_FAILED",
-      message: getActionErrorMessage(error, "Kullanıcı oluşturulamadı."),
+      code: duplicateUser ? "DUPLICATE" : "USER_CREATE_FAILED",
+      message: duplicateUser ? "Bu e-posta ile kayıtlı bir kullanıcı zaten var." : "Kullanıcı oluşturulamadı. Bilgileri kontrol edip yeniden deneyin.",
     };
   }
 }

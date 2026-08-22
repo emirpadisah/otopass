@@ -26,24 +26,24 @@ export default async function AdminDashboardPage() {
 
   const metrics = [
     {
-      label: "Başvuru hacmi",
+      label: "Toplam başvuru",
       value: String(counts.applications),
-      note: "Sisteme giren araç kayıtları",
+      note: "Sistemdeki araç başvuruları",
       icon: FileText,
       progress: (counts.applications / maxCount) * 100,
     },
     {
-      label: "Galeri ağı",
+      label: "Kayıtlı galeri",
       value: String(counts.dealers),
-      note: "Teklif sürecine bağlı işletmeler",
+      note: "Sisteme tanımlı işletmeler",
       icon: Building2,
       tone: "success" as const,
       progress: (counts.dealers / maxCount) * 100,
     },
     {
-      label: "Teklif etkileşimi",
+      label: "Toplam teklif",
       value: String(counts.offers),
-      note: "Galerilerden gelen toplam teklif",
+      note: "Galeriler tarafından oluşturulan teklifler",
       icon: HandCoins,
       tone: "accent" as const,
       progress: (counts.offers / maxCount) * 100,
@@ -52,9 +52,9 @@ export default async function AdminDashboardPage() {
 
   const pipeline = [
     {
-      label: "Galeri ağı hazır",
+      label: "Galeri tanımlandı",
       value: counts.dealers,
-      description: "Başvuru kabul eden kayıtlı galeri",
+      description: "Sistemde kayıtlı galeri",
       tone: "neutral" as const,
     },
     {
@@ -75,8 +75,8 @@ export default async function AdminDashboardPage() {
     <div>
       <PanelPageHeader
         eyebrow="Yönetim / Genel bakış"
-        title="Operasyon merkezi"
-        description="Galeri ağını, araç başvurularını ve teklif hareketini tek karar ekranından izleyin."
+        title="Sistem özeti"
+        description="Galeri, araç başvurusu ve teklif sayılarını tek görünümden izleyin."
         icon={Gauge}
         meta={
           <span className="ops-chip">
@@ -90,8 +90,8 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,.75fr)]">
         <PanelSection
-          title="Operasyon akışı"
-          description="Ağın başvuru ve teklif üretimine katkısı"
+          title="Kayıt akışı"
+          description="Galeri, başvuru ve teklif sayılarının özeti"
           icon={Gauge}
           meta={<span className="ops-chip">Anlık görünüm</span>}
         >
@@ -105,24 +105,24 @@ export default async function AdminDashboardPage() {
                 href="/admin/galleries"
                 className={cn(buttonVariants({ variant: "primary", size: "md" }), "w-full justify-between")}
               >
-                <span className="flex items-center gap-2"><Building2 size={16} aria-hidden="true" /> Galeri oluştur</span>
+                <span className="flex items-center gap-2"><Building2 size={16} aria-hidden="true" /> Galeri ekle</span>
                 <ArrowUpRight size={15} aria-hidden="true" />
               </Link>
               <Link
                 href="/admin/users"
                 className={cn(buttonVariants({ variant: "secondary", size: "md" }), "w-full justify-between")}
               >
-                <span className="flex items-center gap-2"><UserPlus size={16} aria-hidden="true" /> Kullanıcı tanımla</span>
+                <span className="flex items-center gap-2"><UserPlus size={16} aria-hidden="true" /> Kullanıcı ekle</span>
                 <ArrowUpRight size={15} aria-hidden="true" />
               </Link>
             </div>
           </PanelSection>
 
-          <PanelSection title="Erişim çerçevesi" description="Aktif güvenlik varsayılanları" icon={ShieldCheck}>
+          <PanelSection title="Erişim kuralları" description="Hesaplar için uygulanan temel kontroller" icon={ShieldCheck}>
             <dl className="ops-info-list">
-              <div className="ops-info-row"><dt>Kullanıcı oluşturma</dt><dd>Admin</dd></div>
+              <div className="ops-info-row"><dt>Kullanıcı oluşturma</dt><dd>Yönetici</dd></div>
               <div className="ops-info-row"><dt>Galeri ataması</dt><dd>Rol bazlı</dd></div>
-              <div className="ops-info-row"><dt>İlk giriş</dt><dd>Şifre yenileme</dd></div>
+              <div className="ops-info-row"><dt>İlk giriş</dt><dd>Şifre değişikliği zorunlu</dd></div>
             </dl>
           </PanelSection>
         </div>

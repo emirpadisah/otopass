@@ -12,7 +12,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" className="w-full justify-center" size="lg" disabled={pending}>
-      {pending ? "Kaydediliyor..." : "Şifreyi Kaydet"}
+      {pending ? "Kaydediliyor..." : "Şifreyi kaydet"}
     </Button>
   );
 }
@@ -27,7 +27,7 @@ export function ChangePasswordForm() {
         <div className="grid h-11 w-11 place-items-center rounded-[var(--radius-md)] border border-[var(--border-soft)] bg-[var(--accent-soft)] text-[var(--accent)]">
           <ShieldCheck size={20} aria-hidden="true" />
         </div>
-        <h1 className="text-h1 mt-5">Hesabınızı kullanmadan önce şifrenizi yenileyin.</h1>
+        <h1 className="text-h1 mt-5">Devam etmeden önce yeni bir şifre belirleyin</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
           İlk girişte geçici şifre kalıcı şifreyle değiştirilir. Bu adım tamamlanmadan panele
           erişim verilmez.
@@ -41,7 +41,7 @@ export function ChangePasswordForm() {
               <KeyRound size={14} aria-hidden="true" />
               Hesap güvenliği
             </div>
-            <h2 className="text-h1 mt-3">Yeni Şifre Belirle</h2>
+            <h2 className="text-h1 mt-3">Yeni şifre belirleyin</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
               En az 12 karakter, büyük-küçük harf ve sayı kullanın.
             </p>
@@ -50,16 +50,17 @@ export function ChangePasswordForm() {
         </header>
 
         <form action={formAction} className="space-y-4">
-          <Field label="Yeni Şifre" labelFor="password">
-            <Input id="password" name="password" type="password" minLength={12} required />
+          <Field label="Yeni şifre" labelFor="password">
+            <Input id="password" name="password" type="password" minLength={12} autoComplete="new-password" required />
           </Field>
 
-          <Field label="Şifre Tekrar" labelFor="confirmPassword">
+          <Field label="Yeni şifre tekrar" labelFor="confirmPassword">
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
               minLength={12}
+              autoComplete="new-password"
               required
             />
           </Field>

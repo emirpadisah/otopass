@@ -19,15 +19,15 @@ export default async function DealerProfilePage() {
   return (
     <div>
       <PanelPageHeader
-        eyebrow="Galeri / Kurumsal profil"
-        title="Profil ve paylaşım"
-        description="Galerinin sistem kimliğini ve müşteriye açılan başvuru kanalını yönetin."
+        eyebrow="Ayarlar / Profil"
+        title="Profil ve bağlantılar"
+        description="Logo, iletişim bilgileri ve müşterilerle paylaşacağınız başvuru adreslerini yönetin."
         icon={Store}
         meta={<span className="ops-chip">Profil aktif</span>}
       />
 
       <div className="mt-4 grid gap-4">
-        <PanelSection title="Galeri markası" description="Logo ve müşteriye gösterilen iletişim bilgileri" icon={ImageIcon}>
+        <PanelSection title="Logo ve iletişim" description="Başvuru formunda gösterilen galeri bilgileri" icon={ImageIcon}>
           {dealer ? (
             <div className="dealer-branding-layout">
               <DealerLogoManager dealerName={dealer.name} initialLogoSrc={getDealerLogoSrc(dealer)} canManage={canManage} serviceAvailable={brandingSchemaReady} />
@@ -37,11 +37,11 @@ export default async function DealerProfilePage() {
         </PanelSection>
 
         <div className="grid gap-4 xl:grid-cols-[.72fr_1.28fr]">
-          <PanelSection title="Standart başvuru adresi" description="Platform üzerinde daima aktif kalan ana bağlantı" icon={Link2}>
+          <PanelSection title="Standart başvuru adresi" description="Özel alan adı kullanılmasa da çalışmaya devam eden bağlantı" icon={Link2}>
             <div className="ops-link-display">
               <div>
                 <p className="ops-eyebrow">Aktif form adresi</p>
-                <p className="mono mt-2 break-all text-sm text-[var(--ops-text)]">{dealer ? `/form/${dealer.slug}` : "/form/<dealer-slug>"}</p>
+                <p className="mono mt-2 break-all text-sm text-[var(--ops-text)]">{dealer ? `/form/${dealer.slug}` : "-"}</p>
               </div>
               {dealer ? (
                 <Link href={`/form/${dealer.slug}`} className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex shrink-0")}>
@@ -50,7 +50,7 @@ export default async function DealerProfilePage() {
               ) : null}
             </div>
           </PanelSection>
-          <PanelSection title="Özel alan adı" description="Galerinizin kendi domaininden doğrudan başvuru alın" icon={Globe2}>
+          <PanelSection title="Özel alan adı" description="Galerinize ait internet adresinden doğrudan başvuru alın" icon={Globe2}>
             <DealerDomainManager domain={domain ?? null} canManage={canManage} serviceConfigured={brandingSchemaReady && isVercelDomainServiceConfigured()} />
           </PanelSection>
         </div>

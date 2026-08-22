@@ -56,17 +56,17 @@ export default async function DealerDashboardPage() {
 
   const metrics = [
     {
-      label: "İnceleme kuyruğu",
+      label: "İnceleme bekleyen",
       value: String(pendingCount),
-      note: "Aksiyon bekleyen başvuru",
+      note: "Henüz teklif oluşturulmamış başvuru",
       icon: Clock3,
       tone: "warning" as const,
       progress: (pendingCount / total) * 100,
     },
     {
-      label: "Teklif aşaması",
+      label: "Teklif verilen",
       value: String(offeredCount),
-      note: "Aktif teklif sürecindeki araç",
+      note: "Yanıt veya satış işlemi bekleyen araç",
       icon: HandCoins,
       tone: "accent" as const,
       progress: (offeredCount / total) * 100,
@@ -80,9 +80,9 @@ export default async function DealerDashboardPage() {
       progress: (soldCount / total) * 100,
     },
     {
-      label: "Teklif adedi",
+      label: "Toplam teklif",
       value: String(offerCount),
-      note: "Hesabın toplam teklif sayısı",
+      note: "Oluşturulan teklif sayısı",
       icon: Wallet,
       progress: Math.min(100, (offerCount / total) * 100),
     },
@@ -91,14 +91,14 @@ export default async function DealerDashboardPage() {
   return (
     <div>
       <PanelPageHeader
-        eyebrow="Galeri / Genel bakış"
-        title="Araç alım masası"
-        description="Atanan başvuruların hızını, teklif üretimini ve satın alma sonucunu aynı akışta yönetin."
+        eyebrow="Çalışma alanı / Genel bakış"
+        title="Araç başvuruları"
+        description="Atanan başvuruları, teklifleri ve tamamlanan satın alma işlemlerini tek görünümden izleyin."
         icon={Gauge}
         meta={
           <span className="ops-chip">
             <span className="ops-live-dot" aria-hidden="true" />
-            {canManage ? "İşlem yetkisi aktif" : "Salt okunur erişim"}
+              {canManage ? "Düzenleme yetkisi" : "Salt okunur erişim"}
           </span>
         }
         actions={
@@ -115,19 +115,19 @@ export default async function DealerDashboardPage() {
       <MetricStrip metrics={metrics} />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(300px,.72fr)_minmax(0,1.28fr)]">
-        <PanelSection title="Durum akışı" description="Başvuruların operasyon aşamalarına dağılımı" icon={Gauge}>
+        <PanelSection title="Başvuru durumu" description="Kayıtların mevcut aşamalara göre dağılımı" icon={Gauge}>
           <ProcessRail
             items={[
-              { label: "İnceleme", value: pendingCount, description: "Araç bilgileri kontrol ediliyor", tone: "warning" },
-              { label: "Teklif", value: offeredCount, description: "Fiyatlandırma müşteriye hazır", tone: "accent" },
-              { label: "Satın alma", value: soldCount, description: "Araç alım süreci tamamlandı", tone: "success" },
+              { label: "İnceleme", value: pendingCount, description: "Teklif oluşturulması bekleniyor", tone: "warning" },
+              { label: "Teklif", value: offeredCount, description: "Müşteri yanıtı veya sonuç bekleniyor", tone: "accent" },
+              { label: "Tamamlandı", value: soldCount, description: "Satın alma işlemi kaydedildi", tone: "success" },
             ]}
           />
         </PanelSection>
 
         <PanelSection
           title="Son teklifler"
-          description="En son oluşturulan fiyat hareketleri"
+          description="En son oluşturulan teklifler"
           icon={HandCoins}
           meta={<span className="ops-chip">Son 8 ort. {averageOfferAmount === null ? "-" : formatCurrency(averageOfferAmount)}</span>}
           contentClassName="ops-section-flush"

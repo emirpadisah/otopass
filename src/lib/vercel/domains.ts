@@ -187,9 +187,9 @@ export function getFriendlyDomainError(error: unknown): string {
   if (!(error instanceof VercelDomainError)) return "Alan adı işlemi tamamlanamadı.";
   if (error.code === "NOT_CONFIGURED") return "Alan adı servisi henüz yapılandırılmadı.";
   if (["forbidden", "domain_already_in_use", "alias_in_use"].includes(error.code)) {
-    return "Bu alan adı başka bir Vercel hesabı veya projeyle ilişkili. DNS sahiplik doğrulaması gerekebilir.";
+    return "Bu alan adı başka bir hesapta kullanılıyor olabilir. DNS sahiplik doğrulamasını kontrol edin.";
   }
-  if (error.code === "custom_domain_needs_upgrade") return "Vercel özel alan adı sınırına ulaşıldı.";
+  if (error.code === "custom_domain_needs_upgrade") return "Özel alan adı sınırına ulaşıldı. Sistem yöneticinizle iletişime geçin.";
   if (error.status === 429) return "Alan adı servisi yoğun. Birkaç dakika sonra yeniden deneyin.";
-  return "Alan adı Vercel üzerinde yapılandırılamadı.";
+  return "Alan adı yapılandırılamadı. DNS bilgilerini kontrol edip yeniden deneyin.";
 }

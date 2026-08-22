@@ -20,10 +20,11 @@ for (const path of ["/", "/login", "/form/test-galeri"]) {
 
 test("public application can be submitted in local demo mode", async ({ page }, testInfo) => {
   await page.goto("/form/test-galeri");
-  await page.getByLabel(/Araç Sahibi Adı/).fill("E2E Kullanici");
-  const phone = testInfo.project.name === "mobile-chromium" ? "0555 111 22 34" : "0555 111 22 33";
-  await page.getByLabel("Telefon").fill(phone);
-  await expect(page.getByLabel("Telefon")).toHaveValue(testInfo.project.name === "mobile-chromium" ? "+905551112234" : "+905551112233");
+  await page.getByLabel(/Ad soyad/).fill("E2E Kullanici");
+  const projectDigit = testInfo.project.name === "mobile-chromium" ? "2" : "1";
+  const nationalPhone = `555${projectDigit}${String(Date.now()).slice(-6)}`;
+  await page.getByLabel(/Telefon numarası/).fill(`0${nationalPhone}`);
+  await expect(page.getByLabel(/Telefon numarası/)).toHaveValue(`+90${nationalPhone}`);
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByLabel("Marka").fill("Volkswagen");
@@ -34,7 +35,7 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByRole("button", { name: /Kaput, mevcut durum Orijinal/ }).click();
   await expect(page.getByRole("button", { name: /Kaput, mevcut durum Boyalı/ })).toBeVisible();
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
-  await page.getByRole("button", { name: "Teklif talebini gönder" }).click();
+  await page.getByRole("button", { name: "Başvuruyu gönder" }).click();
 
-  await expect(page.getByRole("status")).toContainText("Referans", { timeout: 15_000 });
+  await expect(page.getByRole("status")).toContainText("Başvuru referansı", { timeout: 15_000 });
 });
