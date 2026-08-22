@@ -6290,41 +6290,59 @@ html.theme-dark .vehicle-condition [data-status="replaced"] {
   position: relative;
   z-index: 1;
   display: block;
-  width: min(100%, 220px);
+  width: min(100%, 276px);
   height: auto;
   overflow: visible;
-  filter: drop-shadow(0 20px 18px rgba(14, 24, 40, 0.14));
+  filter: drop-shadow(0 18px 17px rgba(14, 24, 40, 0.12));
 }
 
-.vehicle-map-axis {
-  stroke: color-mix(in srgb, var(--text-muted) 26%, transparent);
-  stroke-dasharray: 3 8;
-  stroke-width: 1;
+.vehicle-map-guide {
+  fill: color-mix(in srgb, var(--text-muted) 14%, transparent);
+}
+
+.vehicle-map-shadow {
+  pointer-events: none;
+  fill: color-mix(in srgb, var(--text-muted) 9%, var(--surface-1));
+  opacity: 0.92;
+}
+
+.vehicle-map-wheels {
+  pointer-events: none;
+  fill: #f0f1f3;
+  stroke: #ffffff;
+  stroke-width: 3;
   vector-effect: non-scaling-stroke;
-}
-
-.vehicle-map-shell {
-  fill: color-mix(in srgb, var(--surface-1) 88%, var(--text-primary) 12%);
-  stroke: color-mix(in srgb, var(--border-strong) 74%, var(--text-primary));
-  stroke-width: 2;
-}
-
-.vehicle-map-wheel {
-  fill: color-mix(in srgb, var(--text-primary) 86%, black);
-  opacity: 0.9;
 }
 
 .vehicle-map-window {
   pointer-events: none;
-  fill: color-mix(in srgb, var(--text-primary) 18%, var(--surface-2));
-  stroke: color-mix(in srgb, var(--text-primary) 38%, var(--border-soft));
-  stroke-width: 1.5;
+  fill: #f7f7f8;
+  stroke: #f0f1f3;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.vehicle-map-part[data-status="original"] {
+  --map-part-color: #e6e9ed;
+}
+
+.vehicle-map-part[data-status="local_paint"] {
+  --map-part-color: #ff9d32;
+}
+
+.vehicle-map-part[data-status="painted"] {
+  --map-part-color: #4389cc;
+}
+
+.vehicle-map-part[data-status="replaced"] {
+  --map-part-color: #ff4b55;
 }
 
 .vehicle-map-part {
-  fill: var(--condition-color);
-  stroke: color-mix(in srgb, var(--surface-1) 90%, var(--text-primary));
-  stroke-width: 2.5;
+  fill: var(--map-part-color);
+  stroke: #ffffff;
+  stroke-width: 3.5;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   transition: filter 180ms ease, opacity 180ms ease, stroke 180ms ease, stroke-width 180ms ease;
 }
@@ -6341,8 +6359,8 @@ html.theme-dark .vehicle-condition [data-status="replaced"] {
 .vehicle-condition:not([data-read-only="true"]) .vehicle-map-part:focus-visible {
   outline: none;
   stroke: #ffffff;
-  stroke-width: 5;
-  filter: brightness(1.04) drop-shadow(0 0 6px color-mix(in srgb, var(--condition-color) 72%, transparent));
+  stroke-width: 5.5;
+  filter: brightness(1.04) drop-shadow(0 0 7px color-mix(in srgb, var(--map-part-color) 72%, transparent));
 }
 
 .vehicle-map-direction {
@@ -6554,7 +6572,7 @@ button.vehicle-part-row:hover .vehicle-part-action {
 }
 
 .vehicle-condition[data-compact="true"] .vehicle-map-svg {
-  width: min(100%, 176px);
+  width: min(100%, 204px);
 }
 
 .vehicle-condition[data-compact="true"] .vehicle-part-list {

@@ -15,26 +15,26 @@ import {
 } from "@/lib/vehicle-condition";
 
 const partGeometry: Record<VehicleBodyPartId, string> = {
-  front_bumper: "M112 52 Q180 32 248 52 L238 79 Q180 67 122 79 Z",
-  hood: "M126 86 Q180 70 234 86 L224 181 Q180 163 136 181 Z",
-  left_front_fender: "M118 88 L135 183 L111 221 L72 202 Q75 127 105 93 Z",
-  right_front_fender: "M242 88 L225 183 L249 221 L288 202 Q285 127 255 93 Z",
-  left_front_door: "M109 227 L137 190 L133 292 L101 305 L79 265 L82 240 Z",
-  right_front_door: "M251 227 L223 190 L227 292 L259 305 L281 265 L278 240 Z",
-  left_rear_door: "M101 313 L133 300 L130 398 L110 431 L76 405 L82 336 Z",
-  right_rear_door: "M259 313 L227 300 L230 398 L250 431 L284 405 L278 336 Z",
-  left_rear_fender: "M75 413 L110 438 L127 493 L107 526 L77 508 Q67 464 69 434 Z",
-  right_rear_fender: "M285 413 L250 438 L233 493 L253 526 L283 508 Q293 464 291 434 Z",
-  roof: "M144 188 Q180 170 216 188 L224 396 Q180 414 136 396 Z",
-  trunk: "M129 405 Q180 421 231 405 L239 496 Q180 514 121 496 Z",
-  rear_bumper: "M112 505 Q180 523 248 505 L254 534 Q180 554 106 534 Z",
+  front_bumper: "M128 42 Q121 42 121 49 L121 67 Q121 74 128 74 H232 Q239 74 239 67 V49 Q239 42 232 42 Z M135 53 H157 L165 63 H134 Z M203 53 H226 L226 63 H195 Z",
+  hood: "M132 86 Q180 67 228 86 Q234 88 235 96 L226 166 Q180 149 134 166 L125 96 Q126 88 132 86 Z",
+  left_front_fender: "M48 95 H73 L79 121 L70 135 H48 Z",
+  right_front_fender: "M312 95 H287 L281 121 L290 135 H312 Z",
+  left_front_door: "M48 153 Q59 158 68 151 L117 224 H48 Z",
+  right_front_door: "M312 153 Q301 158 292 151 L243 224 H312 Z",
+  left_rear_door: "M48 229 H117 V275 L76 292 H48 Z",
+  right_rear_door: "M312 229 H243 V275 L284 292 H312 Z",
+  left_rear_fender: "M48 284 L76 292 Q70 302 78 311 L74 334 H48 Z",
+  right_rear_fender: "M312 284 L284 292 Q290 302 282 311 L286 334 H312 Z",
+  roof: "M139 229 H221 L219 287 H141 Z",
+  trunk: "M128 300 Q180 315 232 300 L239 332 Q180 350 121 332 Z",
+  rear_bumper: "M127 347 Q121 347 121 354 V371 Q121 378 128 378 H232 Q239 378 239 371 V354 Q239 347 232 347 Z M135 356 H157 L161 368 H135 Z M203 356 H225 V368 H199 Z",
 };
 
 const conditionColors: Record<VehicleConditionStatus, string> = {
-  original: "#9aa6b7",
-  local_paint: "#d69214",
-  painted: "#2166d1",
-  replaced: "#d73545",
+  original: "#e6e9ed",
+  local_paint: "#ff9d32",
+  painted: "#4389cc",
+  replaced: "#ff4b55",
 };
 
 const statusDescriptions: Record<VehicleConditionStatus, string> = {
@@ -177,21 +177,20 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
             <span className="vehicle-map-direction vehicle-map-direction-front"><i aria-hidden="true" />Ön</span>
             <svg
               className="vehicle-map-svg"
-              viewBox="0 0 360 580"
+              viewBox="0 0 360 420"
               role={readOnly ? "img" : "group"}
               aria-label="Üstten araç kaporta ekspertiz şeması"
             >
-              <line className="vehicle-map-axis" x1="180" y1="12" x2="180" y2="568" />
-              <path
-                className="vehicle-map-shell"
-                d="M180 22 C244 22 286 64 299 122 L306 201 L296 234 L301 405 C300 472 277 533 236 552 Q180 570 124 552 C83 533 60 472 59 405 L64 234 L54 201 L61 122 C74 64 116 22 180 22 Z"
-                fill={compact ? "#eef1f5" : undefined}
-                stroke={compact ? "#8f9bad" : undefined}
-              />
-              <rect className="vehicle-map-wheel" x="48" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-              <rect className="vehicle-map-wheel" x="293" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-              <rect className="vehicle-map-wheel" x="48" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
-              <rect className="vehicle-map-wheel" x="293" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+              <g className="vehicle-map-guide" aria-hidden="true">
+                <rect x="137" y="20" width="20" height="8" rx="2" />
+                <rect x="203" y="20" width="20" height="8" rx="2" />
+                <rect x="137" y="396" width="20" height="8" rx="2" />
+                <rect x="203" y="396" width="20" height="8" rx="2" />
+              </g>
+              <path className="vehicle-map-shadow" d="M87 101 L123 88 L138 166 L130 227 L119 292 L101 337 H78 L92 288 L101 226 L82 139 Z" />
+              <path className="vehicle-map-shadow" d="M273 101 L237 88 L222 166 L230 227 L241 292 L259 337 H282 L268 288 L259 226 L278 139 Z" />
+              <path className="vehicle-map-window" d="M134 166 Q180 148 226 166 L216 218 H144 Z" />
+              <path className="vehicle-map-window" d="M141 287 H219 L230 300 Q180 314 130 300 Z" />
               {VEHICLE_BODY_PARTS.map((part) => {
                 const status = getVehicleConditionStatus(condition, part.id);
                 return (
@@ -201,8 +200,10 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
                     data-status={status}
                     data-selected={selectedPart === part.id || undefined}
                     d={partGeometry[part.id]}
+                    fillRule="evenodd"
+                    clipRule="evenodd"
                     fill={compact ? conditionColors[status] : undefined}
-                    stroke={compact ? "#f7f8fa" : undefined}
+                    stroke={compact ? "#ffffff" : undefined}
                     role={readOnly ? undefined : "button"}
                     tabIndex={readOnly ? undefined : 0}
                     aria-pressed={readOnly ? undefined : selectedPart === part.id}
@@ -214,18 +215,12 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
                   </path>
                 );
               })}
-              <path
-                className="vehicle-map-window"
-                d="M145 191 Q180 176 215 191 L219 282 Q180 270 141 282 Z"
-                fill={compact ? "#c7ccd5" : undefined}
-                stroke={compact ? "#8994a5" : undefined}
-              />
-              <path
-                className="vehicle-map-window"
-                d="M141 303 Q180 290 219 303 L221 390 Q180 404 139 390 Z"
-                fill={compact ? "#c7ccd5" : undefined}
-                stroke={compact ? "#8994a5" : undefined}
-              />
+              <g className="vehicle-map-wheels" aria-hidden="true">
+                <circle cx="48" cy="142" r="21" />
+                <circle cx="312" cy="142" r="21" />
+                <circle cx="48" cy="285" r="21" />
+                <circle cx="312" cy="285" r="21" />
+              </g>
             </svg>
             <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>
           </div>
