@@ -450,6 +450,28 @@ html.theme-light .ops-shell {
   width: 180px;
 }
 
+.ops-brand-logo-image {
+  position: relative;
+  display: block;
+  height: 52px;
+}
+
+.ops-brand-logo-image img {
+  object-fit: contain;
+  object-position: left center;
+}
+
+.ops-brand-logo-placeholder {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--ops-line-strong);
+  border-radius: 7px;
+  background: var(--ops-accent-soft);
+  color: var(--ops-accent-strong);
+}
+
 .ops-brand-context {
   display: flex;
   max-width: 100%;
@@ -618,6 +640,15 @@ html.theme-light .ops-shell {
 
 .ops-topbar .ops-brand-logo {
   width: 116px;
+}
+
+.ops-topbar .ops-brand-logo-image {
+  height: 36px;
+}
+
+.ops-topbar .ops-brand-logo-placeholder {
+  width: 36px;
+  height: 36px;
 }
 
 .ops-topbar .ops-brand-context {
@@ -2122,6 +2153,28 @@ html.theme-light .ops-drawer-content {
   width: min(72%, 280px);
 }
 
+.dealer-logo-placeholder {
+  display: grid;
+  max-width: 280px;
+  justify-items: center;
+  gap: 7px;
+  padding: 20px;
+  color: var(--ops-muted);
+  text-align: center;
+}
+
+.dealer-logo-placeholder strong {
+  overflow-wrap: anywhere;
+  color: var(--ops-text);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.dealer-logo-placeholder span {
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .dealer-logo-copy {
   display: flex;
   min-width: 0;
@@ -2364,6 +2417,22 @@ html.theme-light .ops-drawer-content {
 .dealer-public-logo img {
   object-fit: contain;
   object-position: left center;
+}
+
+.dealer-public-logo-fallback {
+  display: flex;
+  width: min(180px, 42vw);
+  align-items: center;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 820;
+  line-height: 1.2;
+}
+
+.dealer-public-logo-fallback > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 720px) {
@@ -6776,6 +6845,18 @@ button.vehicle-part-row:hover .vehicle-part-action {
   flex: none;
 }
 
+.offer-sheet-brand-placeholder {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: none;
+  place-items: center;
+  border: 1px solid #d7dce4;
+  border-radius: 7px;
+  background: #f4f6f8;
+  color: #344054;
+}
+
 .offer-sheet-brand div {
   display: grid;
   min-width: 0;
@@ -6987,6 +7068,11 @@ button.vehicle-part-row:hover .vehicle-part-action {
 
 .offer-sheet[data-export="true"] .offer-sheet-brand img {
   width: 310px;
+}
+
+.offer-sheet[data-export="true"] .offer-sheet-brand-placeholder {
+  width: 88px;
+  height: 88px;
 }
 
 .offer-sheet[data-export="true"] .offer-sheet-brand strong {

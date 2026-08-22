@@ -16,6 +16,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -42,6 +43,8 @@ const navIcons: Record<NonNullable<AppShellNavItem["icon"]>, LucideIcon> = {
 
 type AppShellProps = {
   brandLabel?: string;
+  brandLogoSrc?: string | null;
+  useDefaultBrandLogo?: boolean;
   sidebarTitle: string;
   sidebarSubtitle?: string;
   headerTitle: string;
@@ -87,10 +90,28 @@ function NavLink({
   );
 }
 
-function Brand({ brandLabel, title }: { brandLabel: string; title: string }) {
+function Brand({
+  brandLabel,
+  title,
+  brandLogoSrc,
+  useDefaultBrandLogo,
+}: {
+  brandLabel: string;
+  title: string;
+  brandLogoSrc?: string | null;
+  useDefaultBrandLogo: boolean;
+}) {
   return (
     <div className="ops-brand">
-      <BrandLogo className="ops-brand-logo" size="navigation" />
+      {brandLogoSrc ? (
+        <span className="ops-brand-logo ops-brand-logo-image" role="img" aria-label={`${title} logosu`}>
+          <Image src={brandLogoSrc} alt="" fill sizes="180px" unoptimized />
+        </span>
+      ) : useDefaultBrandLogo ? (
+        <BrandLogo className="ops-brand-logo" size="navigation" />
+      ) : (
+        <span className="ops-brand-logo-placeholder" aria-hidden="true"><Store size={21} strokeWidth={1.8} /></span>
+      )}
       <p className="ops-brand-context"><span>{brandLabel}</span>{title}</p>
     </div>
   );
@@ -98,6 +119,8 @@ function Brand({ brandLabel, title }: { brandLabel: string; title: string }) {
 
 function ShellNav({
   brandLabel,
+  brandLogoSrc,
+  useDefaultBrandLogo,
   title,
   subtitle,
   navItems,
@@ -107,6 +130,8 @@ function ShellNav({
   onNavigate,
 }: {
   brandLabel: string;
+  brandLogoSrc?: string | null;
+  useDefaultBrandLogo: boolean;
   title: string;
   subtitle?: string;
   navItems: AppShellNavItem[];
@@ -117,7 +142,12 @@ function ShellNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <Brand brandLabel={brandLabel} title={title} />
+      <Brand
+        brandLabel={brandLabel}
+        title={title}
+        brandLogoSrc={brandLogoSrc}
+        useDefaultBrandLogo={useDefaultBrandLogo}
+      />
 
       <div className="ops-workspace-card">
         <span className="ops-live-dot" aria-hidden="true" />
@@ -171,7 +201,9 @@ function ShellNav({
 }
 
 export function AppShell({
-  brandLabel = "POL-CAR",
+  brandLabel = "Yönetim",
+  brandLogoSrc,
+  useDefaultBrandLogo = true,
   sidebarTitle,
   sidebarSubtitle,
   headerTitle,
@@ -191,6 +223,8 @@ export function AppShell({
         <aside className="ops-sidebar ui-scrollbar">
           <ShellNav
             brandLabel={brandLabel}
+            brandLogoSrc={brandLogoSrc}
+            useDefaultBrandLogo={useDefaultBrandLogo}
             title={sidebarTitle}
             subtitle={sidebarSubtitle}
             navItems={navItems}
@@ -224,6 +258,8 @@ export function AppShell({
                     <div className="ops-drawer-nav">
                       <ShellNav
                         brandLabel={brandLabel}
+                        brandLogoSrc={brandLogoSrc}
+                        useDefaultBrandLogo={useDefaultBrandLogo}
                         title={sidebarTitle}
                         subtitle={sidebarSubtitle}
                         navItems={navItems}
@@ -238,7 +274,12 @@ export function AppShell({
               </Dialog.Root>
 
               <div className="lg:hidden">
-                <Brand brandLabel={brandLabel} title={sidebarTitle} />
+                <Brand
+                  brandLabel={brandLabel}
+                  title={sidebarTitle}
+                  brandLogoSrc={brandLogoSrc}
+                  useDefaultBrandLogo={useDefaultBrandLogo}
+                />
               </div>
               <div className="hidden min-w-0 lg:block">
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[var(--ops-muted)]">

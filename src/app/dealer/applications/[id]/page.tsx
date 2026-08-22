@@ -128,7 +128,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               icon={FileImage}
             >
               <OfferShareCard
-                dealerName={dealerDetails?.name ?? "POL-CAR"}
+                dealerName={dealerDetails?.name ?? "Galeri"}
                 dealerLogoUrl={dealerDetails ? getDealerLogoSrc(dealerDetails) : null}
                 referenceCode={application.reference_code}
                 amount={currentOffer.amount}

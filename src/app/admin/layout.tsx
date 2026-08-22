@@ -26,6 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <AppShell
+      brandLabel="POL-CAR"
       sidebarTitle="Yönetim Paneli"
       sidebarSubtitle="Operasyon merkezi"
       headerTitle="Yönetim Konsolu"

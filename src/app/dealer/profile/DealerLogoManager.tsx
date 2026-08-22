@@ -4,7 +4,6 @@ import Image from "next/image";
 import { ImagePlus, LoaderCircle, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BrandLogo } from "@/components/brand-logo";
 import { Button, ConfirmDialog } from "@/components/ui";
 
 type DealerLogoManagerProps = {
@@ -78,13 +77,17 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
         {logoSrc ? (
           <Image src={logoSrc} alt={`${dealerName} logosu`} fill sizes="(max-width: 640px) 80vw, 360px" loading="eager" fetchPriority="high" unoptimized />
         ) : (
-          <BrandLogo size="display" preload />
+          <div className="dealer-logo-placeholder" role="img" aria-label={`${dealerName} için logo yüklenmedi`}>
+            <ImagePlus size={26} strokeWidth={1.6} aria-hidden="true" />
+            <strong>{dealerName}</strong>
+            <span>Logo yüklenmedi</span>
+          </div>
         )}
       </div>
       <div className="dealer-logo-copy">
         <div>
           <span className="ops-eyebrow">Müşteriye görünen logo</span>
-          <h3>{logoSrc ? "Galeri logosu aktif" : "POL-CAR logosu kullanılıyor"}</h3>
+          <h3>{logoSrc ? "Galeri logosu aktif" : "Henüz logo yüklenmedi"}</h3>
           <p>Şeffaf arka planlı, yatay PNG veya WebP dosyası en iyi sonucu verir.</p>
         </div>
         {canManage && serviceAvailable ? (
@@ -108,7 +111,7 @@ export function DealerLogoManager({ dealerName, initialLogoSrc, canManage, servi
               <ConfirmDialog
                 trigger={<Button type="button" size="sm" variant="secondary" disabled={pending} aria-label="Galeri logosunu kaldır"><Trash2 size={15} aria-hidden="true" /> Kaldır</Button>}
                 title="Galeri logosunu kaldır?"
-                description="Müşteri formu ve teklif görsellerinde yeniden varsayılan POL-CAR logosu kullanılacak."
+                description="Müşteri formu ve teklif görsellerinde logo alanı galeri adıyla gösterilecek."
                 confirmLabel="Logoyu kaldır"
                 tone="danger"
                 disabled={pending}

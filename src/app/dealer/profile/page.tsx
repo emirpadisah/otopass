@@ -37,7 +37,7 @@ export default async function DealerProfilePage() {
         </PanelSection>
 
         <div className="grid gap-4 xl:grid-cols-[.72fr_1.28fr]">
-          <PanelSection title="Standart başvuru adresi" description="POL-CAR altında daima aktif kalan bağlantı" icon={Link2}>
+          <PanelSection title="Standart başvuru adresi" description="Platform üzerinde daima aktif kalan ana bağlantı" icon={Link2}>
             <div className="ops-link-display">
               <div>
                 <p className="ops-eyebrow">Aktif form adresi</p>

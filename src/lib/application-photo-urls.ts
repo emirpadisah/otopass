@@ -14,7 +14,7 @@ function getPhotoExtension(path: string): string {
 }
 
 export function getApplicationPhotoFilename(applicationId: string, index: number, path: string): string {
-  return `pol-car-${applicationId}-${index + 1}.${getPhotoExtension(path)}`;
+  return `arac-basvurusu-${applicationId}-${index + 1}.${getPhotoExtension(path)}`;
 }
 
 export async function getApplicationPhotoUrls(

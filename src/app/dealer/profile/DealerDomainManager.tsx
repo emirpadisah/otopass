@@ -153,7 +153,7 @@ export function DealerDomainManager({
               title="Özel alan adı bağlantısını kaldır?"
               description={`${domain.hostname} adresi artık müşteri formuna yönlenmeyecek.`}
               confirmLabel="Bağlantıyı kaldır"
-              details={["Vercel alan adı kaydı kaldırılır", "Ana POL-CAR form adresi çalışmaya devam eder"]}
+              details={["Vercel alan adı kaydı kaldırılır", "Standart form adresi çalışmaya devam eder"]}
               tone="danger"
               size="sm"
               variant="ghost"

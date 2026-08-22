@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Download, FileImage, LoaderCircle } from "lucide-react";
+import { Download, FileImage, LoaderCircle, Store } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { VehicleConditionMap } from "@/components/ui/vehicle-condition-map";
@@ -86,15 +86,21 @@ function OfferSheet({
     <article className="offer-sheet" data-export={exportMode || undefined}>
       <header className="offer-sheet-header">
         <div className="offer-sheet-brand">
-          <Image
-            src={dealerLogoUrl || "/images/pol-car-logo-transparent.png"}
-            alt={dealerLogoUrl ? `${dealerName} logosu` : "POL-CAR"}
-            width={1548}
-            height={654}
-            sizes={exportMode ? "310px" : "(max-width: 640px) 170px, 250px"}
-            unoptimized
-            priority={exportMode}
-          />
+          {dealerLogoUrl ? (
+            <Image
+              src={dealerLogoUrl}
+              alt={`${dealerName} logosu`}
+              width={1548}
+              height={654}
+              sizes={exportMode ? "310px" : "(max-width: 640px) 170px, 250px"}
+              unoptimized
+              priority={exportMode}
+            />
+          ) : (
+            <span className="offer-sheet-brand-placeholder" role="img" aria-label={`${dealerName} logo alanı`}>
+              <Store size={exportMode ? 38 : 25} strokeWidth={1.6} aria-hidden="true" />
+            </span>
+          )}
           <div>
             <strong>{dealerName}</strong>
             <span>tarafından hazırlanmıştır</span>
@@ -122,7 +128,7 @@ function OfferSheet({
             <span>Ekspertiz bilgisi</span>
             <h3>Araç kaporta durumu</h3>
           </div>
-          <strong>{referenceCode ? `Ref: ${referenceCode}` : "POL-CAR"}</strong>
+          <strong>{referenceCode ? `Ref: ${referenceCode}` : dealerName}</strong>
         </div>
         <div className="offer-sheet-inspection-grid">
           <VehicleConditionMap value={bodyCondition} readOnly compact />
@@ -140,7 +146,7 @@ function OfferSheet({
       </section>
 
       <footer className="offer-sheet-footer">
-        <div><i aria-hidden="true" /> POL-CAR araç değerlendirme sistemi</div>
+        <div><i aria-hidden="true" /> {dealerName} araç değerlendirme</div>
         <p>Bu teklif ön değerlendirme niteliğindedir. Nihai tutar fiziki ekspertiz sonrasında netleşir.</p>
       </footer>
     </article>
@@ -154,7 +160,7 @@ function createDownloadName(referenceCode: string | null) {
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .toLowerCase();
-  return `pol-car-${safeReference || "teklif"}.png`;
+  return `teklif-${safeReference || "arac"}.png`;
 }
 
 export function OfferShareCard(props: OfferShareCardProps) {

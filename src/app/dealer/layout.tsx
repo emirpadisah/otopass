@@ -6,10 +6,11 @@ import { requireDealerAccess } from "@/lib/auth/roles";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerForCurrentUser, getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
 import { requireUser } from "@/lib/auth/session";
+import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Galeri Paneli | POL-CAR",
+  title: "Galeri Paneli",
   description: "Gelen başvuruları yönetin ve teklif verin.",
 };
 
@@ -33,6 +34,9 @@ export default async function DealerLayout({ children }: { children: ReactNode }
 
   return (
     <AppShell
+      brandLabel="Galeri paneli"
+      brandLogoSrc={getDealerLogoSrc(dealer)}
+      useDefaultBrandLogo={false}
       sidebarTitle={dealer.name}
       sidebarSubtitle="Galeri operasyon alanı"
       headerTitle={dealer.name}
