@@ -27,7 +27,7 @@ export default async function DealerProfilePage() {
       />
 
       <div className="mt-4 grid gap-4">
-        <PanelSection title="Galeri markası" description="Logo, kurumsal bilgiler ve müşteri yüzündeki marka görünümü" icon={ImageIcon}>
+        <PanelSection title="Galeri markası" description="Logo ve müşteriye gösterilen iletişim bilgileri" icon={ImageIcon}>
           {dealer ? (
             <div className="dealer-branding-layout">
               <DealerLogoManager dealerName={dealer.name} initialLogoSrc={getDealerLogoSrc(dealer)} canManage={canManage} serviceAvailable={brandingSchemaReady} />
