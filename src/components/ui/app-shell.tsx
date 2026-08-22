@@ -113,7 +113,10 @@ function Brand({
       ) : (
         <span className="ops-brand-logo-placeholder" aria-hidden="true"><Store size={21} strokeWidth={1.8} /></span>
       )}
-      <p className="ops-brand-context"><span>{brandLabel}</span>{title}</p>
+      <p className="ops-brand-context">
+        {brandLabel ? <span>{brandLabel}</span> : null}
+        {title}
+      </p>
     </div>
   );
 }
@@ -298,12 +301,14 @@ export function AppShell({
                 />
               </div>
               <div className="hidden min-w-0 lg:block">
-                <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[var(--ops-muted)]">
-                  <span>{brandLabel}</span>
-                  <ChevronRight size={12} aria-hidden="true" />
-                  <span>{sidebarTitle}</span>
-                </div>
-                <p className="mt-1 truncate text-sm font-bold text-[var(--ops-text)]">{headerTitle}</p>
+                {brandLabel ? (
+                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[var(--ops-muted)]">
+                    <span>{brandLabel}</span>
+                    <ChevronRight size={12} aria-hidden="true" />
+                    <span>{sidebarTitle}</span>
+                  </div>
+                ) : null}
+                <p className={brandLabel ? "mt-1 truncate text-sm font-bold text-[var(--ops-text)]" : "truncate text-sm font-bold text-[var(--ops-text)]"}>{headerTitle}</p>
               </div>
             </div>
 
