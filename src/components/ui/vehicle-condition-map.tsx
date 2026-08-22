@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, RotateCcw, ScanLine } from "lucide-react";
+import { Check, ChevronRight, ClipboardCheck, FileCheck2, RotateCcw, ScanLine } from "lucide-react";
 import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
 import {
@@ -232,12 +232,23 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
         </section>
 
         <section className="vehicle-part-panel" aria-label="Kaporta parça raporu">
-          <header className="vehicle-condition-panel-heading">
-            <div>
-              <span>Kontrol listesi</span>
-              <strong>{compact ? "İşlemli parçalar" : "Kaporta parça raporu"}</strong>
+          <header className="vehicle-condition-panel-heading vehicle-part-panel-heading">
+            <div className="vehicle-part-panel-title">
+              <span className="vehicle-part-panel-icon" aria-hidden="true">
+                <ClipboardCheck size={17} strokeWidth={1.8} />
+              </span>
+              <span className="vehicle-part-panel-copy">
+                <small>Parça bazlı analiz</small>
+                <strong>{compact ? "İşlemli parçalar" : "Kaporta durum raporu"}</strong>
+              </span>
             </div>
-            <span className="vehicle-condition-panel-count">{compact ? changedCount : VEHICLE_BODY_PARTS.length} kayıt</span>
+            <span className="vehicle-part-panel-count">
+              <FileCheck2 size={14} strokeWidth={1.8} aria-hidden="true" />
+              <span>
+                <small>{compact ? "İşlemli" : "Kapsam"}</small>
+                <strong>{compact ? changedCount : VEHICLE_BODY_PARTS.length}<i> / {VEHICLE_BODY_PARTS.length}</i></strong>
+              </span>
+            </span>
           </header>
           <div className="vehicle-part-list" aria-label="Kaporta parçaları">
             {visibleParts.map((part) => {
