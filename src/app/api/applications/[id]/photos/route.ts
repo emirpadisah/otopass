@@ -4,6 +4,7 @@ import { getLocalApplicationById } from "@/lib/local/repository";
 import { readLocalPhoto } from "@/lib/local/store";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserId, getDealerApplicationForCurrentUser, getUserRoles } from "@/lib/supabase/queries";
+import { getApplicationPhotoFilename } from "@/lib/application-photo-urls";
 
 function getImageContentType(photoPath: string): string {
   const extension = photoPath.split(".").pop()?.toLowerCase();
@@ -46,7 +47,8 @@ export async function GET(
   if (!application) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (localMode) {
-    const requestedIndex = new URL(request.url).searchParams.get("index");
+    const searchParams = new URL(request.url).searchParams;
+    const requestedIndex = searchParams.get("index");
     if (requestedIndex !== null) {
       const index = Number(requestedIndex);
       const photoPath = Number.isInteger(index) ? application.photo_paths?.[index] : undefined;
@@ -60,6 +62,9 @@ export async function GET(
             "Content-Type": getImageContentType(photoPath),
             "Cache-Control": "private, no-store",
             "X-Content-Type-Options": "nosniff",
+            ...(searchParams.get("download") === "1"
+              ? { "Content-Disposition": `attachment; filename="${getApplicationPhotoFilename(id, index, photoPath)}"` }
+              : {}),
           },
         });
       } catch {
@@ -71,18 +76,25 @@ export async function GET(
       urls: (application.photo_paths ?? []).map(
         (_, index) => `/api/applications/${id}/photos?index=${index}`
       ),
+      downloadUrls: (application.photo_paths ?? []).map(
+        (_, index) => `/api/applications/${id}/photos?index=${index}&download=1`,
+      ),
     });
   }
 
   const service = createSupabaseServiceClient();
 
   const urls: string[] = [];
-  for (const path of application.photo_paths ?? []) {
+  const downloadUrls: string[] = [];
+  for (const [index, path] of (application.photo_paths ?? []).entries()) {
     const { data, error } = await service.storage.from("applications").createSignedUrl(path, 300);
     if (!error && data?.signedUrl) {
       urls.push(data.signedUrl);
+      downloadUrls.push(
+        `${data.signedUrl}&download=${encodeURIComponent(getApplicationPhotoFilename(id, index, path))}`,
+      );
     }
   }
 
-  return NextResponse.json({ urls });
+  return NextResponse.json({ urls, downloadUrls });
 }

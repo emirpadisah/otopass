@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
+  OfferShareCard,
   PanelPageHeader,
   PanelSection,
   StatusBadge,
@@ -11,11 +12,10 @@ import {
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { isLocalDataMode } from "@/lib/data-mode";
 import { canManageDealerMembership } from "@/lib/auth/route";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
-import { getDealerApplicationForCurrentUser, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
+import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentUser, listDealerOffersForCurrentUser } from "@/lib/supabase/queries";
 import { OfferForm } from "./OfferForm";
 import { OfferDecisionForm } from "./OfferDecisionForm";
 import { SoldButtonForm } from "../SoldButtonForm";
@@ -29,23 +29,6 @@ function formatNumber(value: number | null) {
   return new Intl.NumberFormat("tr-TR").format(value);
 }
 
-async function getSignedPhotoUrls(applicationId: string, photoPaths: string[]): Promise<string[]> {
-  if (photoPaths.length === 0) return [];
-  if (isLocalDataMode()) {
-    return photoPaths.map((_, index) => `/api/applications/${applicationId}/photos?index=${index}`);
-  }
-
-  const supabase = createSupabaseServiceClient();
-  const signedUrls = await Promise.all(
-    photoPaths.map(async (path) => {
-      const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
-      if (error || !data?.signedUrl) return null;
-      return data.signedUrl;
-    })
-  );
-  return signedUrls.filter((url): url is string => Boolean(url));
-}
-
 export default async function DealerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
   const [application, dealer, offers] = await Promise.all([
@@ -56,7 +39,11 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
   if (!application || !dealer) return notFound();
   const canManage = canManageDealerMembership(dealer.role);
   const currentOffer = offers.find((offer) => offer.application_id === application.id) ?? null;
-  const photoUrls = await getSignedPhotoUrls(application.id, application.photo_paths ?? []);
+  const [photoUrls, dealerDetails] = await Promise.all([
+    getApplicationPhotoUrls(application.id, application.photo_paths ?? []),
+    getDealerById(dealer.dealer_id),
+  ]);
+  const bodyCondition = normalizeVehicleBodyCondition(application.body_condition);
 
   const facts = [
     { label: "Araç sahibi", value: application.owner_name ?? "-", icon: UserRound },
@@ -80,7 +67,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         meta={
           <>
             <StatusBadge status={application.status} />
-            <span className="ops-chip"><Camera size={13} aria-hidden="true" /> {photoUrls.length} fotoğraf</span>
+            <span className="ops-chip"><Camera size={13} aria-hidden="true" /> {photoUrls.viewUrls.length} fotoğraf</span>
           </>
         }
         actions={
@@ -100,11 +87,12 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             title="Araç görselleri"
             description="İnceleme için yüklenen güncel fotoğraflar"
             icon={Camera}
-            meta={<span className="ops-chip">{photoUrls.length} dosya</span>}
+            meta={<span className="ops-chip">{photoUrls.viewUrls.length} dosya</span>}
           >
-            {photoUrls.length > 0 ? (
+            {photoUrls.viewUrls.length > 0 ? (
               <ApplicationPhotoGallery
-                photos={photoUrls}
+                photos={photoUrls.viewUrls}
+                downloadUrls={photoUrls.downloadUrls}
                 vehicleLabel={`${application.brand} ${application.model}`}
               />
             ) : (
@@ -117,8 +105,37 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             description="Başvuru sahibinin parça bazında ilettiği kaporta durumu"
             icon={ScanSearch}
           >
-            <VehicleConditionMap value={normalizeVehicleBodyCondition(application.body_condition)} readOnly />
+            <VehicleConditionMap value={bodyCondition} readOnly />
           </PanelSection>
+
+          {currentOffer ? (
+            <PanelSection
+              title="Teklif görseli"
+              description="Müşteriyle paylaşılabilen, başvuru verilerinden otomatik hazırlanan teklif özeti"
+              icon={FileImage}
+            >
+              <OfferShareCard
+                dealerName={dealerDetails?.name ?? "POL-CAR"}
+                referenceCode={application.reference_code}
+                amount={currentOffer.amount}
+                currency={currentOffer.currency}
+                notes={currentOffer.notes}
+                createdAt={currentOffer.created_at}
+                vehicle={{
+                  brand: application.brand,
+                  model: application.model,
+                  vehiclePackage: application.vehicle_package,
+                  modelYear: application.model_year,
+                  km: application.km,
+                  fuelType: application.fuel_type,
+                  transmission: application.transmission,
+                  tramerInfo: application.tramer_info,
+                  damageInfo: application.damage_info,
+                }}
+                bodyCondition={bodyCondition}
+              />
+            </PanelSection>
+          ) : null}
 
           <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
             <PanelSection title="Araç ve müşteri" description="Başvuru sırasında iletilen bilgiler" icon={ClipboardCheck}>

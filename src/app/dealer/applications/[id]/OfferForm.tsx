@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { HandCoins } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 import { createOfferAction } from "./actions";
 import type { ActionResponse } from "@/lib/types";
@@ -22,6 +23,11 @@ function SubmitButton() {
 
 export function OfferForm({ applicationId }: { applicationId: string }) {
   const [state, formAction] = useActionState(createOfferAction, initialState);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.ok) router.refresh();
+  }, [router, state.ok]);
 
   return (
     <form action={formAction} className="space-y-4">

@@ -30,14 +30,22 @@ const partGeometry: Record<VehicleBodyPartId, string> = {
   rear_bumper: "M112 505 Q180 523 248 505 L254 534 Q180 554 106 534 Z",
 };
 
+const conditionColors: Record<VehicleConditionStatus, string> = {
+  original: "#aeb8c7",
+  local_paint: "#e4a11b",
+  painted: "#2673d9",
+  replaced: "#dd3344",
+};
+
 type VehicleConditionMapProps = {
   value?: VehicleBodyCondition | unknown;
   onChange?: (value: VehicleBodyCondition) => void;
   readOnly?: boolean;
+  compact?: boolean;
   className?: string;
 };
 
-export function VehicleConditionMap({ value, onChange, readOnly = false, className }: VehicleConditionMapProps) {
+export function VehicleConditionMap({ value, onChange, readOnly = false, compact = false, className }: VehicleConditionMapProps) {
   const condition = normalizeVehicleBodyCondition(value);
   const [activeStatus, setActiveStatus] = useState<VehicleConditionStatus>("local_paint");
   const changedCount = Object.keys(condition).length;
@@ -57,7 +65,11 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, classNa
   }
 
   return (
-    <div className={cn("vehicle-condition", className)} data-read-only={readOnly || undefined}>
+    <div
+      className={cn("vehicle-condition", className)}
+      data-read-only={readOnly || undefined}
+      data-compact={compact || undefined}
+    >
       <div className="vehicle-condition-summary" aria-live="polite">
         <span>Kaporta durumu</span>
         <strong>{changedCount === 0 ? "Tüm parçalar orijinal" : `${changedCount} işlemli parça`}</strong>
@@ -105,11 +117,16 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, classNa
             role={readOnly ? "img" : "group"}
             aria-label="Üstten araç kaporta ekspertiz şeması"
           >
-            <path className="vehicle-map-shell" d="M180 22 C244 22 286 64 299 122 L306 201 L296 234 L301 405 C300 472 277 533 236 552 Q180 570 124 552 C83 533 60 472 59 405 L64 234 L54 201 L61 122 C74 64 116 22 180 22 Z" />
-            <rect className="vehicle-map-wheel" x="48" y="150" width="19" height="82" rx="7" />
-            <rect className="vehicle-map-wheel" x="293" y="150" width="19" height="82" rx="7" />
-            <rect className="vehicle-map-wheel" x="48" y="407" width="19" height="82" rx="7" />
-            <rect className="vehicle-map-wheel" x="293" y="407" width="19" height="82" rx="7" />
+            <path
+              className="vehicle-map-shell"
+              d="M180 22 C244 22 286 64 299 122 L306 201 L296 234 L301 405 C300 472 277 533 236 552 Q180 570 124 552 C83 533 60 472 59 405 L64 234 L54 201 L61 122 C74 64 116 22 180 22 Z"
+              fill={compact ? "#eef1f5" : undefined}
+              stroke={compact ? "#8f9bad" : undefined}
+            />
+            <rect className="vehicle-map-wheel" x="48" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+            <rect className="vehicle-map-wheel" x="293" y="150" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+            <rect className="vehicle-map-wheel" x="48" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
+            <rect className="vehicle-map-wheel" x="293" y="407" width="19" height="82" rx="7" fill={compact ? "#252b36" : undefined} />
             {VEHICLE_BODY_PARTS.map((part) => {
               const status = getVehicleConditionStatus(condition, part.id);
               return (
@@ -118,6 +135,8 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, classNa
                   className="vehicle-map-part"
                   data-status={status}
                   d={partGeometry[part.id]}
+                  fill={compact ? conditionColors[status] : undefined}
+                  stroke={compact ? "#f7f8fa" : undefined}
                   role={readOnly ? undefined : "button"}
                   tabIndex={readOnly ? undefined : 0}
                   aria-label={readOnly ? undefined : `${part.label}: ${getVehicleConditionLabel(status)}. ${getVehicleConditionLabel(activeStatus)} olarak işaretle`}
@@ -128,14 +147,24 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, classNa
                 </path>
               );
             })}
-            <path className="vehicle-map-window" d="M145 191 Q180 176 215 191 L219 282 Q180 270 141 282 Z" />
-            <path className="vehicle-map-window" d="M141 303 Q180 290 219 303 L221 390 Q180 404 139 390 Z" />
+            <path
+              className="vehicle-map-window"
+              d="M145 191 Q180 176 215 191 L219 282 Q180 270 141 282 Z"
+              fill={compact ? "#c7ccd5" : undefined}
+              stroke={compact ? "#8994a5" : undefined}
+            />
+            <path
+              className="vehicle-map-window"
+              d="M141 303 Q180 290 219 303 L221 390 Q180 404 139 390 Z"
+              fill={compact ? "#c7ccd5" : undefined}
+              stroke={compact ? "#8994a5" : undefined}
+            />
           </svg>
           <span className="vehicle-map-direction vehicle-map-direction-rear">Arka</span>
         </div>
 
         <div className="vehicle-part-list" aria-label="Kaporta parçaları">
-          {VEHICLE_BODY_PARTS.map((part) => {
+          {VEHICLE_BODY_PARTS.filter((part) => !compact || getVehicleConditionStatus(condition, part.id) !== "original").map((part) => {
             const status = getVehicleConditionStatus(condition, part.id);
             const content = (
               <>
@@ -160,6 +189,9 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, classNa
               </button>
             );
           })}
+          {compact && changedCount === 0 ? (
+            <div className="vehicle-part-empty">İşlemli kaporta parçası bulunmuyor.</div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -10,3 +10,4 @@ export * from "./list-controls";
 export * from "./application-photo-gallery";
 export * from "./whatsapp-phone-link";
 export * from "./vehicle-condition-map";
+export * from "./offer-share-card";

@@ -11,6 +11,7 @@ import {
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
 
@@ -38,13 +39,7 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
     .select("name")
     .eq("id", application.dealer_id)
     .maybeSingle();
-  const signedPhotos = await Promise.all(
-    (application.photo_paths ?? []).map(async (path) => {
-      const { data, error } = await supabase.storage.from("applications").createSignedUrl(path, 300);
-      return error ? null : data?.signedUrl ?? null;
-    })
-  );
-  const photoUrls = signedPhotos.filter((url): url is string => Boolean(url));
+  const photoUrls = await getApplicationPhotoUrls(application.id, application.photo_paths ?? []);
   const vehicleLabel = `${application.brand} ${application.model}`;
 
   return (
@@ -59,7 +54,7 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
             <StatusBadge status={application.status} />
             <span className="ops-chip">
               <Camera size={13} aria-hidden="true" />
-              {photoUrls.length} fotoğraf
+              {photoUrls.viewUrls.length} fotoğraf
             </span>
           </>
         }
@@ -80,10 +75,14 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
             title="Araç fotoğrafları"
             description="Başvuru sırasında yüklenen inceleme görselleri"
             icon={Camera}
-            meta={<span className="ops-chip">{photoUrls.length} dosya</span>}
+            meta={<span className="ops-chip">{photoUrls.viewUrls.length} dosya</span>}
           >
-            {photoUrls.length > 0 ? (
-              <ApplicationPhotoGallery photos={photoUrls} vehicleLabel={vehicleLabel} />
+            {photoUrls.viewUrls.length > 0 ? (
+              <ApplicationPhotoGallery
+                photos={photoUrls.viewUrls}
+                downloadUrls={photoUrls.downloadUrls}
+                vehicleLabel={vehicleLabel}
+              />
             ) : (
               <div className="ops-empty-state">
                 <Camera size={20} aria-hidden="true" />

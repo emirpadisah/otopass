@@ -2,11 +2,12 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Maximize2, X } from "lucide-react";
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type ApplicationPhotoGalleryProps = {
   photos: string[];
+  downloadUrls?: string[];
   vehicleLabel: string;
 };
 
@@ -14,12 +15,13 @@ function getPhotoLabel(vehicleLabel: string, index: number) {
   return `${vehicleLabel} - ${index + 1}. fotoğraf`;
 }
 
-export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPhotoGalleryProps) {
+export function ApplicationPhotoGallery({ photos, downloadUrls = [], vehicleLabel }: ApplicationPhotoGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const swipeStartRef = useRef<{ pointerId: number; x: number } | null>(null);
   const suppressExpandRef = useRef(false);
   const activePhoto = photos[activeIndex] ?? photos[0];
+  const activeDownloadUrl = downloadUrls[activeIndex];
 
   if (!activePhoto) return null;
 
@@ -90,6 +92,20 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
             {String(activeIndex + 1).padStart(2, "0")} / {String(photos.length).padStart(2, "0")}
           </span>
 
+          {activeDownloadUrl ? (
+            <a
+              className="ops-photo-download"
+              href={activeDownloadUrl}
+              download
+              aria-label={`${getPhotoLabel(vehicleLabel, activeIndex)} indir`}
+              title="Fotoğrafı indir"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Download size={17} aria-hidden="true" />
+            </a>
+          ) : null}
+
           {photos.length > 1 ? (
             <>
               <button
@@ -159,9 +175,17 @@ export function ApplicationPhotoGallery({ photos, vehicleLabel }: ApplicationPho
                 <Dialog.Title>{vehicleLabel}</Dialog.Title>
                 <span>{activeIndex + 1} / {photos.length}</span>
               </div>
-              <Dialog.Close className="ops-photo-dialog-close" aria-label="Fotoğraf görüntüleyiciyi kapat" title="Kapat">
-                <X size={20} aria-hidden="true" />
-              </Dialog.Close>
+              <div className="ops-photo-dialog-actions">
+                {activeDownloadUrl ? (
+                  <a className="ops-photo-dialog-download" href={activeDownloadUrl} download>
+                    <Download size={17} aria-hidden="true" />
+                    Fotoğrafı indir
+                  </a>
+                ) : null}
+                <Dialog.Close className="ops-photo-dialog-close" aria-label="Fotoğraf görüntüleyiciyi kapat" title="Kapat">
+                  <X size={20} aria-hidden="true" />
+                </Dialog.Close>
+              </div>
             </div>
 
             <div
