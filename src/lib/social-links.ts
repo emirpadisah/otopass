@@ -7,9 +7,7 @@ export const SOCIAL_PLATFORM_OPTIONS = [
   { value: "x", label: "X", placeholder: "https://x.com/galeri" },
   { value: "youtube", label: "YouTube", placeholder: "https://youtube.com/@galeri" },
   { value: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/905xxxxxxxxx" },
-  { value: "telegram", label: "Telegram", placeholder: "https://t.me/galeri" },
   { value: "threads", label: "Threads", placeholder: "https://threads.net/@galeri" },
-  { value: "snapchat", label: "Snapchat", placeholder: "https://snapchat.com/add/galeri" },
   { value: "google_business", label: "Google İşletme", placeholder: "https://maps.app.goo.gl/..." },
   { value: "website", label: "Web sitesi", placeholder: "https://galeri.com" },
   { value: "other", label: "Diğer bağlantı", placeholder: "https://..." },
@@ -32,9 +30,7 @@ const PLATFORM_HOSTS: Partial<Record<SocialPlatform, readonly string[]>> = {
   x: ["x.com", "twitter.com"],
   youtube: ["youtube.com", "youtu.be"],
   whatsapp: ["wa.me", "whatsapp.com"],
-  telegram: ["t.me", "telegram.me"],
   threads: ["threads.net"],
-  snapchat: ["snapchat.com"],
   google_business: ["google.com", "goo.gl"],
 };
 

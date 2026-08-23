@@ -2185,8 +2185,6 @@ html.theme-light .ops-drawer-content {
 .dealer-social-row__icon[data-platform="facebook"] { color: #1877f2; }
 .dealer-social-row__icon[data-platform="youtube"] { color: #e62117; }
 .dealer-social-row__icon[data-platform="whatsapp"] { color: #16875e; }
-.dealer-social-row__icon[data-platform="telegram"] { color: #229ed9; }
-.dealer-social-row__icon[data-platform="snapchat"] { color: #c9a900; }
 .dealer-social-row__icon[data-platform="google_business"] { color: #4285f4; }
 
 .dealer-social-row__platform,

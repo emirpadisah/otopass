@@ -25,7 +25,7 @@ describe("social links", () => {
   });
 
   it("does not expose removed platform options", () => {
-    for (const platform of ["spotify", "linkedin", "discord", "twitch", "pinterest"]) {
+    for (const platform of ["spotify", "linkedin", "discord", "twitch", "pinterest", "snapchat", "telegram"]) {
       expect(isSocialPlatform(platform)).toBe(false);
     }
   });

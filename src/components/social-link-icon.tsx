@@ -3,8 +3,6 @@ import {
   SiFacebook,
   SiGooglemaps,
   SiInstagram,
-  SiSnapchat,
-  SiTelegram,
   SiThreads,
   SiTiktok,
   SiWhatsapp,
@@ -21,9 +19,7 @@ const SOCIAL_BRAND_ICONS: Partial<Record<SocialPlatform, IconType>> = {
   x: SiX,
   youtube: SiYoutube,
   whatsapp: SiWhatsapp,
-  telegram: SiTelegram,
   threads: SiThreads,
-  snapchat: SiSnapchat,
   google_business: SiGooglemaps,
 };
 
