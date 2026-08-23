@@ -49,10 +49,11 @@ type VehicleConditionMapProps = {
   onChange?: (value: VehicleBodyCondition) => void;
   readOnly?: boolean;
   compact?: boolean;
+  captureMode?: boolean;
   className?: string;
 };
 
-export function VehicleConditionMap({ value, onChange, readOnly = false, compact = false, className }: VehicleConditionMapProps) {
+export function VehicleConditionMap({ value, onChange, readOnly = false, compact = false, captureMode = false, className }: VehicleConditionMapProps) {
   const condition = normalizeVehicleBodyCondition(value);
   const statusGroupName = useId();
   const [activeStatus, setActiveStatus] = useState<VehicleConditionStatus>("local_paint");
@@ -139,7 +140,10 @@ export function VehicleConditionMap({ value, onChange, readOnly = false, compact
         </fieldset>
       ) : null}
 
-      <div className="vehicle-condition-layout">
+      <div
+        className="vehicle-condition-layout"
+        style={captureMode ? { backdropFilter: "none", WebkitBackdropFilter: "none" } : undefined}
+      >
         <section className="vehicle-map-panel" aria-label="Araç kaporta şeması">
           <header className="vehicle-condition-panel-heading">
             <div>

@@ -131,7 +131,7 @@ function OfferSheet({
           <strong>{referenceCode ? `Ref: ${referenceCode}` : dealerName}</strong>
         </div>
         <div className="offer-sheet-inspection-grid">
-          <VehicleConditionMap value={bodyCondition} readOnly compact />
+          <VehicleConditionMap value={bodyCondition} readOnly compact captureMode={exportMode} />
           <div className="offer-sheet-notes">
             <div>
               <span>Hasar beyanı</span>
