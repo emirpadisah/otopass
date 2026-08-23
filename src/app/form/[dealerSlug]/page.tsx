@@ -128,44 +128,53 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
           {hasContactInfo ? (
             <section className="intake-contact-card" aria-labelledby="dealer-contact-title">
               <div className="intake-contact-heading">
-                <span><UserRound size={16} aria-hidden="true" /></span>
+                <span className="intake-contact-avatar"><UserRound size={18} aria-hidden="true" /></span>
                 <div>
                   <small>Galeri yetkilisi</small>
                   <strong id="dealer-contact-title">{dealer.contact_name || `${dealer.name} ekibi`}</strong>
                 </div>
               </div>
-              <p>Teklif sürecinizle ilgili doğrudan iletişim kurabilirsiniz.</p>
-              <div className="intake-contact-actions">
+              <p className="intake-contact-copy">Teklif sürecinizle ilgili doğrudan iletişim kurabilirsiniz.</p>
+              <div className="intake-contact-actions" aria-label="Galeri iletişim seçenekleri">
                 {dealer.contact_phone && contactWhatsAppUrl ? (
-                  <a href={contactWhatsAppUrl} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle size={14} aria-hidden="true" />
-                    <span dir="ltr">{dealer.contact_phone}</span>
+                  <a className="intake-contact-action is-whatsapp" href={contactWhatsAppUrl} target="_blank" rel="noopener noreferrer">
+                    <span className="intake-contact-action-icon"><MessageCircle size={17} aria-hidden="true" /></span>
+                    <span className="intake-contact-action-copy">
+                      <small>WhatsApp</small>
+                      <strong dir="ltr">{dealer.contact_phone}</strong>
+                    </span>
                   </a>
                 ) : null}
                 {dealer.contact_email ? (
-                  <a href={`mailto:${dealer.contact_email}`}>
-                    <Mail size={14} aria-hidden="true" />
-                    <span>{dealer.contact_email}</span>
+                  <a className="intake-contact-action" href={`mailto:${dealer.contact_email}`}>
+                    <span className="intake-contact-action-icon"><Mail size={17} aria-hidden="true" /></span>
+                    <span className="intake-contact-action-copy">
+                      <small>E-posta</small>
+                      <strong>{dealer.contact_email}</strong>
+                    </span>
                   </a>
                 ) : null}
               </div>
               {socialLinks.length > 0 ? (
-                <div className="dealer-public-socials">
-                  {socialLinks.map((link, index) => {
-                    const label = getSocialLinkLabel(link);
-                    return (
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${dealer.name} ${label} bağlantısını aç`}
-                        key={`${link.platform}-${link.url}-${index}`}
-                      >
-                        <SocialLinkIcon platform={link.platform} size={14} />
-                        {label}
-                      </a>
-                    );
-                  })}
+                <div className="intake-social-block">
+                  <span>Sosyal medya</span>
+                  <div className="dealer-public-socials">
+                    {socialLinks.map((link, index) => {
+                      const label = getSocialLinkLabel(link);
+                      return (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${dealer.name} ${label} bağlantısını aç`}
+                          key={`${link.platform}-${link.url}-${index}`}
+                        >
+                          <SocialLinkIcon platform={link.platform} size={14} />
+                          {label}
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
               ) : null}
             </section>

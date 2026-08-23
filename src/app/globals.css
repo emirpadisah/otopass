@@ -6232,28 +6232,29 @@ button.vehicle-part-row:hover .vehicle-part-action {
 
 .intake-contact-card {
   display: grid;
-  gap: 12px;
-  margin-top: 4px;
+  gap: 14px;
+  margin-top: 6px;
   border-top: 1px solid var(--border-soft);
-  padding-top: 17px;
+  padding-top: 20px;
 }
 
 .intake-contact-heading {
-  display: flex;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
   min-width: 0;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.intake-contact-heading > span {
+.intake-contact-avatar {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   flex: none;
   place-items: center;
-  border: 1px solid var(--border-soft);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-soft));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 82%, var(--surface-2));
   color: var(--accent);
 }
 
@@ -6268,46 +6269,105 @@ button.vehicle-part-row:hover .vehicle-part-action {
 
 .intake-contact-heading small {
   color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 760;
+  font-size: 10px;
+  font-weight: 780;
+  line-height: 1.35;
   text-transform: uppercase;
 }
 
 .intake-contact-heading strong {
+  margin-top: 2px;
   overflow-wrap: anywhere;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 14px;
+  line-height: 1.35;
 }
 
-.intake-contact-card > p {
+.intake-contact-copy {
   color: var(--text-muted);
-  font-size: 10px;
-  line-height: 1.55;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .intake-contact-actions {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
-.intake-contact-actions a {
-  display: flex;
+.intake-contact-action {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
   min-width: 0;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-height: 54px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  padding: 8px 10px;
   color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 700;
-  transition: color 180ms ease;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
-.intake-contact-actions a span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.intake-contact-actions a:hover {
+.intake-contact-action-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
   color: var(--accent);
+}
+
+.intake-contact-action-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.intake-contact-action-copy small,
+.intake-contact-action-copy strong {
+  display: block;
+}
+
+.intake-contact-action-copy small {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 760;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.intake-contact-action-copy strong {
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.intake-contact-action:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent-soft) 42%, var(--surface-2));
+  transform: translateY(-1px);
+}
+
+.intake-contact-action.is-whatsapp .intake-contact-action-icon {
+  background: color-mix(in srgb, #1d9a67 14%, var(--surface-2));
+  color: #16805a;
+}
+
+.intake-social-block {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 13px;
+}
+
+.intake-social-block > span {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 780;
+  text-transform: uppercase;
 }
 
 .dealer-public-socials {
@@ -6338,7 +6398,7 @@ button.vehicle-part-row:hover .vehicle-part-action {
 }
 
 .dealer-public-socials a:focus-visible,
-.intake-contact-actions a:focus-visible {
+.intake-contact-action:focus-visible {
   border-radius: 6px;
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
