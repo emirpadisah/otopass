@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth/session";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export const metadata: Metadata = {
-  title: "Şifre yenileme | POL-CAR",
+  title: "Şifre yenileme | otoköprü",
   description: "Geçici şifrenizi yalnızca sizin bildiğiniz yeni bir şifreyle değiştirin.",
 };
 

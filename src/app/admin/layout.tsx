@@ -6,7 +6,7 @@ import { logout } from "@/app/login/actions";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Yönetim | POL-CAR",
+  title: "Yönetim | otoköprü",
   description: "Galerileri, kullanıcıları, başvuruları ve teklifleri yönetin.",
 };
 
@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <AppShell
-      brandLabel="POL-CAR"
+      brandLabel="otoköprü"
       sidebarTitle="Yönetim"
       sidebarSubtitle="Sistem ve erişim yönetimi"
       headerTitle="Yönetim"

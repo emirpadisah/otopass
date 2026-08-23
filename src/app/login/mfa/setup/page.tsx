@@ -4,7 +4,7 @@ import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { hasDealerRole } from "@/lib/auth/route";
 import { requireUser } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "İki adımlı doğrulama | POL-CAR" };
+export const metadata: Metadata = { title: "İki adımlı doğrulama | otoköprü" };
 
 export default async function MfaSetupPage() {
   await requireUser();

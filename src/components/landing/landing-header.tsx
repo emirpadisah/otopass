@@ -15,7 +15,7 @@ const navItems = [
 
 function Brand() {
   return (
-    <Link href="/" className="vc-brand" aria-label="POL-CAR ana sayfa">
+    <Link href="/" className="vc-brand" aria-label="otoköprü ana sayfa">
       <BrandLogo size="navigation" preload />
     </Link>
   );
@@ -59,7 +59,7 @@ export function LandingHeader() {
                 <Dialog.Overlay className="vc-menu-overlay" />
                 <Dialog.Content className="vc-menu-content" aria-describedby={undefined}>
                   <div className="vc-menu-head">
-                    <Dialog.Title className="sr-only">POL-CAR menüsü</Dialog.Title>
+                    <Dialog.Title className="sr-only">otoköprü menüsü</Dialog.Title>
                     <Brand />
                     <Dialog.Close className="vc-icon-button" aria-label="Menüyü kapat"><X size={20} aria-hidden="true" /></Dialog.Close>
                   </div>

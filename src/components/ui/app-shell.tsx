@@ -45,7 +45,6 @@ const navIcons: Record<NonNullable<AppShellNavItem["icon"]>, LucideIcon> = {
 type AppShellProps = {
   brandLabel?: string;
   brandLogoSrc?: string | null;
-  useDefaultBrandLogo?: boolean;
   sidebarTitle: string;
   sidebarSubtitle?: string;
   headerTitle: string;
@@ -91,40 +90,16 @@ function NavLink({
   );
 }
 
-function Brand({
-  brandLabel,
-  title,
-  brandLogoSrc,
-  useDefaultBrandLogo,
-}: {
-  brandLabel: string;
-  title: string;
-  brandLogoSrc?: string | null;
-  useDefaultBrandLogo: boolean;
-}) {
+function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <div className="ops-brand">
-      {brandLogoSrc ? (
-        <span className="ops-brand-logo ops-brand-logo-image" role="img" aria-label={`${title} logosu`}>
-          <Image src={brandLogoSrc} alt="" fill sizes="180px" unoptimized />
-        </span>
-      ) : useDefaultBrandLogo ? (
-        <BrandLogo className="ops-brand-logo" size="navigation" />
-      ) : (
-        <span className="ops-brand-logo-placeholder" aria-hidden="true"><Store size={21} strokeWidth={1.8} /></span>
-      )}
-      <p className="ops-brand-context">
-        {brandLabel ? <span>{brandLabel}</span> : null}
-        {title}
-      </p>
+      <BrandLogo className="ops-brand-logo" size={compact ? "compact" : "navigation"} preload />
     </div>
   );
 }
 
 function ShellNav({
-  brandLabel,
   brandLogoSrc,
-  useDefaultBrandLogo,
   title,
   subtitle,
   navItems,
@@ -133,9 +108,7 @@ function ShellNav({
   logoutAction,
   onNavigate,
 }: {
-  brandLabel: string;
   brandLogoSrc?: string | null;
-  useDefaultBrandLogo: boolean;
   title: string;
   subtitle?: string;
   navItems: AppShellNavItem[];
@@ -146,18 +119,21 @@ function ShellNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <Brand
-        brandLabel={brandLabel}
-        title={title}
-        brandLogoSrc={brandLogoSrc}
-        useDefaultBrandLogo={useDefaultBrandLogo}
-      />
+      <Brand />
 
       <div className="ops-workspace-card">
-        <span className="ops-live-dot" aria-hidden="true" />
+        {brandLogoSrc ? (
+          <span className="ops-workspace-logo" role="img" aria-label={`${title} logosu`}>
+            <Image src={brandLogoSrc} alt="" fill sizes="42px" unoptimized />
+          </span>
+        ) : (
+          <span className="ops-workspace-logo ops-workspace-logo-fallback" aria-hidden="true">
+            <Store size={18} strokeWidth={1.8} />
+          </span>
+        )}
         <div className="min-w-0">
-          <p className="truncate text-xs font-bold text-[var(--ops-text)]">{subtitle ?? "Operasyon alanı"}</p>
-          <p className="mt-0.5 text-[11px] text-[var(--ops-muted)]">Oturum doğrulandı</p>
+          <p className="ops-workspace-title">{title}</p>
+          <p className="ops-workspace-subtitle">{subtitle ?? "Operasyon alanı"}</p>
         </div>
       </div>
 
@@ -205,9 +181,8 @@ function ShellNav({
 }
 
 export function AppShell({
-  brandLabel = "Yönetim",
+  brandLabel = "otoköprü",
   brandLogoSrc,
-  useDefaultBrandLogo = true,
   sidebarTitle,
   sidebarSubtitle,
   headerTitle,
@@ -241,9 +216,7 @@ export function AppShell({
       <div className="ops-layout">
         <aside className="ops-sidebar ui-scrollbar">
           <ShellNav
-            brandLabel={brandLabel}
             brandLogoSrc={activeBrandLogoSrc}
-            useDefaultBrandLogo={useDefaultBrandLogo}
             title={sidebarTitle}
             subtitle={sidebarSubtitle}
             navItems={navItems}
@@ -276,9 +249,7 @@ export function AppShell({
                     </div>
                     <div className="ops-drawer-nav">
                       <ShellNav
-                        brandLabel={brandLabel}
                         brandLogoSrc={activeBrandLogoSrc}
-                        useDefaultBrandLogo={useDefaultBrandLogo}
                         title={sidebarTitle}
                         subtitle={sidebarSubtitle}
                         navItems={navItems}
@@ -293,12 +264,7 @@ export function AppShell({
               </Dialog.Root>
 
               <div className="lg:hidden">
-                <Brand
-                  brandLabel={brandLabel}
-                  title={sidebarTitle}
-                  brandLogoSrc={activeBrandLogoSrc}
-                  useDefaultBrandLogo={useDefaultBrandLogo}
-                />
+                <Brand compact />
               </div>
               <div className="hidden min-w-0 lg:block">
                 {brandLabel ? (

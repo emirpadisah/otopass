@@ -10,7 +10,7 @@ import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Başvuru yönetimi",
+  title: "Galeri hesabı | otoköprü",
   description: "Gelen başvuruları yönetin ve teklif verin.",
 };
 
@@ -34,9 +34,8 @@ export default async function DealerLayout({ children }: { children: ReactNode }
 
   return (
     <AppShell
-      brandLabel=""
+      brandLabel="otoköprü"
       brandLogoSrc={getDealerLogoSrc(dealer)}
-      useDefaultBrandLogo={false}
       sidebarTitle={dealer.name}
       sidebarSubtitle="Başvuru ve teklif yönetimi"
       headerTitle={dealer.name}

@@ -96,17 +96,17 @@ function createSeedData(): LocalData {
     dealers: [
       {
         id: dealerId,
-        name: "POL-CAR Test Galeri",
+        name: "Test Galeri",
         slug: "test-galeri",
         contact_name: "Test Galeri Yetkilisi",
         contact_phone: "+905325554433",
-        contact_email: "galeri@pol-car.local",
+        contact_email: "galeri@otokopru.local",
         social_links: [
           { platform: "instagram", url: "https://instagram.com/testgaleri" },
           { platform: "whatsapp", url: "https://wa.me/905325554433" },
         ],
-        legal_name: "POL-CAR Test Galeri",
-        privacy_contact_email: "galeri@pol-car.local",
+        legal_name: "Test Galeri",
+        privacy_contact_email: "galeri@otokopru.local",
         logo_url: null,
         brand_color: null,
         is_active: true,

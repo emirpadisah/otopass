@@ -18,11 +18,11 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000"),
-  title: "POL-CAR | Araç başvurusu ve teklif yönetimi",
+  title: "otoköprü | Araç başvurusu ve teklif yönetimi",
   description:
     "Araç başvurularını, ekspertiz bilgilerini ve teklif süreçlerini tek çalışma alanında yönetin.",
-  openGraph: { title: "POL-CAR", description: "Araç başvurularını ve teklif süreçlerini tek çalışma alanında yönetin.", type: "website", locale: "tr_TR", url: "/", siteName: "POL-CAR" },
-  twitter: { card: "summary_large_image", title: "POL-CAR", description: "Araç başvurularını ve teklif süreçlerini tek çalışma alanında yönetin." },
+  openGraph: { title: "otoköprü", description: "Araç başvurularını ve teklif süreçlerini tek çalışma alanında yönetin.", type: "website", locale: "tr_TR", url: "/", siteName: "otoköprü" },
+  twitter: { card: "summary_large_image", title: "otoköprü", description: "Araç başvurularını ve teklif süreçlerini tek çalışma alanında yönetin." },
   manifest: "/manifest.webmanifest",
 };
 

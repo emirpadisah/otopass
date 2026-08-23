@@ -108,8 +108,10 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                   return (
                     <TableRow key={application.id}>
                       <TableCell data-label="Araç sahibi" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
-                        {application.owner_name ?? "-"}
-                        <WhatsAppPhoneLink phone={application.owner_phone} className="mt-1 font-normal" />
+                        <div className="ops-application-owner">
+                          <span>{application.owner_name ?? "-"}</span>
+                          <WhatsAppPhoneLink phone={application.owner_phone} className="font-normal" />
+                        </div>
                       </TableCell>
                       <TableCell data-label="Araç" className="whitespace-nowrap">{application.brand} {application.model}</TableCell>
                       <TableCell data-label="Yıl / KM" className="whitespace-nowrap">

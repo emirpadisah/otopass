@@ -1,6 +1,6 @@
-# POL-CAR
+# otoköprü
 
-POL-CAR, galeri bazlı araç başvurusu, teklif ve satış operasyonlarını yöneten Next.js 16 uygulamasıdır. Production veri ve kimlik doğrulama katmanı Supabase; dağıtım Vercel; bot koruması Cloudflare Turnstile; hata izleme Sentry üzerinde çalışır.
+otoköprü, galeri bazlı araç başvurusu, teklif ve satış operasyonlarını yöneten Next.js 16 uygulamasıdır. Production veri ve kimlik doğrulama katmanı Supabase; dağıtım Vercel; bot koruması Cloudflare Turnstile; hata izleme Sentry üzerinde çalışır.
 
 ## Yerel geliştirme
 

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function DealerLogo({
   dealerName,
@@ -14,8 +15,8 @@ export function DealerLogo({
 }) {
   if (!logoSrc) {
     return (
-      <span className={cn("dealer-public-logo dealer-public-logo-fallback", className)} role="img" aria-label={`${dealerName} logosu`}>
-        <span>{dealerName}</span>
+      <span className={cn("dealer-public-logo-fallback", className)}>
+        <BrandLogo size="compact" preload={priority} />
       </span>
     );
   }

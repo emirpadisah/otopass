@@ -6,7 +6,7 @@ import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
-  title: "Giriş | POL-CAR",
+  title: "Giriş | otoköprü",
 };
 
 const trustItems = [

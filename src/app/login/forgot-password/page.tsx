@@ -4,7 +4,7 @@ import { ArrowLeft, KeyRound } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
-export const metadata: Metadata = { title: "Şifremi unuttum | POL-CAR" };
+export const metadata: Metadata = { title: "Şifremi unuttum | otoköprü" };
 
 export default function ForgotPasswordPage() {
   return (

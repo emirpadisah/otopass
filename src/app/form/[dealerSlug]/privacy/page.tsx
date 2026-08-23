@@ -23,7 +23,7 @@ export default async function PrivacyPage({ params }: PageProps) {
       <Link href={requestHeaders.get("x-custom-domain") ? "/" : `/form/${dealerSlug}`} className="legal-back"><ArrowLeft size={16} /> Başvuru formuna dön</Link>
       <article className="panel legal-document">
         <header><DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} /><ShieldCheck className="mt-5" size={26} aria-hidden="true" /><p className="section-label">Yürürlük tarihi: 17 Ağustos 2026</p><h1>KVKK aydınlatma metni</h1></header>
-        <p>Bu araç başvuru formu kapsamında işlenen kişisel verilerin veri sorumlusu <strong>{controller}</strong>’dır. POL-CAR, başvuru sürecinin yürütüldüğü teknik altyapıyı sağlar.</p>
+        <p>Bu araç başvuru formu kapsamında işlenen kişisel verilerin veri sorumlusu <strong>{controller}</strong>’dır. otoköprü, başvuru sürecinin yürütüldüğü teknik altyapıyı sağlar.</p>
         <h2>İşlenen kişisel veriler</h2><p>Ad soyad ve telefon numarası, araç özellikleri, tramer ve hasar açıklamaları, kaporta bilgileri, yüklenen fotoğraflar ile işlem güvenliği kayıtları işlenir.</p>
         <h2>İşleme amaçları</h2><p>Veriler; araç başvurusunun alınması ve değerlendirilmesi, fiyat teklifi hazırlanması, başvuru sahibiyle iletişim kurulması, bilgi güvenliğinin sağlanması ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenir.</p>
         <h2>Toplama yöntemi ve hukuki sebep</h2><p>Kişisel veriler bu elektronik form üzerinden otomatik yöntemle toplanır; sözleşmenin kurulmasıyla doğrudan ilgili olma, veri sorumlusunun hukuki yükümlülüğünü yerine getirmesi ve meşru menfaatleri hukuki sebeplerine dayanılarak işlenir.</p>

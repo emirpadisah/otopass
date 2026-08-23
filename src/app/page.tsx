@@ -137,7 +137,7 @@ export default function Home() {
             <div className="vc-hero-copy">
               <span className="vc-hero-kicker"><Sparkles size={15} /> Araç başvurusu ve teklif yönetimi</span>
               <h1>Araç başvurularını ve teklif sürecini <span>tek akışta yönetin</span></h1>
-              <p>POL-CAR ile araç, müşteri, ekspertiz ve fotoğraf bilgilerini düzenli biçimde toplayın; teklif kararlarını aynı çalışma alanından yönetin.</p>
+              <p>otoköprü ile araç, müşteri, ekspertiz ve fotoğraf bilgilerini düzenli biçimde toplayın; teklif kararlarını aynı çalışma alanından yönetin.</p>
               <div className="vc-hero-cta-row">
                 <Link href="/login" className="vc-primary-cta">Panele giriş yap <ArrowRight size={17} /></Link>
                 <a href="#faydalar" className="vc-text-cta">Faydaları incele <ArrowRight size={16} /></a>
@@ -252,7 +252,7 @@ export default function Home() {
         <section className="vc-section vc-experience">
           <div className="vc-container">
             <div className="vc-centered-heading" data-reveal>
-              <span className="vc-section-kicker">POL-CAR deneyimi</span>
+              <span className="vc-section-kicker">otoköprü deneyimi</span>
               <h2>Ekibin çalışma hızına uyum sağlayan kontrol</h2>
               <p>Başvuru inceleme ve teklif yönetimi için gereken temel araçlar bir arada.</p>
             </div>
@@ -274,11 +274,11 @@ export default function Home() {
 
       <footer className="vc-footer">
         <div className="vc-container vc-footer-grid">
-          <div><Link href="/" className="vc-brand" aria-label="POL-CAR ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
+          <div><Link href="/" className="vc-brand" aria-label="otoköprü ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
           <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#roller">Kimler için?</a></div>
           <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenlik yaklaşımı</a><Link href="/terms">Kullanım koşulları</Link></div>
         </div>
-        <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} POL-CAR</span><span>Araç alım operasyon platformu</span></div>
+        <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} otoköprü</span><span>Araç alım operasyon platformu</span></div>
       </footer>
     </div>
   );

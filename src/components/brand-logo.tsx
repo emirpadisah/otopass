@@ -13,18 +13,21 @@ export function BrandLogo({ className, preload = false, size = "navigation" }: B
       className={cn("brand-lockup", className)}
       data-size={size}
       role="img"
-      aria-label="POL-CAR"
+      aria-label="otoköprü"
     >
-      <Image
-        className="brand-lockup-image"
-        src="/images/pol-car-logo-transparent.png"
-        alt=""
-        width={1548}
-        height={654}
-        loading={preload ? "eager" : "lazy"}
-        fetchPriority={preload ? "high" : "auto"}
-        sizes={size === "display" ? "(max-width: 640px) 72vw, 320px" : "180px"}
-      />
+      <span className="brand-lockup-mark" aria-hidden="true">
+        <Image
+          className="brand-lockup-image"
+          src="/images/otokopru-logo.png"
+          alt=""
+          width={559}
+          height={272}
+          loading={preload ? "eager" : "lazy"}
+          fetchPriority={preload ? "high" : "auto"}
+          sizes={size === "display" ? "(max-width: 640px) 46vw, 180px" : "96px"}
+        />
+      </span>
+      <span className="brand-lockup-name" aria-hidden="true">otoköprü</span>
     </span>
   );
 }
