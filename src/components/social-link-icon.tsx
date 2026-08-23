@@ -1,43 +1,40 @@
+import { Globe2, Link2 } from "lucide-react";
+import { FaLinkedinIn } from "react-icons/fa6";
 import {
-  AtSign,
-  AudioLines,
-  Facebook,
-  Ghost,
-  Globe2,
-  Instagram,
-  Link2,
-  Linkedin,
-  MapPin,
-  MessageCircle,
-  MessagesSquare,
-  Music2,
-  Pin,
-  Send,
-  Twitch,
-  Twitter,
-  Youtube,
-  type LucideIcon,
-} from "lucide-react";
+  SiDiscord,
+  SiFacebook,
+  SiGooglemaps,
+  SiInstagram,
+  SiPinterest,
+  SiSnapchat,
+  SiSpotify,
+  SiTelegram,
+  SiThreads,
+  SiTiktok,
+  SiTwitch,
+  SiWhatsapp,
+  SiX,
+  SiYoutube,
+} from "react-icons/si";
+import type { IconType } from "react-icons";
 import type { SocialPlatform } from "@/lib/social-links";
 
-const SOCIAL_ICONS: Record<SocialPlatform, LucideIcon> = {
-  instagram: Instagram,
-  tiktok: Music2,
-  facebook: Facebook,
-  x: Twitter,
-  youtube: Youtube,
-  linkedin: Linkedin,
-  whatsapp: MessageCircle,
-  telegram: Send,
-  threads: AtSign,
-  snapchat: Ghost,
-  pinterest: Pin,
-  twitch: Twitch,
-  discord: MessagesSquare,
-  spotify: AudioLines,
-  google_business: MapPin,
-  website: Globe2,
-  other: Link2,
+const SOCIAL_BRAND_ICONS: Partial<Record<SocialPlatform, IconType>> = {
+  instagram: SiInstagram,
+  tiktok: SiTiktok,
+  facebook: SiFacebook,
+  x: SiX,
+  youtube: SiYoutube,
+  linkedin: FaLinkedinIn,
+  whatsapp: SiWhatsapp,
+  telegram: SiTelegram,
+  threads: SiThreads,
+  snapchat: SiSnapchat,
+  pinterest: SiPinterest,
+  twitch: SiTwitch,
+  discord: SiDiscord,
+  spotify: SiSpotify,
+  google_business: SiGooglemaps,
 };
 
 export function SocialLinkIcon({
@@ -49,6 +46,9 @@ export function SocialLinkIcon({
   size?: number;
   className?: string;
 }) {
-  const Icon = SOCIAL_ICONS[platform];
-  return <Icon size={size} className={className} aria-hidden="true" />;
+  const BrandIcon = SOCIAL_BRAND_ICONS[platform];
+  if (BrandIcon) return <BrandIcon size={size} className={className} aria-hidden="true" />;
+
+  const GenericIcon = platform === "website" ? Globe2 : Link2;
+  return <GenericIcon size={size} className={className} aria-hidden="true" />;
 }

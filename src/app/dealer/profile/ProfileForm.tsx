@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import { ChevronDown, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronDown, Link2, Plus, Save, Trash2 } from "lucide-react";
 import { SocialLinkIcon } from "@/components/social-link-icon";
 import { Button, Field, Input, Select } from "@/components/ui";
 import {
@@ -145,84 +145,89 @@ export function ProfileForm({ dealer, canManage }: { dealer: Dealer; canManage: 
 
         {socialLinks.length > 0 ? (
           <div className="dealer-social-list">
-            {socialLinks.map((link, index) => {
+            {socialLinks.map((link) => {
               const option = getSocialPlatformOption(link.platform);
               return (
-                <div className="dealer-social-row" key={link.id}>
-                  <div className="dealer-social-row__number" aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
-                  <div className="dealer-social-row__icon">
-                    <SocialLinkIcon platform={link.platform} />
-                  </div>
-                  <div className="dealer-social-row__platform">
-                    <label className="sr-only" htmlFor={`${link.id}-platform`}>Platform</label>
-                    <div className="dealer-social-select-wrap">
-                      <Select
-                        id={`${link.id}-platform`}
-                        value={link.platform}
-                        disabled={!canManage}
-                        onChange={(event) => updateSocialLink(link.id, { platform: event.target.value as SocialPlatform })}
+                <div className="dealer-social-row" data-platform={link.platform} key={link.id}>
+                  <div className="dealer-social-row__header">
+                    <div className="dealer-social-row__icon" data-platform={link.platform} aria-hidden="true">
+                      <SocialLinkIcon platform={link.platform} size={18} />
+                    </div>
+                    <div className="dealer-social-row__platform">
+                      <label className="dealer-social-field-label" htmlFor={`${link.id}-platform`}>Platform</label>
+                      <div className="dealer-social-select-wrap">
+                        <Select
+                          id={`${link.id}-platform`}
+                          value={link.platform}
+                          disabled={!canManage}
+                          onChange={(event) => updateSocialLink(link.id, { platform: event.target.value as SocialPlatform })}
+                        >
+                          {SOCIAL_PLATFORM_OPTIONS.map((platformOption) => (
+                            <option
+                              key={platformOption.value}
+                              value={platformOption.value}
+                              disabled={
+                                platformOption.value !== "other" &&
+                                platformOption.value !== link.platform &&
+                                socialLinks.some((item) => item.platform === platformOption.value)
+                              }
+                            >
+                              {platformOption.label}
+                            </option>
+                          ))}
+                        </Select>
+                        <ChevronDown size={15} aria-hidden="true" />
+                      </div>
+                    </div>
+                    {canManage ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="dealer-social-row__remove"
+                        onClick={() => removeSocialLink(link.id)}
+                        aria-label={`${option.label} bağlantısını kaldır`}
+                        title="Bağlantıyı kaldır"
                       >
-                        {SOCIAL_PLATFORM_OPTIONS.map((platformOption) => (
-                          <option
-                            key={platformOption.value}
-                            value={platformOption.value}
-                            disabled={
-                              platformOption.value !== "other" &&
-                              platformOption.value !== link.platform &&
-                              socialLinks.some((item) => item.platform === platformOption.value)
-                            }
-                          >
-                            {platformOption.label}
-                          </option>
-                        ))}
-                      </Select>
-                      <ChevronDown size={15} aria-hidden="true" />
+                        <Trash2 size={16} aria-hidden="true" />
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <div className="dealer-social-row__fields">
+                    {link.platform === "other" ? (
+                      <div className="dealer-social-row__label">
+                        <label className="dealer-social-field-label" htmlFor={`${link.id}-label`}>Bağlantı adı</label>
+                        <Input
+                          id={`${link.id}-label`}
+                          value={link.label ?? ""}
+                          disabled={!canManage}
+                          onChange={(event) => updateSocialLink(link.id, { label: event.target.value })}
+                          placeholder="Örn. Sahibinden mağazası"
+                          maxLength={40}
+                          required
+                        />
+                      </div>
+                    ) : null}
+                    <div className="dealer-social-row__url">
+                      <label className="dealer-social-field-label" htmlFor={`${link.id}-url`}>Bağlantı adresi</label>
+                      <div className="dealer-social-url-wrap">
+                        <Link2 size={15} aria-hidden="true" />
+                        <Input
+                          id={`${link.id}-url`}
+                          type="url"
+                          inputMode="url"
+                          value={link.url}
+                          disabled={!canManage}
+                          onChange={(event) => updateSocialLink(link.id, { url: event.target.value })}
+                          placeholder={option.placeholder}
+                          maxLength={300}
+                          autoComplete="url"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
-                  {link.platform === "other" ? (
-                    <div className="dealer-social-row__label">
-                      <label className="sr-only" htmlFor={`${link.id}-label`}>Bağlantı adı</label>
-                      <Input
-                        id={`${link.id}-label`}
-                        value={link.label ?? ""}
-                        disabled={!canManage}
-                        onChange={(event) => updateSocialLink(link.id, { label: event.target.value })}
-                        placeholder="Bağlantı adı"
-                        maxLength={40}
-                        required
-                      />
-                    </div>
-                  ) : null}
-                  <div className="dealer-social-row__url">
-                    <label className="sr-only" htmlFor={`${link.id}-url`}>{option.label} bağlantısı</label>
-                    <Input
-                      id={`${link.id}-url`}
-                      type="url"
-                      inputMode="url"
-                      value={link.url}
-                      disabled={!canManage}
-                      onChange={(event) => updateSocialLink(link.id, { url: event.target.value })}
-                      placeholder={option.placeholder}
-                      maxLength={300}
-                      autoComplete="url"
-                      required
-                    />
-                  </div>
-                  {canManage ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="dealer-social-row__remove"
-                      onClick={() => removeSocialLink(link.id)}
-                      aria-label={`${option.label} bağlantısını kaldır`}
-                      title="Bağlantıyı kaldır"
-                    >
-                      <Trash2 size={16} aria-hidden="true" />
-                    </Button>
-                  ) : <span />}
                 </div>
               );
             })}
