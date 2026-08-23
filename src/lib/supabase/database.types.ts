@@ -4,7 +4,10 @@ type DealerRow = {
   id: string;
   name: string;
   slug: string;
+  contact_name: string | null;
+  contact_phone: string | null;
   contact_email: string | null;
+  social_links: Json;
   legal_name: string | null;
   privacy_contact_email: string | null;
   logo_url: string | null;

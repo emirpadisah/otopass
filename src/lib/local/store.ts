@@ -98,7 +98,13 @@ function createSeedData(): LocalData {
         id: dealerId,
         name: "POL-CAR Test Galeri",
         slug: "test-galeri",
+        contact_name: "Test Galeri Yetkilisi",
+        contact_phone: "+905325554433",
         contact_email: "galeri@pol-car.local",
+        social_links: [
+          { platform: "instagram", url: "https://instagram.com/testgaleri" },
+          { platform: "whatsapp", url: "https://wa.me/905325554433" },
+        ],
         legal_name: "POL-CAR Test Galeri",
         privacy_contact_email: "galeri@pol-car.local",
         logo_url: null,
@@ -257,7 +263,13 @@ export async function readLocalData(): Promise<LocalData> {
   const raw = await readFile(LOCAL_DATA_FILE, "utf8");
 
   try {
-    return JSON.parse(raw) as LocalData;
+    const data = JSON.parse(raw) as LocalData;
+    for (const dealer of data.dealers) {
+      dealer.contact_name ??= null;
+      dealer.contact_phone ??= null;
+      dealer.social_links ??= [];
+    }
+    return data;
   } catch {
     throw new Error("Yerel veri dosyası okunamadı. .local-data/otopass.json geçerli JSON olmalıdır.");
   }

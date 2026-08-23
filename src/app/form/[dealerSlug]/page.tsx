@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Camera, Check, ClipboardCheck, Clock3, PhoneCall, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Camera, Check, ClipboardCheck, Clock3, Mail, MessageCircle, PhoneCall, ShieldCheck, UserRound } from "lucide-react";
 import { DealerLogo } from "@/components/dealer-logo";
+import { SocialLinkIcon } from "@/components/social-link-icon";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
+import { getWhatsAppUrl } from "@/lib/phone";
+import { getDealerSocialLinks, getSocialLinkLabel } from "@/lib/social-links";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { FormClient } from "./FormClient";
 
@@ -48,6 +51,12 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
   if (!dealer) {
     notFound();
   }
+
+  const socialLinks = getDealerSocialLinks(dealer);
+  const contactWhatsAppUrl = getWhatsAppUrl(dealer.contact_phone);
+  const hasContactInfo = Boolean(
+    dealer.contact_name || dealer.contact_phone || dealer.contact_email || socialLinks.length > 0
+  );
 
   return (
     <div className="intake-page">
@@ -115,6 +124,52 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
               </li>
             ))}
           </ol>
+
+          {hasContactInfo ? (
+            <section className="intake-contact-card" aria-labelledby="dealer-contact-title">
+              <div className="intake-contact-heading">
+                <span><UserRound size={16} aria-hidden="true" /></span>
+                <div>
+                  <small>Galeri yetkilisi</small>
+                  <strong id="dealer-contact-title">{dealer.contact_name || `${dealer.name} ekibi`}</strong>
+                </div>
+              </div>
+              <p>Teklif sürecinizle ilgili doğrudan iletişim kurabilirsiniz.</p>
+              <div className="intake-contact-actions">
+                {dealer.contact_phone && contactWhatsAppUrl ? (
+                  <a href={contactWhatsAppUrl} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle size={14} aria-hidden="true" />
+                    <span dir="ltr">{dealer.contact_phone}</span>
+                  </a>
+                ) : null}
+                {dealer.contact_email ? (
+                  <a href={`mailto:${dealer.contact_email}`}>
+                    <Mail size={14} aria-hidden="true" />
+                    <span>{dealer.contact_email}</span>
+                  </a>
+                ) : null}
+              </div>
+              {socialLinks.length > 0 ? (
+                <div className="dealer-public-socials">
+                  {socialLinks.map((link, index) => {
+                    const label = getSocialLinkLabel(link);
+                    return (
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${dealer.name} ${label} bağlantısını aç`}
+                        key={`${link.platform}-${link.url}-${index}`}
+                      >
+                        <SocialLinkIcon platform={link.platform} size={14} />
+                        {label}
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <div className="intake-security-note">
             <ShieldCheck size={17} aria-hidden="true" />
