@@ -2184,14 +2184,9 @@ html.theme-light .ops-drawer-content {
 .dealer-social-row__icon[data-platform="instagram"] { color: #d62976; }
 .dealer-social-row__icon[data-platform="facebook"] { color: #1877f2; }
 .dealer-social-row__icon[data-platform="youtube"] { color: #e62117; }
-.dealer-social-row__icon[data-platform="linkedin"] { color: #0a66c2; }
 .dealer-social-row__icon[data-platform="whatsapp"] { color: #16875e; }
 .dealer-social-row__icon[data-platform="telegram"] { color: #229ed9; }
 .dealer-social-row__icon[data-platform="snapchat"] { color: #c9a900; }
-.dealer-social-row__icon[data-platform="pinterest"] { color: #e60023; }
-.dealer-social-row__icon[data-platform="twitch"] { color: #9146ff; }
-.dealer-social-row__icon[data-platform="discord"] { color: #5865f2; }
-.dealer-social-row__icon[data-platform="spotify"] { color: #168f46; }
 .dealer-social-row__icon[data-platform="google_business"] { color: #4285f4; }
 
 .dealer-social-row__platform,

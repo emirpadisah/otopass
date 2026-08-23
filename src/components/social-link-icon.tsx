@@ -1,17 +1,12 @@
 import { Globe2, Link2 } from "lucide-react";
-import { FaLinkedinIn } from "react-icons/fa6";
 import {
-  SiDiscord,
   SiFacebook,
   SiGooglemaps,
   SiInstagram,
-  SiPinterest,
   SiSnapchat,
-  SiSpotify,
   SiTelegram,
   SiThreads,
   SiTiktok,
-  SiTwitch,
   SiWhatsapp,
   SiX,
   SiYoutube,
@@ -25,15 +20,10 @@ const SOCIAL_BRAND_ICONS: Partial<Record<SocialPlatform, IconType>> = {
   facebook: SiFacebook,
   x: SiX,
   youtube: SiYoutube,
-  linkedin: FaLinkedinIn,
   whatsapp: SiWhatsapp,
   telegram: SiTelegram,
   threads: SiThreads,
   snapchat: SiSnapchat,
-  pinterest: SiPinterest,
-  twitch: SiTwitch,
-  discord: SiDiscord,
-  spotify: SiSpotify,
   google_business: SiGooglemaps,
 };
 

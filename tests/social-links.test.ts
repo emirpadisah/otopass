@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSocialLink, parseSocialLinksInput } from "@/lib/social-links";
+import { isSocialPlatform, normalizeSocialLink, parseSocialLinksInput } from "@/lib/social-links";
 
 describe("social links", () => {
   it("normalizes supported platform links", () => {
@@ -22,5 +22,11 @@ describe("social links", () => {
       { platform: "facebook", url: "https://facebook.com/a" },
       { platform: "facebook", url: "https://facebook.com/b" },
     ]))).toThrow("yalnızca bir kez");
+  });
+
+  it("does not expose removed platform options", () => {
+    for (const platform of ["spotify", "linkedin", "discord", "twitch", "pinterest"]) {
+      expect(isSocialPlatform(platform)).toBe(false);
+    }
   });
 });
