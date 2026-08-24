@@ -40,13 +40,17 @@ export async function login(
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
-    if (!email || !password) {
+    if (!email || email.length > 254 || !password || password.length > 128) {
       return { error: "E-posta ve şifre zorunludur." };
     }
 
     const ip = getClientIp(await headers());
-    const allowed = await consumeRateLimit(`${ip}:${email.toLowerCase()}`, { scope: "login", limit: 5, windowSeconds: 900 });
-    if (!allowed) return { error: "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin." };
+    const normalizedEmail = email.toLowerCase();
+    const [ipAllowed, accountAllowed] = await Promise.all([
+      consumeRateLimit(ip, { scope: "login-ip", limit: 30, windowSeconds: 900 }),
+      consumeRateLimit(normalizedEmail, { scope: "login-account", limit: 8, windowSeconds: 900 }),
+    ]);
+    if (!ipAllowed || !accountAllowed) return { error: "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin." };
 
     if (isLocalDataMode()) {
       if (!isLocalUserAuthEnabled()) {
@@ -113,11 +117,14 @@ export async function requestPasswordReset(
   formData: FormData
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Geçerli bir e-posta adresi girin." };
+  if (email.length > 254 || !/^\S+@\S+\.\S+$/.test(email)) return { error: "Geçerli bir e-posta adresi girin." };
   if (isLocalDataMode()) return { error: "Bu ortamda şifre yenileme kullanılamıyor." };
   const ip = getClientIp(await headers());
-  const allowed = await consumeRateLimit(`${ip}:${email}`, { scope: "password-reset", limit: 3, windowSeconds: 3600 });
-  if (!allowed) return { error: "Çok fazla yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin." };
+  const [ipAllowed, accountAllowed] = await Promise.all([
+    consumeRateLimit(ip, { scope: "password-reset-ip", limit: 20, windowSeconds: 3600 }),
+    consumeRateLimit(email, { scope: "password-reset-account", limit: 3, windowSeconds: 3600 }),
+  ]);
+  if (!ipAllowed || !accountAllowed) return { error: "Çok fazla yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin." };
   const siteUrl = getPublicSiteOrigin();
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -197,6 +204,8 @@ export async function changePassword(
     if (profileError) {
       return { error: "Şifre güncellendi ancak profil durumu kaydedilemedi. Lütfen tekrar deneyin." };
     }
+
+    await supabase.auth.signOut({ scope: "others" });
 
     redirect(await resolvePostLoginRoute());
   } catch (error) {

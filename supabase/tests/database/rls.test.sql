@@ -1,28 +1,38 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(39);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
   ('00000000-0000-4000-8000-000000000101', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'viewer@test.local', '', now(), now(), now()),
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'manager@test.local', '', now(), now(), now()),
-  ('00000000-0000-4000-8000-000000000103', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'other@test.local', '', now(), now(), now());
+  ('00000000-0000-4000-8000-000000000103', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'other@test.local', '', now(), now(), now()),
+  ('00000000-0000-4000-8000-000000000104', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'inactive@test.local', '', now(), now(), now()),
+  ('00000000-0000-4000-8000-000000000105', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@test.local', '', now(), now(), now()),
+  ('00000000-0000-4000-8000-000000000106', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'super@test.local', '', now(), now(), now());
 
 insert into public.user_profiles(user_id, is_active, must_change_password) values
   ('00000000-0000-4000-8000-000000000101', true, false),
   ('00000000-0000-4000-8000-000000000102', true, false),
-  ('00000000-0000-4000-8000-000000000103', true, false);
+  ('00000000-0000-4000-8000-000000000103', true, false),
+  ('00000000-0000-4000-8000-000000000104', false, false),
+  ('00000000-0000-4000-8000-000000000105', true, false),
+  ('00000000-0000-4000-8000-000000000106', true, false);
 insert into public.user_roles(user_id, role) values
   ('00000000-0000-4000-8000-000000000101', 'dealer_viewer'),
   ('00000000-0000-4000-8000-000000000102', 'dealer_manager'),
-  ('00000000-0000-4000-8000-000000000103', 'dealer_manager');
+  ('00000000-0000-4000-8000-000000000103', 'dealer_manager'),
+  ('00000000-0000-4000-8000-000000000104', 'dealer_manager'),
+  ('00000000-0000-4000-8000-000000000105', 'admin'),
+  ('00000000-0000-4000-8000-000000000106', 'super_admin');
 insert into public.dealers(id, name, slug) values
   ('00000000-0000-4000-8000-000000000201', 'Dealer A', 'dealer-a'),
   ('00000000-0000-4000-8000-000000000202', 'Dealer B', 'dealer-b');
 insert into public.dealer_users(user_id, dealer_id, role) values
   ('00000000-0000-4000-8000-000000000101', '00000000-0000-4000-8000-000000000201', 'viewer'),
   ('00000000-0000-4000-8000-000000000102', '00000000-0000-4000-8000-000000000201', 'manager'),
-  ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000202', 'manager');
+  ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000202', 'manager'),
+  ('00000000-0000-4000-8000-000000000104', '00000000-0000-4000-8000-000000000201', 'manager');
 insert into public.dealer_domains(dealer_id, hostname, status)
 values ('00000000-0000-4000-8000-000000000201', 'apply.dealer-a.test', 'verified');
 insert into public.applications(id, dealer_id, dealer_slug, brand, model, reference_code, submitted_at)
@@ -79,6 +89,21 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000103
 select throws_ok($$ select public.create_dealer_offer('00000000-0000-4000-8000-000000000302', 200000, 'TRY', null) $$, 'FORBIDDEN', 'cross-tenant manager cannot create offer');
 select throws_ok($$ select public.delete_application_for_current_user('00000000-0000-4000-8000-000000000302') $$, 'FORBIDDEN', 'cross-tenant manager cannot delete another dealer application');
 select is_empty($$ select hostname from public.dealer_domains $$, 'cross-tenant manager cannot read another dealer domain');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000104', true);
+select isnt(public.current_user_is_active(), true, 'inactive user is rejected by the active-user helper');
+select isnt(public.current_user_can_manage_dealer('00000000-0000-4000-8000-000000000201'), true, 'inactive manager cannot manage a dealer');
+select is_empty($$ select id from public.applications $$, 'inactive user cannot read dealer applications');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000105', true);
+select ok(public.current_user_is_admin(), 'active admin retains read access');
+select is_empty($$ update public.user_roles set role = 'super_admin' where user_id = '00000000-0000-4000-8000-000000000105' returning user_id $$, 'admin cannot elevate a role directly');
+select throws_ok($$ select public.admin_update_user_access('00000000-0000-4000-8000-000000000105', 'Admin', 'super_admin', null, true) $$, 'SUPER_ADMIN_REQUIRED', 'admin cannot elevate through the RPC');
+select is_empty($$ update public.dealers set name = 'Compromised' where id = '00000000-0000-4000-8000-000000000201' returning id $$, 'admin cannot mutate a dealer directly');
+select is_empty($$ update public.activity_log set action = 'TAMPERED' returning id $$, 'admin cannot mutate audit records');
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000106', true);
+select throws_ok($$ select public.admin_update_user_access('00000000-0000-4000-8000-000000000106', 'Super', 'super_admin', null, false) $$, 'CANNOT_DEACTIVATE_SELF', 'super admin cannot deactivate the current account');
 
 set local role anon;
 select results_eq(

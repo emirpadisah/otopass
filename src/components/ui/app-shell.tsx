@@ -90,10 +90,32 @@ function NavLink({
   );
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function Brand({
+  compact = false,
+  logoSrc,
+  title,
+}: {
+  compact?: boolean;
+  logoSrc?: string | null;
+  title: string;
+}) {
   return (
-    <div className="ops-brand">
-      <BrandLogo className="ops-brand-logo" size={compact ? "compact" : "navigation"} preload />
+    <div className="ops-brand" data-custom-logo={logoSrc ? "true" : "false"}>
+      {logoSrc ? (
+        <span className="ops-brand-dealer-logo" role="img" aria-label={`${title} logosu`}>
+          <Image
+            src={logoSrc}
+            alt=""
+            fill
+            sizes={compact ? "104px" : "196px"}
+            loading="eager"
+            fetchPriority="high"
+            unoptimized
+          />
+        </span>
+      ) : (
+        <BrandLogo className="ops-brand-logo" size={compact ? "compact" : "navigation"} preload />
+      )}
     </div>
   );
 }
@@ -119,7 +141,7 @@ function ShellNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <Brand />
+      <Brand logoSrc={brandLogoSrc} title={title} />
 
       <div className="ops-workspace-card">
         {brandLogoSrc ? (
@@ -264,7 +286,7 @@ export function AppShell({
               </Dialog.Root>
 
               <div className="lg:hidden">
-                <Brand compact />
+                <Brand compact logoSrc={activeBrandLogoSrc} title={sidebarTitle} />
               </div>
               <div className="hidden min-w-0 lg:block">
                 {brandLabel ? (

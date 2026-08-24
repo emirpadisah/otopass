@@ -1,32 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { PlusCircle } from "lucide-react";
+import { useActionState, useState } from "react";
+import { LoaderCircle, PlusCircle } from "lucide-react";
 import { Button, Field, Input } from "@/components/ui";
 import type { ActionResponse } from "@/lib/types";
 import { createDealerAction } from "./actions";
 
 const initialState: ActionResponse = { ok: false };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" disabled={pending}>
-      <PlusCircle size={16} aria-hidden="true" />
-      {pending ? "Oluşturuluyor..." : "Galeri oluştur"}
-    </Button>
-  );
-}
-
 export function DealerCreateForm() {
-  const [state, formAction] = useActionState(createDealerAction, initialState);
+  const [state, formAction, pending] = useActionState(createDealerAction, initialState);
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form action={formAction} className="grid gap-4" aria-busy={pending}>
           <Field label="Galeri adı" labelFor="name">
-            <Input id="name" name="name" placeholder="Örn. Atlas Oto Galeri" required />
+            <Input id="name" name="name" placeholder="Örn. Atlas Oto Galeri" required value={name} onChange={(event) => setName(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           <Field
@@ -34,11 +25,11 @@ export function DealerCreateForm() {
             labelFor="slug"
             description="Boş bırakılırsa galeri adından otomatik üretilir."
           >
-            <Input id="slug" name="slug" placeholder="orn-atlas-oto" />
+            <Input id="slug" name="slug" placeholder="orn-atlas-oto" value={slug} onChange={(event) => setSlug(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           <Field label="İletişim e-postası" labelFor="contactEmail">
-            <Input id="contactEmail" name="contactEmail" type="email" placeholder="iletisim@galeri.com" />
+            <Input id="contactEmail" name="contactEmail" type="email" placeholder="iletisim@galeri.com" value={contactEmail} onChange={(event) => setContactEmail(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           {state.message ? (
@@ -52,7 +43,10 @@ export function DealerCreateForm() {
           ) : null}
 
           <div>
-            <SubmitButton />
+            <Button type="submit" disabled={pending}>
+              {pending ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : <PlusCircle size={16} aria-hidden="true" />}
+              {pending ? "Galeri oluşturuluyor..." : "Galeri oluştur"}
+            </Button>
           </div>
     </form>
   );

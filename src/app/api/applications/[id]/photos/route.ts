@@ -5,6 +5,7 @@ import { readLocalPhoto } from "@/lib/local/store";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserId, getDealerApplicationForCurrentUser, getUserRoles } from "@/lib/supabase/queries";
 import { getApplicationPhotoFilename } from "@/lib/application-photo-urls";
+import { PRIVATE_NO_STORE_HEADERS } from "@/lib/security/request";
 
 function getImageContentType(photoPath: string): string {
   const extension = photoPath.split(".").pop()?.toLowerCase();
@@ -18,6 +19,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   const userId = await getCurrentUserId();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -79,7 +83,7 @@ export async function GET(
       downloadUrls: (application.photo_paths ?? []).map(
         (_, index) => `/api/applications/${id}/photos?index=${index}&download=1`,
       ),
-    });
+    }, { headers: PRIVATE_NO_STORE_HEADERS });
   }
 
   const service = createSupabaseServiceClient();
@@ -96,5 +100,5 @@ export async function GET(
     }
   }
 
-  return NextResponse.json({ urls, downloadUrls });
+  return NextResponse.json({ urls, downloadUrls }, { headers: PRIVATE_NO_STORE_HEADERS });
 }

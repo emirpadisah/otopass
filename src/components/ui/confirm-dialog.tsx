@@ -21,6 +21,8 @@ type ConfirmDialogProps = {
   formId?: string;
   submitName?: string;
   submitValue?: string;
+  feedbackMessage?: string;
+  feedbackTone?: "success" | "danger" | "warning";
 };
 
 export function ConfirmDialog({
@@ -36,6 +38,8 @@ export function ConfirmDialog({
   formId,
   submitName,
   submitValue,
+  feedbackMessage,
+  feedbackTone = "danger",
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
   const [working, setWorking] = useState(false);
@@ -55,7 +59,7 @@ export function ConfirmDialog({
   const confirmVariant = tone === "danger" ? "danger" : tone === "primary" ? "primary" : "tonal";
 
   return (
-    <Dialog.Root open={open} onOpenChange={(nextOpen) => !working && setOpen(nextOpen)}>
+    <Dialog.Root open={open} onOpenChange={(nextOpen) => !busy && setOpen(nextOpen)}>
       <Dialog.Trigger asChild disabled={disabled}>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="ops-confirm-overlay" />
@@ -65,7 +69,7 @@ export function ConfirmDialog({
               <AlertTriangle size={21} strokeWidth={1.8} />
             </span>
             <Dialog.Close asChild>
-              <button type="button" className="ops-confirm-close" aria-label="Pencereyi kapat" disabled={working}>
+              <button type="button" className="ops-confirm-close" aria-label="Pencereyi kapat" disabled={busy}>
                 <X size={17} aria-hidden="true" />
               </button>
             </Dialog.Close>
@@ -83,9 +87,19 @@ export function ConfirmDialog({
             </ul>
           ) : null}
 
+          {feedbackMessage ? (
+            <div
+              className="status-alert"
+              data-tone={feedbackTone}
+              role={feedbackTone === "danger" ? "alert" : "status"}
+            >
+              {feedbackMessage}
+            </div>
+          ) : null}
+
           <div className="ops-confirm-actions">
             <Dialog.Close asChild>
-              <Button type="button" variant="secondary" disabled={working}>{cancelLabel}</Button>
+              <Button type="button" variant="secondary" disabled={busy}>{cancelLabel}</Button>
             </Dialog.Close>
             {formId ? (
               <Button
@@ -95,9 +109,9 @@ export function ConfirmDialog({
                 value={submitValue}
                 variant={confirmVariant}
                 disabled={busy}
-                onClick={() => setOpen(false)}
               >
-                {confirmLabel}
+                {busy ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : null}
+                {busy ? "İşlem tamamlanıyor..." : confirmLabel}
               </Button>
             ) : (
               <Button type="button" variant={confirmVariant} disabled={busy} onClick={() => void handleConfirm()}>
@@ -122,6 +136,8 @@ type ConfirmSubmitButtonProps = Omit<ButtonProps, "type" | "form"> & {
   tone?: ConfirmTone;
   submitName?: string;
   submitValue?: string;
+  feedbackMessage?: string;
+  feedbackTone?: "success" | "danger" | "warning";
   children: ReactNode;
 };
 
@@ -135,6 +151,8 @@ export function ConfirmSubmitButton({
   tone,
   submitName,
   submitValue,
+  feedbackMessage,
+  feedbackTone,
   children,
   disabled,
   ...buttonProps
@@ -152,6 +170,8 @@ export function ConfirmSubmitButton({
       formId={formId}
       submitName={submitName}
       submitValue={submitValue}
+      feedbackMessage={feedbackMessage}
+      feedbackTone={feedbackTone}
     />
   );
 }

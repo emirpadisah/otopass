@@ -481,6 +481,19 @@ html.theme-light .ops-shell {
   color: var(--ops-text);
 }
 
+.ops-brand-dealer-logo {
+  position: relative;
+  display: block;
+  width: min(100%, 196px);
+  height: 88px;
+  flex: none;
+}
+
+.ops-brand-dealer-logo img {
+  object-fit: contain;
+  object-position: center;
+}
+
 .ops-workspace-card {
   display: flex;
   min-height: 68px;
@@ -636,6 +649,11 @@ html.theme-light .ops-shell {
 
 .ops-topbar .ops-brand-logo {
   width: 102px;
+}
+
+.ops-topbar .ops-brand-dealer-logo {
+  width: 104px;
+  height: 42px;
 }
 
 .ops-topbar-divider {
@@ -2773,6 +2791,8 @@ html.theme-dark .vc-root {
   top: 12px;
   left: 12px;
   z-index: 100;
+  opacity: 0;
+  pointer-events: none;
   transform: translateY(-160%);
   border-radius: 6px;
   background: var(--vc-red);
@@ -2780,10 +2800,12 @@ html.theme-dark .vc-root {
   color: white;
   font-size: 13px;
   font-weight: 800;
-  transition: transform 160ms ease;
+  transition: opacity 120ms ease, transform 160ms ease;
 }
 
-.vc-skip-link:focus {
+.vc-skip-link:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
@@ -3748,6 +3770,584 @@ html.theme-dark .vc-offer-visual {
   line-height: 1.65;
 }
 
+/* 21st.dev Animated Glassy Pricing pattern, adapted to otokopru */
+.vc-pricing-section {
+  position: relative;
+  overflow: hidden;
+  scroll-margin-top: 24px;
+  border-block: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #111722;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(227, 38, 46, 0.12), transparent 48%);
+  background-size: 46px 46px, 46px 46px, 100% 100%;
+}
+
+.vc-pricing-heading .vc-section-kicker {
+  color: #ff7379;
+}
+
+.vc-pricing-heading h2 {
+  color: #ffffff;
+}
+
+.vc-pricing-heading > p {
+  color: #bdc7d6;
+}
+
+.vc-pricing-grid {
+  display: grid;
+  width: min(100%, 1020px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin: 42px auto 0;
+}
+
+.vc-pricing-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 650px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 28px;
+  color: #ffffff;
+  box-shadow: 0 28px 70px -44px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  transition: border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+
+.vc-pricing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.vc-pricing-card[data-featured="true"] {
+  border-color: rgba(255, 101, 108, 0.72);
+  background: linear-gradient(145deg, rgba(227, 38, 46, 0.2), rgba(255, 255, 255, 0.075) 48%);
+  box-shadow: 0 30px 80px -42px rgba(227, 38, 46, 0.5);
+}
+
+.vc-pricing-card[data-featured="true"]::before {
+  background: #f0444b;
+}
+
+.vc-pricing-card:hover {
+  border-color: rgba(255, 115, 121, 0.68);
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 32px 80px -42px rgba(227, 38, 46, 0.46);
+}
+
+.vc-pricing-card-topline {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vc-pricing-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #ff7379;
+}
+
+.vc-pricing-badge {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
+  color: #dce3ed;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.vc-pricing-card[data-featured="true"] .vc-pricing-badge {
+  border-color: rgba(255, 115, 121, 0.48);
+  background: rgba(227, 38, 46, 0.2);
+  color: #ffffff;
+}
+
+.vc-pricing-title {
+  margin-top: 24px;
+}
+
+.vc-pricing-title > span {
+  color: #ffffff;
+  font-size: 21px;
+  font-weight: 830;
+}
+
+.vc-pricing-title > p {
+  min-height: 66px;
+  margin-top: 8px;
+  color: #bdc7d6;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.vc-pricing-amount {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.vc-pricing-amount strong {
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.vc-pricing-amount span {
+  padding-bottom: 5px;
+  color: #aeb9c9;
+  font-size: 12px;
+  font-weight: 730;
+}
+
+.vc-pricing-billing {
+  display: block;
+  min-height: 17px;
+  margin-top: 8px;
+  color: #ff9da1;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.vc-pricing-divider {
+  height: 1px;
+  margin-block: 24px 19px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.vc-pricing-includes {
+  color: #e8edf4;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.vc-pricing-features {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.vc-pricing-features li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  color: #d2dae5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.vc-pricing-features li > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(84, 211, 165, 0.13);
+  color: #71dfb7;
+}
+
+.vc-pricing-features li[data-exclusive="true"] {
+  border: 1px solid rgba(255, 115, 121, 0.32);
+  border-radius: 7px;
+  background: rgba(227, 38, 46, 0.12);
+  padding: 10px;
+  color: #ffffff;
+  font-weight: 780;
+}
+
+.vc-pricing-features li[data-exclusive="true"] > span {
+  background: rgba(227, 38, 46, 0.24);
+  color: #ff8a90;
+}
+
+.vc-pricing-cta {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 820;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.vc-pricing-card[data-featured="true"] .vc-pricing-cta {
+  border-color: #f0444b;
+  background: #e3262e;
+}
+
+.vc-pricing-cta:hover {
+  border-color: #ff7379;
+  background: rgba(227, 38, 46, 0.88);
+}
+
+.vc-pricing-cta svg {
+  transition: transform 180ms ease;
+}
+
+.vc-pricing-cta:hover svg {
+  transform: translateX(3px);
+}
+
+.vc-pricing-note {
+  max-width: 760px;
+  margin: 22px auto 0;
+  color: #9fabbc;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.vc-motion-ready .vc-pricing-card[data-reveal] {
+  transition-delay: calc(var(--vc-order) * 80ms);
+}
+
+/* 21st.dev Efferd Contact Card pattern, adapted to otokopru */
+.vc-contact-section {
+  scroll-margin-top: 24px;
+  background: var(--vc-bg-soft);
+}
+
+.vc-contact-shell {
+  display: grid;
+  width: min(100%, 1120px);
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  overflow: hidden;
+  margin: 42px auto 0;
+  border: 1px solid var(--vc-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--vc-card) 92%, transparent);
+  box-shadow: 0 28px 68px -44px rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(18px) saturate(115%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+}
+
+.vc-contact-details {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background:
+    linear-gradient(150deg, rgba(227, 38, 46, 0.2), transparent 44%),
+    #141b26;
+  padding: 34px;
+  color: #ffffff;
+}
+
+.vc-contact-details-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.vc-contact-details-heading > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ff7379;
+}
+
+.vc-contact-details-heading > div {
+  display: grid;
+  gap: 5px;
+}
+
+.vc-contact-details-heading small,
+.vc-contact-form-heading > span {
+  color: #ff8a90;
+  font-size: 9px;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.vc-contact-form-heading > span {
+  color: var(--vc-red-dark);
+}
+
+.vc-contact-details-heading h3 {
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 820;
+}
+
+.vc-contact-details > p {
+  margin-top: 20px;
+  color: #bdc7d6;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.vc-contact-links {
+  display: grid;
+  gap: 9px;
+  margin-top: 28px;
+}
+
+.vc-contact-links > a {
+  display: grid;
+  min-width: 0;
+  min-height: 70px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 11px 13px;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.vc-contact-links > a:hover {
+  border-color: rgba(255, 115, 121, 0.55);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vc-contact-links > a > span:first-child {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(227, 38, 46, 0.18);
+  color: #ff7379;
+}
+
+.vc-contact-links > a > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.vc-contact-links small {
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 730;
+  text-transform: uppercase;
+}
+
+.vc-contact-links strong {
+  overflow-wrap: anywhere;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.vc-contact-links > a > svg {
+  color: #94a3b8;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.vc-contact-links > a:hover > svg {
+  transform: translate(2px, -2px);
+  color: #ffffff;
+}
+
+.vc-contact-assurance {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 25px;
+  color: #71dfb7;
+}
+
+.vc-contact-assurance > span {
+  display: grid;
+  gap: 3px;
+}
+
+.vc-contact-assurance strong {
+  color: #ffffff;
+  font-size: 11px;
+}
+
+.vc-contact-assurance small {
+  color: #9faabd;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.vc-contact-form-wrap {
+  min-width: 0;
+  background: color-mix(in srgb, var(--vc-bg) 90%, transparent);
+  padding: 34px;
+}
+
+.vc-contact-form-heading > h3 {
+  margin-top: 7px;
+  color: var(--vc-ink);
+  font-size: 23px;
+  line-height: 1.25;
+  font-weight: 830;
+}
+
+.vc-contact-form-heading > p {
+  max-width: 540px;
+  margin-top: 8px;
+  color: var(--vc-text);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.vc-contact-form {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 26px;
+}
+
+.vc-contact-form > div:not(.vc-contact-honeypot) {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.vc-contact-form label {
+  color: var(--vc-ink);
+  font-size: 10px;
+  font-weight: 780;
+}
+
+.vc-contact-form :is(input, textarea) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--vc-border);
+  border-radius: 7px;
+  background: var(--vc-bg);
+  padding: 12px 13px;
+  color: var(--vc-ink);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 170ms ease, box-shadow 170ms ease, background-color 170ms ease;
+}
+
+.vc-contact-form input {
+  min-height: 48px;
+}
+
+.vc-contact-form textarea {
+  min-height: 126px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.vc-contact-form :is(input, textarea)::placeholder {
+  color: var(--vc-muted);
+  opacity: 0.82;
+}
+
+.vc-contact-form :is(input, textarea):focus {
+  border-color: var(--vc-red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vc-red) 15%, transparent);
+}
+
+.vc-contact-field-wide,
+.vc-contact-submit,
+.vc-contact-consent,
+.vc-contact-status {
+  grid-column: 1 / -1;
+}
+
+.vc-contact-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.vc-contact-submit {
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--vc-red);
+  border-radius: 7px;
+  background: var(--vc-red);
+  padding: 11px 16px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 820;
+  cursor: pointer;
+  box-shadow: 0 16px 30px -24px color-mix(in srgb, var(--vc-red) 85%, transparent);
+  transition: border-color 170ms ease, background-color 170ms ease, box-shadow 170ms ease;
+}
+
+.vc-contact-submit:hover {
+  border-color: var(--vc-red-dark);
+  background: var(--vc-red-dark);
+  box-shadow: 0 20px 36px -22px color-mix(in srgb, var(--vc-red) 90%, transparent);
+}
+
+.vc-contact-consent {
+  color: var(--vc-muted);
+  font-size: 9px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.vc-contact-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--vc-success) 34%, var(--vc-border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--vc-success) 9%, var(--vc-bg));
+  padding: 10px 12px;
+  color: var(--vc-success);
+  font-size: 10px;
+  font-weight: 730;
+  line-height: 1.5;
+}
+
+.vc-contact-status svg {
+  flex: none;
+  margin-top: 1px;
+}
+
 .vc-final-cta {
   padding-block: 36px 86px;
   background: var(--vc-bg);
@@ -3957,6 +4557,14 @@ html.theme-dark .vc-offer-visual {
   .vc-experience-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 26px 18px;
+  }
+
+  .vc-contact-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-contact-assurance {
+    margin-top: 30px;
   }
 }
 
@@ -4188,6 +4796,43 @@ html.theme-dark .vc-offer-visual {
 
   .vc-experience-grid {
     grid-template-columns: 1fr;
+  }
+
+  .vc-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-pricing-card {
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .vc-pricing-title > p {
+    min-height: 0;
+  }
+
+  .vc-pricing-amount strong {
+    font-size: 40px;
+  }
+
+  .vc-pricing-cta {
+    margin-top: 26px;
+  }
+
+  .vc-contact-details,
+  .vc-contact-form-wrap {
+    padding: 26px 22px;
+  }
+
+  .vc-contact-form {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-contact-field-wide,
+  .vc-contact-submit,
+  .vc-contact-consent,
+  .vc-contact-status {
+    grid-column: auto;
   }
 
   .vc-final-cta {

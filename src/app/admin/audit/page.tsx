@@ -8,6 +8,7 @@ const actionLabels: Record<string, string> = {
   ADMIN_DEALER_CREATED: "Galeri oluşturuldu",
   ADMIN_DEALER_UPDATED: "Galeri güncellendi",
   ADMIN_DEALER_DELETE_REQUESTED: "Galeri silme işlemi başlatıldı",
+  ADMIN_DEALER_DELETED: "Galeri silindi",
   ADMIN_USER_CREATED: "Kullanıcı oluşturuldu",
   ADMIN_USER_DELETED: "Kullanıcı silindi",
   ADMIN_PASSWORD_RESET_SENT: "Şifre yenileme bağlantısı gönderildi",

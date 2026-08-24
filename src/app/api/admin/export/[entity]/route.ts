@@ -23,7 +23,7 @@ const roleLabels: Record<string, string> = {
 
 function csvCell(value: unknown): string {
   let text = String(value ?? "");
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  if (/^[\u0000-\u0020]*[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 

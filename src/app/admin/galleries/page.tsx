@@ -20,7 +20,7 @@ import { parsePagination } from "@/lib/pagination";
 import { listDealers } from "@/lib/supabase/queries";
 import { DealerCreateForm } from "./DealerCreateForm";
 
-type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string };
+type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string; created?: string; deleted?: string; cleanup?: string };
 
 export default async function AdminGalleriesPage({ searchParams }: { searchParams: Promise<Params> }) {
   const raw = await searchParams;
@@ -44,6 +44,20 @@ export default async function AdminGalleriesPage({ searchParams }: { searchParam
         icon={Building2}
         meta={<span className="ops-chip">{filteredDealers.length} kayıtlı galeri</span>}
       />
+
+      {raw.created === "1" ? (
+        <div className="status-alert mt-4" data-tone="success" role="status">
+          Galeri oluşturuldu ve başvuru adresi kullanıma hazırlandı.
+        </div>
+      ) : null}
+
+      {raw.deleted === "1" ? (
+        <div className="status-alert mt-4" data-tone={raw.cleanup === "pending" ? "warning" : "success"} role="status">
+          {raw.cleanup === "pending"
+            ? "Galeri ve bağlı kayıtlar silindi. Bazı dosya veya alan adı temizlikleri arka planda tamamlanmayı bekliyor."
+            : "Galeri, bağlı başvurular, teklifler ve üyelikler kalıcı olarak silindi."}
+        </div>
+      ) : null}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <PanelSection

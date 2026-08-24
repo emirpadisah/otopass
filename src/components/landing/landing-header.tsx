@@ -9,8 +9,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 const navItems = [
   { href: "#faydalar", label: "Sistem faydaları" },
   { href: "#nasil-calisir", label: "Nasıl çalışır?" },
-  { href: "#roller", label: "Kimler için?" },
-  { href: "#guven", label: "Güven" },
+  { href: "#fiyatlar", label: "Fiyatlar" },
+  { href: "#iletisim", label: "İletişim" },
 ];
 
 function Brand() {

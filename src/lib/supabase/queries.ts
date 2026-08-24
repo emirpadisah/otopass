@@ -1,4 +1,7 @@
+import "server-only";
+
 import { cache } from "react";
+import { requireAdminAccess } from "@/lib/auth/roles";
 import { createSupabaseServerClient } from "./server";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
@@ -18,7 +21,6 @@ import {
   listLocalUsersForAdmin,
 } from "@/lib/local/repository";
 import type { ApplicationStatus, PaginatedResult, PaginationInput, UserRole } from "@/lib/types";
-import { isMissingColumn, isMissingRelation } from "./schema-compat";
 import { safeSearchTerm } from "@/lib/pagination";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
@@ -52,22 +54,8 @@ export async function getDealerBySlug(slug: string): Promise<DealerRow | null> {
 
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase.from("dealers").select("*").eq("slug", slug).eq("is_active", true).maybeSingle();
-  if (!error) return (data as DealerRow | null) ?? null;
-  if (!isMissingColumn(error, "is_active")) throw error;
-
-  const { data: legacyDealer, error: legacyError } = await supabase.from("dealers").select("*").eq("slug", slug).maybeSingle();
-  if (legacyError) throw legacyError;
-  if (!legacyDealer) return null;
-  return {
-    ...legacyDealer,
-    legal_name: null,
-    privacy_contact_email: null,
-    logo_url: null,
-    brand_color: null,
-    is_active: true,
-    updated_at: legacyDealer.created_at,
-    deactivated_at: null,
-  } as DealerRow;
+  if (error) throw error;
+  return (data as DealerRow | null) ?? null;
 }
 
 export async function getDealerById(id: string): Promise<DealerRow | null> {
@@ -88,7 +76,16 @@ export const getCurrentUserId = cache(async (): Promise<string | null> => {
     error,
   } = await supabase.auth.getUser();
   if (error) throw error;
-  return user?.id ?? null;
+  if (!user) return null;
+
+  const service = createSupabaseServiceClient();
+  const { data: profile, error: profileError } = await service
+    .from("user_profiles")
+    .select("is_active")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (profileError || profile?.is_active !== true) return null;
+  return user.id;
 });
 
 export async function getUserRoles(userId: string): Promise<UserRole[]> {
@@ -101,6 +98,7 @@ export async function getUserRoles(userId: string): Promise<UserRole[]> {
 }
 
 export async function listDealers(): Promise<DealerRow[]> {
+  await requireAdminAccess();
   if (isLocalDataMode()) return listLocalDealers();
 
   const supabase = createSupabaseServiceClient();
@@ -162,7 +160,6 @@ export async function getDealerDomainByDealerId(dealerId: string): Promise<Deale
     .select("*")
     .eq("dealer_id", dealerId)
     .maybeSingle();
-  if (error && isMissingRelation(error, "dealer_domains")) return undefined;
   if (error) throw error;
   return (data as DealerDomainRow | null) ?? null;
 }
@@ -410,6 +407,7 @@ export async function getDealerApplicationForCurrentUser(applicationId: string):
 }
 
 export async function listUsersForAdmin() {
+  await requireAdminAccess();
   if (isLocalDataMode()) return listLocalUsersForAdmin();
 
   const supabase = createSupabaseServiceClient();
@@ -465,6 +463,7 @@ export async function getAdminDashboardCounts(): Promise<{
   dealers: number;
   offers: number;
 }> {
+  await requireAdminAccess();
   if (isLocalDataMode()) return getLocalAdminDashboardCounts();
 
   const supabase = createSupabaseServiceClient();

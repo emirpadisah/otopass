@@ -1,8 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
-import { useFormStatus } from "react-dom";
-import { UserPlus } from "lucide-react";
+import { useActionState, useState } from "react";
+import { LoaderCircle, UserPlus } from "lucide-react";
 import {
   Button,
   Field,
@@ -18,31 +17,24 @@ const DEALER_ROLE_SET = new Set(["dealer_owner", "dealer_manager", "dealer_viewe
 
 type DealerOption = { id: string; name: string };
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" disabled={pending} aria-disabled={pending}>
-      <UserPlus size={16} aria-hidden="true" />
-      {pending ? "Oluşturuluyor..." : "Kullanıcı oluştur"}
-    </Button>
-  );
-}
-
 export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
-  const [state, formAction] = useActionState(createUserAction, initialState);
+  const [state, formAction, pending] = useActionState(createUserAction, initialState);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
+  const [dealerId, setDealerId] = useState("");
 
-  const roleNeedsDealer = useMemo(() => DEALER_ROLE_SET.has(role), [role]);
+  const roleNeedsDealer = DEALER_ROLE_SET.has(role);
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form action={formAction} className="grid gap-4" aria-busy={pending}>
           <Field label="E-posta" labelFor="email">
-            <Input id="email" name="email" type="email" placeholder="kullanici@firma.com" required />
+            <Input id="email" name="email" type="email" autoComplete="off" placeholder="kullanici@firma.com" required value={email} onChange={(event) => setEmail(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           <Field label="Ad soyad" labelFor="fullName">
-            <Input id="fullName" name="fullName" type="text" placeholder="Ad soyad" />
+            <Input id="fullName" name="fullName" type="text" autoComplete="off" placeholder="Ad soyad" value={fullName} onChange={(event) => setFullName(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           <Field
@@ -50,7 +42,7 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
             labelFor="password"
             description="En az 12 karakter, en az bir büyük harf, bir küçük harf ve bir sayı içermelidir."
           >
-            <Input id="password" name="password" type="password" placeholder="En az 12 karakter" required />
+            <Input id="password" name="password" type="password" autoComplete="new-password" placeholder="En az 12 karakter" required value={password} onChange={(event) => setPassword(event.currentTarget.value)} disabled={pending} />
           </Field>
 
           <Field label="Rol" labelFor="role">
@@ -58,8 +50,13 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
               id="role"
               name="role"
               required
-              defaultValue=""
-              onChange={(event) => setRole(event.currentTarget.value)}
+              value={role}
+              disabled={pending}
+              onChange={(event) => {
+                const nextRole = event.currentTarget.value;
+                setRole(nextRole);
+                if (!DEALER_ROLE_SET.has(nextRole)) setDealerId("");
+              }}
             >
               <option value="" disabled>
                 Rol seçin
@@ -92,9 +89,10 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
             <Select
               id="dealerId"
               name="dealerId"
-              defaultValue=""
+              value={dealerId}
               required={roleNeedsDealer}
-              disabled={!roleNeedsDealer}
+              disabled={!roleNeedsDealer || pending}
+              onChange={(event) => setDealerId(event.currentTarget.value)}
             >
               <option value="">Galeri seçilmedi</option>
               {dealers.map((dealer) => (
@@ -116,7 +114,10 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
           ) : null}
 
           <div>
-            <SubmitButton />
+            <Button type="submit" disabled={pending} aria-disabled={pending}>
+              {pending ? <LoaderCircle className="animate-spin" size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
+              {pending ? "Hesap oluşturuluyor..." : "Kullanıcı oluştur"}
+            </Button>
           </div>
     </form>
   );

@@ -12,6 +12,7 @@ import {
   buttonVariants,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { requireAdminAccess } from "@/lib/auth/roles";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
@@ -27,6 +28,7 @@ function formatNumber(value: number | null) {
 }
 
 export default async function AdminApplicationDetailPage({ params }: PageProps) {
+  await requireAdminAccess();
   const { id } = await params;
   const supabase = createSupabaseServiceClient();
   const [{ data: application }, { data: offers }] = await Promise.all([

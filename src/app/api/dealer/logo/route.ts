@@ -7,6 +7,7 @@ import { DEALER_ASSET_BUCKET, DEALER_LOGO_PREFIX, getManagedDealerLogoPath } fro
 import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerForCurrentUser } from "@/lib/supabase/queries";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { hasTrustedMutationOrigin, isRequestBodyWithinLimit, PRIVATE_NO_STORE_HEADERS } from "@/lib/security/request";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,10 @@ async function getContext() {
 
 export async function POST(request: Request) {
   if (isLocalDataMode()) return NextResponse.json({ error: "Bu ortamda logo yükleme kullanılamıyor." }, { status: 409 });
+  if (!hasTrustedMutationOrigin(request.headers)) return NextResponse.json({ error: "İstek kaynağı doğrulanamadı." }, { status: 403 });
+  if (!isRequestBodyWithinLimit(request, MAX_LOGO_SIZE + 64 * 1024)) {
+    return NextResponse.json({ error: "Logo en fazla 2 MB olabilir." }, { status: 413 });
+  }
   const context = await getContext();
   if (!context) return NextResponse.json({ error: "Bu işlem için yetkiniz bulunmuyor." }, { status: 403 });
 
@@ -91,11 +96,12 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     logoUrl: `/api/public/dealers/${membership.dealer_id}/logo?v=${encodeURIComponent(randomUUID())}`,
-  }, { headers: { "Cache-Control": "no-store" } });
+  }, { headers: PRIVATE_NO_STORE_HEADERS });
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   if (isLocalDataMode()) return NextResponse.json({ error: "Bu ortamda logo yönetimi kullanılamıyor." }, { status: 409 });
+  if (!hasTrustedMutationOrigin(request.headers)) return NextResponse.json({ error: "İstek kaynağı doğrulanamadı." }, { status: 403 });
   const context = await getContext();
   if (!context) return NextResponse.json({ error: "Bu işlem için yetkiniz bulunmuyor." }, { status: 403 });
   const { actor, membership, service } = context;
@@ -114,5 +120,5 @@ export async function DELETE() {
     metadata: {},
   });
   revalidatePath("/dealer", "layout");
-  return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ok: true }, { headers: PRIVATE_NO_STORE_HEADERS });
 }

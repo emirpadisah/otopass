@@ -39,3 +39,35 @@ test("public application can be submitted in local demo mode", async ({ page }, 
 
   await expect(page.getByRole("status")).toContainText("Başvuru referansı", { timeout: 15_000 });
 });
+
+test("landing pricing and contact form prepare a WhatsApp inquiry", async ({ page }) => {
+  await page.addInitScript(() => {
+    const testWindow = window as typeof window & { __contactUrl?: string };
+    testWindow.__contactUrl = "";
+    window.open = ((url?: string | URL) => {
+      testWindow.__contactUrl = String(url || "");
+      return window;
+    }) as typeof window.open;
+  });
+
+  await page.goto("/");
+  const pricingCards = page.locator(".vc-pricing-card");
+  await expect(pricingCards).toHaveCount(2);
+  await expect(pricingCards.nth(0)).toContainText("₺5.000");
+  await expect(pricingCards.nth(1)).toContainText("₺50.000");
+
+  const monthlyFeatures = await pricingCards.nth(0).locator(".vc-pricing-features li").allTextContents();
+  const annualFeatures = await pricingCards.nth(1).locator(".vc-pricing-features li").allTextContents();
+  expect(annualFeatures).toEqual(monthlyFeatures);
+
+  await page.getByLabel("Ad soyad").fill("E2E Galeri");
+  await page.getByLabel("Telefon veya e-posta").fill("galeri@example.com");
+  await page.getByLabel("Mesajınız").fill("Kurulum hakkında bilgi almak istiyorum.");
+  await page.getByRole("button", { name: "WhatsApp'ta gönder" }).click();
+
+  await expect(page.getByRole("status")).toContainText("WhatsApp görüşmesi açıldı");
+  const openedUrl = await page.evaluate(() => (window as typeof window & { __contactUrl?: string }).__contactUrl);
+  expect(openedUrl).toContain("https://wa.me/905536845821");
+  expect(decodeURIComponent(openedUrl || "")).toContain("E2E Galeri");
+  expect(decodeURIComponent(openedUrl || "")).toContain("galeri@example.com");
+});

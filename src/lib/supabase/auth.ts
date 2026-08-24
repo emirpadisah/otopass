@@ -3,6 +3,11 @@ import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { createLocalUser } from "@/lib/local/auth";
 import type { UserRole } from "@/lib/types";
 import { validatePasswordPolicy } from "@/lib/validation/password";
+import {
+  AdminUserCreationError,
+  toAdminUserCreationError,
+  type AdminUserCreationStage,
+} from "./admin-user-errors";
 
 type CreateUserInput = {
   email: string;
@@ -13,36 +18,13 @@ type CreateUserInput = {
   actorUserId?: string | null;
 };
 
-type SupabaseLikeError = {
-  message?: string;
-  code?: string;
-  details?: string | null;
-  hint?: string | null;
-};
-
-const ALREADY_REGISTERED_MARKER = "already registered";
-
-function toErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  if (typeof error === "object" && error !== null) {
-    const maybe = error as SupabaseLikeError;
-    if (maybe.message && maybe.message.length > 0) {
-      if (maybe.message.toLowerCase().includes(ALREADY_REGISTERED_MARKER)) {
-        return "Bu e-posta ile kayıtlı bir kullanıcı zaten var.";
-      }
-      return fallback;
-    }
-  }
-
-  return fallback;
-}
-
-function assertNoSupabaseError(error: SupabaseLikeError | null, fallback: string): void {
+function assertNoSupabaseError(
+  error: { message?: string; code?: string } | null,
+  stage: AdminUserCreationStage,
+  fallback: string
+): void {
   if (!error) return;
-  throw new Error(toErrorMessage(error, fallback));
+  throw toAdminUserCreationError(error, stage, fallback);
 }
 
 export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
@@ -69,17 +51,17 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       email_confirm: true,
     });
 
-    assertNoSupabaseError(createUserError, "Kullanıcı oluşturulamadı.");
+    assertNoSupabaseError(createUserError, "auth", "Kullanıcı oluşturulamadı.");
 
     if (!createdUser.user) {
-      throw new Error("Kullanıcı oluşturulamadı.");
+      throw new AdminUserCreationError("CREATE_FAILED", "auth", "Kullanıcı oluşturulamadı.", null);
     }
 
     userId = createdUser.user.id;
     createdFreshUser = true;
 
     if (!userId) {
-      throw new Error("Kullanıcı oluşturma akışı tamamlanamadı.");
+      throw new AdminUserCreationError("CREATE_FAILED", "auth", "Kullanıcı oluşturma akışı tamamlanamadı.", null);
     }
 
     const { error: profileError } = await supabase.from("user_profiles").upsert(
@@ -92,7 +74,7 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       },
       { onConflict: "user_id" }
     );
-    assertNoSupabaseError(profileError, "Kullanıcı profil kaydı oluşturulamadı.");
+    assertNoSupabaseError(profileError, "profile", "Kullanıcı profil kaydı oluşturulamadı.");
 
     const { error: roleError } = await supabase.from("user_roles").upsert(
       {
@@ -101,7 +83,7 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       },
       { onConflict: "user_id,role" }
     );
-    assertNoSupabaseError(roleError, "Kullanıcı rolü atanamadı.");
+    assertNoSupabaseError(roleError, "role", "Kullanıcı rolü atanamadı.");
 
     if (input.dealerId && input.role.startsWith("dealer_")) {
       const { error: dealerError } = await supabase.from("dealer_users").upsert(
@@ -112,7 +94,7 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
         },
         { onConflict: "user_id,dealer_id" }
       );
-      assertNoSupabaseError(dealerError, "Galeri üyeliği atanamadı.");
+      assertNoSupabaseError(dealerError, "membership", "Galeri üyeliği atanamadı.");
     }
 
     const { error: activityLogError } = await supabase.from("activity_log").insert({
@@ -125,13 +107,13 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
       },
     });
 
-    assertNoSupabaseError(activityLogError, "Kullanıcı işlem kaydı oluşturulamadı.");
+    assertNoSupabaseError(activityLogError, "audit", "Kullanıcı işlem kaydı oluşturulamadı.");
   } catch (error) {
     if (createdFreshUser && userId) {
       // Keep auth + app tables consistent if downstream inserts fail.
       await supabase.auth.admin.deleteUser(userId).catch(() => undefined);
     }
 
-    throw new Error(toErrorMessage(error, "Kullanıcı oluşturulamadı."));
+    throw toAdminUserCreationError(error, "unknown", "Kullanıcı oluşturulamadı.");
   }
 }

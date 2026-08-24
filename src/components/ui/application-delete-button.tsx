@@ -32,6 +32,8 @@ export function ApplicationDeleteButton({
         description={`${referenceCode || "Referanssız"} numaralı ${vehicleLabel} başvurusu sistemden kaldırılacak.`}
         confirmLabel="Başvuruyu sil"
         details={["Teklif geçmişi silinir", "Yüklenen araç fotoğrafları kaldırılır", "Bu işlem geri alınamaz"]}
+        feedbackMessage={state.message}
+        feedbackTone={state.ok ? "success" : "danger"}
         tone="danger"
         variant="ghost"
         size="sm"

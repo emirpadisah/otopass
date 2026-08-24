@@ -5,6 +5,7 @@ import { Download, FileImage, LoaderCircle, Store } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { VehicleConditionMap } from "@/components/ui/vehicle-condition-map";
+import { getCurrentMobilePlatform, type MobilePlatform } from "@/lib/client-file-delivery";
 import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
 
 type OfferVehicle = {
@@ -168,18 +169,127 @@ function createDownloadName(referenceCode: string | null) {
   return `teklif-${safeReference || "arac"}.png`;
 }
 
+type PreparedOfferVisual = {
+  blob: Blob;
+  file: File;
+  fileName: string;
+};
+
+type ShareAttempt = "shared" | "cancelled" | "retry" | "unsupported" | "failed" | "opened";
+
+function canShareFile(file: File) {
+  if (typeof navigator.share !== "function" || typeof navigator.canShare !== "function") {
+    return false;
+  }
+
+  try {
+    return navigator.canShare({ files: [file] });
+  } catch {
+    return false;
+  }
+}
+
+async function shareFile(file: File, dealerName: string): Promise<ShareAttempt> {
+  if (!canShareFile(file)) return "unsupported";
+
+  const shareResult = navigator.share({
+    files: [file],
+    title: `${dealerName} araç fiyat teklifi`,
+    text: "Araç ön değerlendirme fiyat teklifi",
+  }).then(
+    () => ({ status: "shared" as const }),
+    (error: unknown) => ({ status: "failed" as const, error }),
+  );
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<{ status: "opened" }>((resolve) => {
+    timer = setTimeout(() => resolve({ status: "opened" }), 15_000);
+  });
+  const result = await Promise.race([shareResult, timeout]);
+  if (timer) clearTimeout(timer);
+
+  if (result.status === "shared") return "shared";
+  if (result.status === "opened") return "opened";
+
+  const errorName = result.error instanceof DOMException
+    ? result.error.name
+    : result.error && typeof result.error === "object" && "name" in result.error
+      ? String(result.error.name)
+      : "";
+
+  if (errorName === "AbortError") return "cancelled";
+  if (errorName === "NotAllowedError") return "retry";
+  return "failed";
+}
+
+function downloadBlob(blob: Blob, fileName: string, platform: MobilePlatform) {
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = fileName;
+  anchor.rel = "noopener noreferrer";
+  anchor.style.display = "none";
+
+  if (platform === "ios") {
+    anchor.target = "_blank";
+  }
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  // Safari may continue reading the object URL after the synthetic click.
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+}
+
 export function OfferShareCard(props: OfferShareCardProps) {
   const exportRef = useRef<HTMLDivElement>(null);
+  const preparedVisualRef = useRef<PreparedOfferVisual | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function deliverVisual(prepared: PreparedOfferVisual, platform: MobilePlatform, wasPrepared: boolean) {
+    if (platform === "ios") {
+      const shareAttempt = await shareFile(prepared.file, props.dealerName);
+
+      if (shareAttempt === "shared" || shareAttempt === "opened") {
+        setNotice("Kaydetme ekranı açıldı. Görseli Fotoğraflar'a veya Dosyalar'a kaydedebilirsiniz.");
+        return;
+      }
+
+      if (shareAttempt === "cancelled") {
+        setNotice(null);
+        return;
+      }
+
+      if (shareAttempt === "retry" && !wasPrepared) {
+        setNotice("Görsel hazır. Kaydetme ekranını açmak için düğmeye yeniden dokunun.");
+        return;
+      }
+    }
+
+    downloadBlob(prepared.blob, prepared.fileName, platform);
+    setNotice(platform === "ios"
+      ? "Görsel yeni sekmede açıldı. Paylaş menüsünden Fotoğraflar'a veya Dosyalar'a kaydedebilirsiniz."
+      : "Teklif görseli PNG olarak indirildi.");
+  }
 
   async function downloadOfferVisual() {
     const node = exportRef.current;
     if (!node || isDownloading) return;
 
+    const platform = getCurrentMobilePlatform();
+    const preparedVisual = preparedVisualRef.current;
     setIsDownloading(true);
     setError(null);
+    setNotice(null);
     try {
+      if (preparedVisual) {
+        await deliverVisual(preparedVisual, platform, true);
+        return;
+      }
+
       await document.fonts?.ready;
       await Promise.all(
         Array.from(node.querySelectorAll("img")).map((image) =>
@@ -192,16 +302,22 @@ export function OfferShareCard(props: OfferShareCardProps) {
         ),
       );
 
-      const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(node, {
+      const { toBlob } = await import("html-to-image");
+      const blob = await toBlob(node, {
         backgroundColor: "#f7f8fa",
         cacheBust: true,
-        pixelRatio: 2,
+        pixelRatio: platform === "other" ? 2 : 1.5,
       });
-      const anchor = document.createElement("a");
-      anchor.href = dataUrl;
-      anchor.download = createDownloadName(props.referenceCode);
-      anchor.click();
+      if (!blob) throw new Error("PNG blob could not be created");
+
+      const fileName = createDownloadName(props.referenceCode);
+      const prepared = {
+        blob,
+        fileName,
+        file: new File([blob], fileName, { type: "image/png", lastModified: Date.now() }),
+      };
+      preparedVisualRef.current = prepared;
+      await deliverVisual(prepared, platform, false);
     } catch {
       setError("Teklif görseli hazırlanamadı. Lütfen yeniden deneyin.");
     } finally {
@@ -225,6 +341,7 @@ export function OfferShareCard(props: OfferShareCardProps) {
       <div className="offer-sheet-preview">
         <OfferSheet {...props} />
       </div>
+      {notice ? <div className="status-alert" data-tone="success" role="status">{notice}</div> : null}
       {error ? <div className="status-alert" data-tone="danger" role="alert">{error}</div> : null}
 
       <div className="offer-sheet-export-stage" aria-hidden="true">

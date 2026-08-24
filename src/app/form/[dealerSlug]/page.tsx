@@ -37,10 +37,28 @@ const points = [
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { dealerSlug } = await params;
   const dealer = await getDealerBySlug(dealerSlug);
+  const title = dealer ? `${dealer.name} | Araç başvurusu` : "Araç başvurusu";
+  const description = dealer
+    ? `Araç bilgilerinizi ve fotoğraflarınızı ön değerlendirme için doğrudan ${dealer.name} ekibine iletin.`
+    : "Araç bilgilerinizi ve fotoğraflarınızı ön değerlendirme için doğrudan galeriye iletin.";
 
   return {
-    title: dealer ? `${dealer.name} | Araç başvurusu` : "Araç başvurusu",
-    description: "Araç bilgilerinizi ve fotoğraflarınızı ön değerlendirme için doğrudan galeriye iletin.",
+    title,
+    description,
+    alternates: { canonical: `/form/${encodeURIComponent(dealerSlug)}` },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: "tr_TR",
+      url: `/form/${encodeURIComponent(dealerSlug)}`,
+      siteName: dealer?.name ?? "otoköprü",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 

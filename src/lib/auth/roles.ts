@@ -2,8 +2,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { getLocalSessionUser } from "@/lib/local/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getActiveSessionUser } from "@/lib/auth/session";
 import { hasDealerRole, resolveRouteForRoles } from "@/lib/auth/route";
 import type { AuthRedirectTarget, UserRole } from "@/lib/types";
 
@@ -12,17 +12,10 @@ export const getCurrentUserRoles = cache(async (): Promise<UserRole[]> => {
     return (await getLocalSessionUser())?.roles ?? [];
   }
 
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: userErr,
-  } = await authClient.auth.getUser();
-
-  if (userErr || !user) return [];
+  const user = await getActiveSessionUser();
+  if (!user) return [];
 
   const serviceClient = createSupabaseServiceClient();
-  const { data: profile } = await serviceClient.from("user_profiles").select("is_active").eq("user_id", user.id).maybeSingle();
-  if (profile?.is_active === false) return [];
   const { data, error } = await serviceClient
     .from("user_roles")
     .select("role")
@@ -31,10 +24,10 @@ export const getCurrentUserRoles = cache(async (): Promise<UserRole[]> => {
   if (error || !data) return [];
   const roles = data.map((row) => row.role as UserRole);
   if (roles.some((role) => role.startsWith("dealer_"))) {
-    const { data: membership } = await serviceClient.from("dealer_users").select("dealer_id").eq("user_id", user.id).limit(1).maybeSingle();
-    if (!membership) return roles.filter((role) => !role.startsWith("dealer_"));
-    const { data: dealer } = await serviceClient.from("dealers").select("is_active").eq("id", membership.dealer_id).maybeSingle();
-    if (dealer?.is_active === false) return roles.filter((role) => !role.startsWith("dealer_"));
+    const { data: membership, error: membershipError } = await serviceClient.from("dealer_users").select("dealer_id").eq("user_id", user.id).limit(1).maybeSingle();
+    if (membershipError || !membership) return roles.filter((role) => !role.startsWith("dealer_"));
+    const { data: dealer, error: dealerError } = await serviceClient.from("dealers").select("is_active").eq("id", membership.dealer_id).maybeSingle();
+    if (dealerError || dealer?.is_active !== true) return roles.filter((role) => !role.startsWith("dealer_"));
   }
   return roles;
 });
@@ -43,11 +36,12 @@ export async function resolvePostLoginRoute(): Promise<AuthRedirectTarget> {
   return resolveRouteForRoles(await getCurrentUserRoles());
 }
 
-export async function requireAdminAccess(): Promise<void> {
+export async function requireAdminAccess(): Promise<UserRole[]> {
   const roles = await getCurrentUserRoles();
   if (!roles.some((role) => role === "admin" || role === "super_admin")) {
     redirect("/");
   }
+  return roles;
 }
 
 export async function requireDealerAccess(): Promise<void> {

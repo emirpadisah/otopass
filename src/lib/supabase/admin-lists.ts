@@ -1,3 +1,6 @@
+import "server-only";
+
+import { requireAdminAccess } from "@/lib/auth/roles";
 import type { PaginationInput, PaginatedResult } from "@/lib/types";
 import { safeSearchTerm } from "@/lib/pagination";
 import type { Database } from "./database.types";
@@ -15,6 +18,7 @@ function result<T>(items: T[], count: number | null, input: PaginationInput): Pa
 }
 
 export async function listAdminApplications(input: PaginationInput): Promise<PaginatedResult<Application>> {
+  await requireAdminAccess();
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
   let query = supabase.from("applications").select("id, dealer_id, reference_code, owner_name, owner_phone, brand, model, status, created_at", { count: "exact" }).not("submitted_at", "is", null);
@@ -31,6 +35,7 @@ export async function listAdminApplications(input: PaginationInput): Promise<Pag
 }
 
 export async function listAdminOffers(input: PaginationInput): Promise<PaginatedResult<Offer>> {
+  await requireAdminAccess();
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
   let query = supabase.from("offers").select("id, application_id, dealer_id, amount, currency, status, responded_at, created_at", { count: "exact" });
@@ -52,6 +57,7 @@ export async function listAdminOffers(input: PaginationInput): Promise<Paginated
 }
 
 export async function listAdminActivity(input: PaginationInput): Promise<PaginatedResult<Activity>> {
+  await requireAdminAccess();
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
   let query = supabase.from("activity_log").select("*", { count: "exact" });

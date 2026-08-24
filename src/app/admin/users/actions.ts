@@ -1,6 +1,8 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import type { ActionResponse, UserRole } from "@/lib/types";
 import { requireUser } from "@/lib/auth/session";
 import { requireAdminAccess } from "@/lib/auth/roles";
@@ -11,6 +13,7 @@ import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { getDealerById } from "@/lib/supabase/queries";
 import { validatePasswordPolicy } from "@/lib/validation/password";
 import { getPublicSiteOrigin } from "@/lib/site-url";
+import { AdminUserCreationError } from "@/lib/supabase/admin-user-errors";
 
 const DEALER_ROLES: UserRole[] = ["dealer_owner", "dealer_manager", "dealer_viewer"];
 const ALL_ROLES = new Set<UserRole>([
@@ -20,6 +23,7 @@ const ALL_ROLES = new Set<UserRole>([
   "dealer_manager",
   "dealer_viewer",
 ]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function updateUserAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const actor = await requireUser();
@@ -29,9 +33,20 @@ export async function updateUserAction(_prevState: ActionResponse, formData: For
   const role = String(formData.get("role") ?? "") as UserRole;
   const dealerId = String(formData.get("dealerId") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "on";
-  if (!userId || !ALL_ROLES.has(role)) return { ok: false, code: "VALIDATION", message: "Kullanıcı bilgileri geçersiz." };
+  if (!UUID_PATTERN.test(userId) || fullName.length > 120 || !ALL_ROLES.has(role)) return { ok: false, code: "VALIDATION", message: "Kullanıcı bilgileri geçersiz." };
   if (userId === actor.id && !isActive) return { ok: false, code: "SELF_DEACTIVATE", message: "Kendi hesabınızı pasifleştiremezsiniz." };
   if (DEALER_ROLES.includes(role) && !dealerId) return { ok: false, code: "VALIDATION", message: "Galeri rolü için galeri seçin." };
+  if (dealerId && !UUID_PATTERN.test(dealerId)) return { ok: false, code: "VALIDATION", message: "Galeri bilgisi geçersiz." };
+
+  const actorRoles = await getCurrentUserRoles();
+  const actorIsSuperAdmin = actorRoles.includes("super_admin");
+  const service = createSupabaseServiceClient();
+  const { data: targetRoles, error: targetRoleError } = await service.from("user_roles").select("role").eq("user_id", userId);
+  if (targetRoleError) return { ok: false, code: "UPDATE_FAILED", message: "Kullanıcı güncellenemedi." };
+  const targetIsSuperAdmin = targetRoles?.some((item) => item.role === "super_admin") ?? false;
+  if (!actorIsSuperAdmin && (role === "super_admin" || targetIsSuperAdmin)) {
+    return { ok: false, code: "FORBIDDEN", message: "Süper yönetici hesaplarını yalnızca başka bir süper yönetici düzenleyebilir." };
+  }
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("admin_update_user_access", { p_user_id: userId, p_full_name: fullName, p_role: role, p_dealer_id: dealerId, p_is_active: isActive });
   if (error) return { ok: false, code: "UPDATE_FAILED", message: "Kullanıcı güncellenemedi." };
@@ -44,6 +59,7 @@ export async function sendPasswordResetAction(_prevState: ActionResponse, formDa
   const actor = await requireUser();
   await requireAdminAccess();
   const userId = String(formData.get("userId") ?? "").trim();
+  if (!UUID_PATTERN.test(userId)) return { ok: false, code: "VALIDATION", message: "Kullanıcı bilgisi geçersiz." };
   const service = createSupabaseServiceClient();
   const { data, error } = await service.auth.admin.getUserById(userId);
   if (error || !data.user.email) return { ok: false, code: "USER_NOT_FOUND", message: "Kullanıcı bulunamadı." };
@@ -61,13 +77,14 @@ export async function deleteUserAction(_prevState: ActionResponse, formData: For
   const roles = await getCurrentUserRoles();
   if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme işlemini yalnızca süper yönetici yapabilir." };
   const userId = String(formData.get("userId") ?? "").trim();
-  if (!userId || userId === actor.id) return { ok: false, code: "SELF_DELETE", message: "Kendi hesabınızı silemezsiniz." };
+  if (!UUID_PATTERN.test(userId) || userId === actor.id) return { ok: false, code: "SELF_DELETE", message: "Kendi hesabınızı silemezsiniz." };
   const service = createSupabaseServiceClient();
   await service.from("activity_log").insert({ actor_user_id: actor.id, action: "ADMIN_USER_DELETED", metadata: { target_user_id: userId } });
   const { error } = await service.auth.admin.deleteUser(userId);
   if (error) return { ok: false, code: "DELETE_FAILED", message: "Kullanıcı silinemedi." };
   revalidatePath("/admin/users");
-  return { ok: true, code: "USER_DELETED", message: "Kullanıcı kalıcı olarak silindi." };
+  revalidatePath("/admin/audit");
+  redirect("/admin/users?deleted=1");
 }
 
 export async function createUserAction(
@@ -75,7 +92,7 @@ export async function createUserAction(
   formData: FormData
 ): Promise<ActionResponse> {
   const actor = await requireUser();
-  await requireAdminAccess();
+  const actorRoles = await requireAdminAccess();
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -83,7 +100,7 @@ export async function createUserAction(
   const role = String(formData.get("role") ?? "") as UserRole;
   const dealerId = String(formData.get("dealerId") ?? "").trim() || undefined;
 
-  if (!email || !password || !role) {
+  if (!email || email.length > 254 || !password || !role) {
     return { ok: false, code: "VALIDATION", message: "E-posta, şifre ve rol zorunludur." };
   }
 
@@ -105,7 +122,7 @@ export async function createUserAction(
     return { ok: false, code: "VALIDATION", message: "Geçersiz kullanıcı rolü." };
   }
 
-  if (role === "super_admin" && !(await getCurrentUserRoles()).includes("super_admin")) {
+  if (role === "super_admin" && !actorRoles.includes("super_admin")) {
     return { ok: false, code: "FORBIDDEN", message: "Süper yönetici rolünü yalnızca mevcut bir süper yönetici atayabilir." };
   }
 
@@ -133,24 +150,26 @@ export async function createUserAction(
       dealerId: DEALER_ROLES.includes(role) ? dealerId : undefined,
       actorUserId: actor.id,
     });
-
-    revalidatePath("/admin/users");
-
-    if (DEALER_ROLES.includes(role)) {
-      return {
-        ok: true,
-        code: "USER_CREATED",
-        message: "Galeri hesabı başarıyla oluşturuldu. Kullanıcı ilk girişte şifre değiştirecek.",
-      };
-    }
-
-    return { ok: true, code: "USER_CREATED", message: "Kullanıcı başarıyla oluşturuldu." };
   } catch (error) {
-    const duplicateUser = error instanceof Error && error.message === "Bu e-posta ile kayıtlı bir kullanıcı zaten var.";
+    const duplicateUser = error instanceof AdminUserCreationError && error.code === "DUPLICATE_USER";
+    if (!duplicateUser) {
+      Sentry.captureException(error, {
+        tags: {
+          operation: "admin-user-create",
+          stage: error instanceof AdminUserCreationError ? error.stage : "unknown",
+        },
+        extra: { role, dealerId: dealerId ?? null },
+      });
+    }
     return {
       ok: false,
       code: duplicateUser ? "DUPLICATE" : "USER_CREATE_FAILED",
-      message: duplicateUser ? "Bu e-posta ile kayıtlı bir kullanıcı zaten var." : "Kullanıcı oluşturulamadı. Bilgileri kontrol edip yeniden deneyin.",
+      message: duplicateUser
+        ? "Bu e-posta zaten kayıtlı. Kullanıcı listesindeki Yönet bağlantısından rol veya galeri atamasını güncelleyin."
+        : "Kullanıcı oluşturulamadı. Bilgileri kontrol edip yeniden deneyin.",
     };
   }
+
+  revalidatePath("/admin/users");
+  redirect(`/admin/users?created=${DEALER_ROLES.includes(role) ? "dealer" : "admin"}`);
 }

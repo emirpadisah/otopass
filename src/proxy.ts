@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isPlatformHostname } from "@/lib/site-url";
+import { getPublicSiteOrigin, isPlatformHostname } from "@/lib/site-url";
 
 const domainCache = new Map<string, { slug: string | null; expiresAt: number }>();
 
@@ -31,7 +31,15 @@ async function resolveCustomDomainSlug(hostname: string, url: string, anonKey: s
     if (!response.ok) throw new Error("DOMAIN_LOOKUP_FAILED");
     const payload = await response.json() as unknown;
     const row = Array.isArray(payload) && payload[0] && typeof payload[0] === "object" ? payload[0] as { dealer_slug?: unknown } : null;
-    const slug = typeof row?.dealer_slug === "string" ? row.dealer_slug : null;
+    const candidate = typeof row?.dealer_slug === "string" ? row.dealer_slug : null;
+    const slug = candidate && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(candidate) ? candidate : null;
+    if (domainCache.size >= 500) {
+      const now = Date.now();
+      for (const [key, value] of domainCache) {
+        if (value.expiresAt <= now) domainCache.delete(key);
+      }
+      if (domainCache.size >= 500) domainCache.delete(domainCache.keys().next().value as string);
+    }
     domainCache.set(hostname, { slug, expiresAt: Date.now() + (slug ? 60_000 : 10_000) });
     return slug;
   } catch {
@@ -39,14 +47,10 @@ async function resolveCustomDomainSlug(hostname: string, url: string, anonKey: s
   }
 }
 
-async function getRewriteUrl(request: NextRequest, url?: string, anonKey?: string): Promise<URL | null> {
-  if (!url || !anonKey || request.method !== "GET") return null;
+function getRewriteUrl(request: NextRequest, slug: string | null): URL | null {
+  if (!slug || request.method !== "GET") return null;
   const pathname = request.nextUrl.pathname;
   if (pathname !== "/" && pathname !== "/privacy") return null;
-  const hostname = getRequestHostname(request);
-  if (isPlatformHostname(hostname)) return null;
-  const slug = await resolveCustomDomainSlug(hostname, url, anonKey);
-  if (!slug) return null;
   const destination = request.nextUrl.clone();
   destination.pathname = pathname === "/privacy" ? `/form/${slug}/privacy` : `/form/${slug}`;
   return destination;
@@ -75,15 +79,33 @@ function buildCsp(nonce: string): string {
 export async function proxy(request: NextRequest) {
   const nonce = randomBytes(16).toString("base64");
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete("x-custom-domain");
+  requestHeaders.delete("x-custom-dealer-slug");
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  const rewriteUrl = await getRewriteUrl(request, url, anonKey);
-  if (rewriteUrl) {
-    requestHeaders.set("x-custom-domain", getRequestHostname(request));
+  const hostname = getRequestHostname(request);
+  let customDealerSlug: string | null = null;
+  if (!isPlatformHostname(hostname)) {
+    customDealerSlug = url && anonKey ? await resolveCustomDomainSlug(hostname, url, anonKey) : null;
+    const publicPage = request.method === "GET" && (request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/privacy");
+    const publicLogo = request.method === "GET" && /^\/api\/public\/dealers\/[0-9a-f-]+\/logo$/i.test(request.nextUrl.pathname);
+    const publicApplication = request.method === "POST" && [
+      "/api/public/applications/initiate",
+      "/api/public/applications/finalize",
+    ].includes(request.nextUrl.pathname);
+    if (!customDealerSlug || (!publicPage && !publicLogo && !publicApplication)) {
+      if (request.method === "GET" && !request.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.redirect(new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, getPublicSiteOrigin()), 307);
+      }
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    requestHeaders.set("x-custom-domain", hostname);
+    requestHeaders.set("x-custom-dealer-slug", customDealerSlug);
   }
+  const rewriteUrl = getRewriteUrl(request, customDealerSlug);
   const createResponse = () => rewriteUrl
     ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     : NextResponse.next({ request: { headers: requestHeaders } });

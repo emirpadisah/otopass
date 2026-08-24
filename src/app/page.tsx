@@ -20,8 +20,10 @@ import {
   Users,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { ContactSection } from "@/components/landing/contact-section";
 import { LandingHeader } from "@/components/landing/landing-header";
 import { LandingMotion } from "@/components/landing/landing-motion";
+import { PricingSection } from "@/components/landing/pricing-section";
 
 const journeys = [
   {
@@ -264,19 +266,23 @@ export default function Home() {
           </div>
         </section>
 
+        <PricingSection />
+
         <section className="vc-final-cta">
           <div className="vc-container vc-final-cta-inner" data-reveal>
-            <div><span>Tek akış. Net kontrol.</span><h2>Araç başvurularını düzenli bir iş akışına taşıyın.</h2></div>
-            <Link href="/login" className="vc-primary-cta">Panele giriş yap <ArrowRight size={17} /></Link>
+            <div><span>Tek akış. Net kontrol.</span><h2>Galeriniz için doğru kurulum planını birlikte oluşturalım.</h2></div>
+            <a href="#iletisim" className="vc-primary-cta">Görüşme planla <ArrowRight size={17} /></a>
           </div>
         </section>
+
+        <ContactSection />
       </main>
 
       <footer className="vc-footer">
         <div className="vc-container vc-footer-grid">
           <div><Link href="/" className="vc-brand" aria-label="otoköprü ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
-          <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#roller">Kimler için?</a></div>
-          <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenlik yaklaşımı</a><Link href="/terms">Kullanım koşulları</Link></div>
+          <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#fiyatlar">Fiyatlandırma</a></div>
+          <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#iletisim">Görüşme talebi</a><Link href="/terms">Kullanım koşulları</Link></div>
           <div><strong>İletişim</strong><a href="https://www.otokopru.com">www.otokopru.com</a><a href="mailto:info@otokopru.com">info@otokopru.com</a><a href="tel:+905536845821" dir="ltr">+90 553 684 58 21</a></div>
         </div>
         <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} otoköprü</span><span>Araç alım operasyon platformu</span></div>

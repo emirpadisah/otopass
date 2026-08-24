@@ -8,6 +8,7 @@ import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerForCurrentUser } from "@/lib/supabase/queries";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { ActionResponse } from "@/lib/types";
+import { isPlatformHostname } from "@/lib/site-url";
 import {
   addVercelProjectDomain,
   getFriendlyDomainError,
@@ -39,6 +40,7 @@ function snapshotUpdate(snapshot: VercelDomainSnapshot) {
 function domainValidationMessage(error: unknown): string {
   if (!(error instanceof Error)) return "Geçerli bir alan adı girin.";
   if (error.message === "WILDCARD_NOT_ALLOWED") return "Wildcard alan adları desteklenmiyor.";
+  if (error.message === "PLATFORM_DOMAIN_NOT_ALLOWED") return "Platform alan adı galeri alan adı olarak kullanılamaz.";
   return "Geçerli bir alan adı girin. Örnek: basvuru.galeriniz.com";
 }
 
@@ -53,6 +55,7 @@ export async function addDealerDomainAction(
   let hostname: string;
   try {
     hostname = normalizeCustomDomain(String(formData.get("hostname") ?? ""));
+    if (isPlatformHostname(hostname)) throw new Error("PLATFORM_DOMAIN_NOT_ALLOWED");
   } catch (error) {
     return { ok: false, code: "VALIDATION", message: domainValidationMessage(error) };
   }

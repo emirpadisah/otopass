@@ -6,49 +6,43 @@ import { isLocalDataMode } from "@/lib/data-mode";
 import {
   APPLICATIONS_BUCKET,
   createFinalizeToken,
-  createLegacyFinalizeToken,
   createReferenceCode,
   hashFinalizeToken,
   sanitizeUploadName,
-  type LegacyUploadItem,
 } from "@/lib/public-applications";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
-import { createRequestId, getClientIp } from "@/lib/security/request";
+import {
+  createRequestId,
+  getClientIp,
+  getRequestHostname,
+  hasTrustedMutationOrigin,
+  PRIVATE_NO_STORE_HEADERS,
+  readJsonBody,
+} from "@/lib/security/request";
 import { verifyTurnstile } from "@/lib/security/turnstile";
 import type { Database } from "@/lib/supabase/database.types";
-import { isMissingColumn, isMissingRelation, type DatabaseErrorLike } from "@/lib/supabase/schema-compat";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { parseApplicationPayload, PRIVACY_NOTICE_VERSION, validatePhotoDescriptors } from "@/lib/validation/application";
 
+const MAX_INITIATE_BODY_BYTES = 64 * 1024;
 const requestSchema = z.object({
   application: z.unknown(),
   files: z.unknown(),
-  turnstileToken: z.string().default(""),
-  website: z.string().optional().default(""),
+  turnstileToken: z.string().max(4096).default(""),
+  website: z.string().max(200).optional().default(""),
 });
 
 type ServiceClient = SupabaseClient<Database>;
 type DealerIdentity = { id: string; slug: string };
-type UploadItem = LegacyUploadItem & { id: string; sessionId: string; sortOrder: number };
-
-function errorText(error: { message?: string } | null): string {
-  return error?.message?.toLowerCase() ?? "";
-}
-
-async function ensureApplicationsBucket(supabase: ServiceClient): Promise<void> {
-  const { data: bucket, error } = await supabase.storage.getBucket(APPLICATIONS_BUCKET);
-  if (bucket) return;
-  if (error && !errorText(error).includes("not found") && !errorText(error).includes("does not exist")) throw error;
-
-  const { error: createError } = await supabase.storage.createBucket(APPLICATIONS_BUCKET, {
-    public: false,
-    fileSizeLimit: "10MB",
-    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
-  });
-  if (createError && !errorText(createError).includes("already exists") && !errorText(createError).includes("duplicate")) {
-    throw createError;
-  }
-}
+type UploadItem = {
+  id: string;
+  sessionId: string;
+  path: string;
+  name: string;
+  contentType: "image/jpeg" | "image/png" | "image/webp";
+  size: number;
+  sortOrder: number;
+};
 
 async function createSignedUploads(supabase: ServiceClient, items: UploadItem[]) {
   return Promise.all(items.map(async (item) => {
@@ -58,19 +52,15 @@ async function createSignedUploads(supabase: ServiceClient, items: UploadItem[])
   }));
 }
 
-function requiresLegacyApplicationSchema(error: DatabaseErrorLike | null): boolean {
-  return ["owner_email", "reference_code", "privacy_version", "privacy_acknowledged_at", "submitted_at", "body_condition", "engine_info"]
-    .some((column) => isMissingColumn(error, column));
-}
-
-async function findDealer(supabase: ServiceClient, slug: string): Promise<{ dealer: DealerIdentity | null; legacy: boolean }> {
-  const activeResult = await supabase.from("dealers").select("id, slug").eq("slug", slug).eq("is_active", true).maybeSingle();
-  if (!activeResult.error) return { dealer: activeResult.data as DealerIdentity | null, legacy: false };
-  if (!isMissingColumn(activeResult.error, "is_active")) throw activeResult.error;
-
-  const legacyResult = await supabase.from("dealers").select("id, slug").eq("slug", slug).maybeSingle();
-  if (legacyResult.error) throw legacyResult.error;
-  return { dealer: legacyResult.data as DealerIdentity | null, legacy: true };
+async function findDealer(supabase: ServiceClient, slug: string): Promise<DealerIdentity | null> {
+  const { data, error } = await supabase
+    .from("dealers")
+    .select("id, slug")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw error;
+  return data as DealerIdentity | null;
 }
 
 export async function POST(request: Request) {
@@ -79,29 +69,46 @@ export async function POST(request: Request) {
     if (isLocalDataMode()) {
       return NextResponse.json({ error: "Başvuru bu ortamda başlatılamıyor.", requestId }, { status: 409 });
     }
+    if (!hasTrustedMutationOrigin(request.headers)) {
+      return NextResponse.json({ error: "İstek kaynağı doğrulanamadı.", requestId }, { status: 403 });
+    }
 
-    const parsed = requestSchema.parse(await request.json());
-    if (parsed.website.trim()) return NextResponse.json({ ok: true, dropped: true, requestId });
+    const parsed = requestSchema.parse(await readJsonBody(request, MAX_INITIATE_BODY_BYTES));
+    if (parsed.website.trim()) {
+      return NextResponse.json({ ok: true, dropped: true, requestId }, { headers: PRIVATE_NO_STORE_HEADERS });
+    }
     const application = parseApplicationPayload(parsed.application);
+    const customDealerSlug = request.headers.get("x-custom-dealer-slug");
+    if (customDealerSlug && customDealerSlug !== application.dealer_slug) {
+      return NextResponse.json({ error: "Başvuru adresi doğrulanamadı.", requestId }, { status: 403 });
+    }
     const files = validatePhotoDescriptors(parsed.files);
     const ip = getClientIp(request.headers);
 
-    const captchaValid = await verifyTurnstile(parsed.turnstileToken, ip);
+    const ipAllowed = await consumeRateLimit(ip, {
+      scope: "public-initiate-ip",
+      limit: 30,
+      windowSeconds: 300,
+    });
+    if (!ipAllowed) {
+      return NextResponse.json({ error: "Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.", requestId }, { status: 429 });
+    }
+
+    const captchaValid = await verifyTurnstile(parsed.turnstileToken, ip, getRequestHostname(request.headers) ?? undefined);
     if (!captchaValid) return NextResponse.json({ error: "Doğrulama tamamlanamadı.", requestId }, { status: 400 });
 
-    const allowed = await consumeRateLimit(`${ip}:${application.owner_phone}`, {
-      scope: `public-form:${application.dealer_slug}`,
+    const supabase = createSupabaseServiceClient();
+    const dealer = await findDealer(supabase, application.dealer_slug);
+    if (!dealer) return NextResponse.json({ error: "Galeri başvuru kabul etmiyor.", requestId }, { status: 404 });
+
+    const contactAllowed = await consumeRateLimit(`${ip}:${application.owner_phone}`, {
+      scope: `public-form-contact:${dealer.slug}`,
       limit: 3,
       windowSeconds: 300,
     });
-    if (!allowed) return NextResponse.json({ error: "Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.", requestId }, { status: 429 });
-
-    const supabase = createSupabaseServiceClient();
-    const dealerResult = await findDealer(supabase, application.dealer_slug);
-    if (!dealerResult.dealer) return NextResponse.json({ error: "Galeri başvuru kabul etmiyor.", requestId }, { status: 404 });
-    const dealer = dealerResult.dealer;
-
-    await ensureApplicationsBucket(supabase);
+    if (!contactAllowed) {
+      return NextResponse.json({ error: "Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.", requestId }, { status: 429 });
+    }
 
     const applicationId = crypto.randomUUID();
     const sessionId = crypto.randomUUID();
@@ -116,29 +123,6 @@ export async function POST(request: Request) {
       size: file.size,
       sortOrder: index,
     }));
-
-    const legacyResponse = async () => {
-      const finalizeToken = createLegacyFinalizeToken({
-        version: 1,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-        sessionId,
-        applicationId,
-        referenceCode,
-        dealer,
-        application,
-        files: items.map(({ path, name, contentType, size }) => ({ path, name, contentType, size })),
-      });
-      const uploads = await createSignedUploads(supabase, items);
-      return NextResponse.json({ sessionId, finalizeToken, uploads, requestId });
-    };
-
-    let useLegacySchema = dealerResult.legacy;
-    if (!useLegacySchema) {
-      const probe = await supabase.from("upload_sessions").select("id").limit(1);
-      if (probe.error && isMissingRelation(probe.error, "upload_sessions")) useLegacySchema = true;
-      else if (probe.error) throw probe.error;
-    }
-    if (useLegacySchema) return legacyResponse();
 
     const finalizeToken = createFinalizeToken();
     const { error: applicationError } = await supabase.from("applications").insert({
@@ -165,7 +149,6 @@ export async function POST(request: Request) {
       submitted_at: null,
       photo_paths: [],
     });
-    if (applicationError && requiresLegacyApplicationSchema(applicationError)) return legacyResponse();
     if (applicationError) throw applicationError;
 
     const { error: sessionError } = await supabase.from("upload_sessions").insert({
@@ -175,7 +158,6 @@ export async function POST(request: Request) {
     });
     if (sessionError) {
       await supabase.from("applications").delete().eq("id", applicationId);
-      if (isMissingRelation(sessionError, "upload_sessions")) return legacyResponse();
       throw sessionError;
     }
 
@@ -191,14 +173,16 @@ export async function POST(request: Request) {
       })));
       if (itemsError) {
         await supabase.from("applications").delete().eq("id", applicationId);
-        if (isMissingRelation(itemsError, "upload_items")) return legacyResponse();
         throw itemsError;
       }
     }
 
     try {
       const uploads = await createSignedUploads(supabase, items);
-      return NextResponse.json({ sessionId, finalizeToken, uploads, requestId });
+      return NextResponse.json(
+        { sessionId, finalizeToken, uploads, requestId },
+        { headers: PRIVATE_NO_STORE_HEADERS },
+      );
     } catch (error) {
       await supabase.from("applications").delete().eq("id", applicationId);
       throw error;

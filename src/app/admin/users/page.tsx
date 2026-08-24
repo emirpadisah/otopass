@@ -20,7 +20,7 @@ import { parsePagination } from "@/lib/pagination";
 import { listDealers, listUsersForAdmin } from "@/lib/supabase/queries";
 import { UserCreateForm } from "./UserCreateForm";
 
-type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string };
+type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string; created?: string; deleted?: string };
 const roleLabels: Record<string, string> = {
   super_admin: "Süper yönetici",
   admin: "Yönetici",
@@ -57,6 +57,20 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           </>
         }
       />
+
+      {raw.created === "dealer" || raw.created === "admin" ? (
+        <div className="status-alert mt-4" data-tone="success" role="status">
+          {raw.created === "dealer"
+            ? "Galeri hesabı oluşturuldu. Kullanıcı ilk girişte geçici şifresini değiştirecek."
+            : "Yönetici hesabı başarıyla oluşturuldu."}
+        </div>
+      ) : null}
+
+      {raw.deleted === "1" ? (
+        <div className="status-alert mt-4" data-tone="success" role="status">
+          Kullanıcı hesabı, rol ve galeri erişimleri kalıcı olarak silindi.
+        </div>
+      ) : null}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
         <PanelSection

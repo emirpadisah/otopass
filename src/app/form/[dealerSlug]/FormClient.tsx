@@ -482,7 +482,7 @@ export function FormClient({
                 </div>
 
                 {!localMode && turnstileSiteKey ? (
-                  <div className="intake-captcha"><Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken("")} options={{ theme: "auto", size: "flexible" }} /></div>
+                  <div className="intake-captcha"><Turnstile ref={turnstileRef} siteKey={turnstileSiteKey} onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken("")} options={{ theme: "auto", size: "flexible", action: "public_application" }} /></div>
                 ) : null}
               </div>
             </section>

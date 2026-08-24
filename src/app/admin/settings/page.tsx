@@ -1,10 +1,12 @@
 import { Check, LockKeyhole, ServerCog, Settings } from "lucide-react";
 import { PanelPageHeader, PanelSection } from "@/components/ui";
+import { requireAdminAccess } from "@/lib/auth/roles";
 import { getDataMode } from "@/lib/data-mode";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { SettingsForm } from "./SettingsForm";
 
 export default async function AdminSettingsPage() {
+  await requireAdminAccess();
   const dataMode = getDataMode();
   let archiveDays = 365;
   let purgeDays = 30;

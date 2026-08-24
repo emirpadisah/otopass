@@ -59,6 +59,7 @@ async function vercelRequest<T extends UnknownRecord>(path: string, init?: Reque
       "Content-Type": "application/json",
       ...init?.headers,
     },
+    signal: AbortSignal.timeout(10_000),
   });
   const payload = (await response.json().catch(() => ({}))) as UnknownRecord;
 
