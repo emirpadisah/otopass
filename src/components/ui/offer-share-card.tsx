@@ -11,6 +11,7 @@ type OfferVehicle = {
   brand: string;
   model: string;
   vehiclePackage: string | null;
+  engineInfo: string | null;
   modelYear: number | null;
   km: number | null;
   fuelType: string | null;
@@ -79,7 +80,7 @@ function OfferSheet({
     },
     { label: "Yakıt", value: displayValue(vehicle.fuelType) },
     { label: "Vites", value: displayValue(vehicle.transmission) },
-    { label: "Tramer", value: displayValue(vehicle.tramerInfo) },
+    { label: "Motor", value: displayValue(vehicle.engineInfo) },
   ];
 
   return (
@@ -133,6 +134,10 @@ function OfferSheet({
         <div className="offer-sheet-inspection-grid">
           <VehicleConditionMap value={bodyCondition} readOnly compact captureMode={exportMode} />
           <div className="offer-sheet-notes">
+            <div>
+              <span>Tramer kaydı</span>
+              <p>{displayValue(vehicle.tramerInfo)}</p>
+            </div>
             <div>
               <span>Hasar beyanı</span>
               <p>{displayValue(vehicle.damageInfo)}</p>

@@ -59,7 +59,7 @@ async function createSignedUploads(supabase: ServiceClient, items: UploadItem[])
 }
 
 function requiresLegacyApplicationSchema(error: DatabaseErrorLike | null): boolean {
-  return ["owner_email", "reference_code", "privacy_version", "privacy_acknowledged_at", "submitted_at", "body_condition"]
+  return ["owner_email", "reference_code", "privacy_version", "privacy_acknowledged_at", "submitted_at", "body_condition", "engine_info"]
     .some((column) => isMissingColumn(error, column));
 }
 
@@ -151,6 +151,7 @@ export async function POST(request: Request) {
       brand: application.brand,
       model: application.model,
       vehicle_package: application.vehicle_package,
+      engine_info: application.engine_info,
       model_year: application.model_year,
       km: application.km,
       fuel_type: application.fuel_type,

@@ -78,6 +78,7 @@ function toApplicationPayload(formData: FormData, dealerSlug: string, bodyCondit
     brand: String(formData.get("brand") ?? ""),
     model: String(formData.get("model") ?? ""),
     vehicle_package: String(formData.get("vehicle_package") ?? ""),
+    engine_info: String(formData.get("engine_info") ?? ""),
     model_year: String(formData.get("model_year") ?? ""),
     km: String(formData.get("km") ?? ""),
     fuel_type: String(formData.get("fuel_type") ?? ""),
@@ -129,6 +130,7 @@ export function FormClient({
   const turnstileRef = useRef<TurnstileInstance>(null);
   const photosRef = useRef<PhotoItem[]>([]);
   const stepHeadingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
+  const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [captchaToken, setCaptchaToken] = useState("");
   const [currentStep, setCurrentStep] = useState(0);
@@ -141,6 +143,14 @@ export function FormClient({
     photosRef.current = photos;
   }, [photos]);
   useEffect(() => () => photosRef.current.forEach((photo) => URL.revokeObjectURL(photo.preview)), []);
+  useEffect(() => {
+    if (state.tone !== "success") return;
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      successHeadingRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [state.tone]);
 
   function selectPhotos(files: FileList | null) {
     if (!files?.length) return;
@@ -303,7 +313,7 @@ export function FormClient({
         <section className="intake-success-view" role="status" aria-labelledby="intake-success-title">
           <span className="intake-success-icon"><CheckCircle2 size={28} aria-hidden="true" /></span>
           <p className="section-label">Başvuru tamamlandı</p>
-          <h2 id="intake-success-title">Aracınız değerlendirme sırasına alındı.</h2>
+          <h2 ref={successHeadingRef} id="intake-success-title" tabIndex={-1}>Aracınız değerlendirme sırasına alındı.</h2>
           <p>{state.message} Süreçle ilgili geri dönüş, paylaştığınız iletişim bilgileri üzerinden yapılacak.</p>
           <div className="intake-reference">
             <span>Başvuru referansı</span>
@@ -385,6 +395,7 @@ export function FormClient({
                 <Field label="Marka *" labelFor="brand"><Input id="brand" name="brand" placeholder="Örn. Volkswagen" required /></Field>
                 <Field label="Model *" labelFor="model"><Input id="model" name="model" placeholder="Örn. Golf" required /></Field>
                 <Field label="Paket" labelFor="vehicle_package"><Input id="vehicle_package" name="vehicle_package" placeholder="Örn. Comfortline" /></Field>
+                <Field label="Motor" labelFor="engine_info"><Input id="engine_info" name="engine_info" maxLength={120} placeholder="Örn. 1.6 TDI" /></Field>
                 <Field label="Model yılı" labelFor="model_year"><Input id="model_year" name="model_year" type="number" min={1950} max={new Date().getFullYear() + 1} inputMode="numeric" placeholder="2022" /></Field>
                 <Field label="Kilometre" labelFor="km"><Input id="km" name="km" type="number" min={0} max={10_000_000} inputMode="numeric" placeholder="45000" /></Field>
                 <Field label="Yakıt tipi" labelFor="fuel_type">

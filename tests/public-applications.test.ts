@@ -26,6 +26,7 @@ const payload: LegacyFinalizePayload = {
     brand: "Volkswagen",
     model: "Golf",
     vehicle_package: null,
+    engine_info: "1.5 TSI",
     model_year: 2022,
     km: 50_000,
     fuel_type: "Benzin",

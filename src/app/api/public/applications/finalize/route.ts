@@ -121,6 +121,7 @@ export async function POST(request: Request) {
         brand: application.brand,
         model: application.model,
         vehicle_package: application.vehicle_package,
+        engine_info: application.engine_info,
         model_year: application.model_year,
         km: application.km,
         fuel_type: application.fuel_type,
@@ -131,6 +132,10 @@ export async function POST(request: Request) {
         photo_paths: payload.files.map((file) => file.path),
       };
       let { error: insertError } = await supabase.from("applications").insert(legacyInsert);
+      if (insertError && isMissingColumn(insertError, "engine_info")) {
+        delete legacyInsert.engine_info;
+        ({ error: insertError } = await supabase.from("applications").insert(legacyInsert));
+      }
       if (insertError && isMissingColumn(insertError, "body_condition")) {
         delete legacyInsert.body_condition;
         ({ error: insertError } = await supabase.from("applications").insert(legacyInsert));

@@ -54,6 +54,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
     { label: "Model yılı", value: application.model_year ?? "-", icon: CarFront },
     { label: "Kilometre", value: `${formatNumber(application.km)} km`, icon: CarFront },
     { label: "Paket", value: application.vehicle_package ?? "-", icon: CarFront },
+    { label: "Motor", value: application.engine_info ?? "-", icon: CarFront },
     { label: "Yakıt", value: application.fuel_type ?? "-", icon: CarFront },
     { label: "Vites", value: application.transmission ?? "-", icon: CarFront },
   ];
@@ -139,6 +140,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
                   brand: application.brand,
                   model: application.model,
                   vehiclePackage: application.vehicle_package,
+                  engineInfo: application.engine_info,
                   modelYear: application.model_year,
                   km: application.km,
                   fuelType: application.fuel_type,

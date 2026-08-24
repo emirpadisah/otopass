@@ -135,6 +135,7 @@ export default async function AdminApplicationDetailPage({ params }: PageProps) 
               <div className="ops-info-row"><dt>Müşteri</dt><dd>{application.owner_name ?? "-"}</dd></div>
               <div className="ops-info-row"><dt>Telefon</dt><dd><WhatsAppPhoneLink phone={application.owner_phone} /></dd></div>
               <div className="ops-info-row"><dt>Paket</dt><dd>{application.vehicle_package ?? "-"}</dd></div>
+              <div className="ops-info-row"><dt>Motor</dt><dd>{application.engine_info ?? "-"}</dd></div>
               <div className="ops-info-row"><dt>Model yılı</dt><dd>{application.model_year ?? "-"}</dd></div>
               <div className="ops-info-row"><dt>Kilometre</dt><dd>{formatNumber(application.km)} km</dd></div>
               <div className="ops-info-row"><dt>Yakıt</dt><dd>{application.fuel_type ?? "-"}</dd></div>

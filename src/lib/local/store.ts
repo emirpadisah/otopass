@@ -126,6 +126,7 @@ function createSeedData(): LocalData {
         brand: "Renault",
         model: "Clio",
         vehicle_package: "Icon",
+        engine_info: "1.0 TCe",
         model_year: 2022,
         km: 46500,
         fuel_type: "Benzin",
@@ -154,6 +155,7 @@ function createSeedData(): LocalData {
         brand: "Toyota",
         model: "Corolla",
         vehicle_package: "Flame X-Pack",
+        engine_info: "1.8 Hybrid",
         model_year: 2021,
         km: 68300,
         fuel_type: "Hibrit",
@@ -182,6 +184,7 @@ function createSeedData(): LocalData {
         brand: "Fiat",
         model: "Egea",
         vehicle_package: "Urban",
+        engine_info: "1.3 Multijet",
         model_year: 2020,
         km: 91200,
         fuel_type: "Dizel",
@@ -268,6 +271,9 @@ export async function readLocalData(): Promise<LocalData> {
       dealer.contact_name ??= null;
       dealer.contact_phone ??= null;
       dealer.social_links ??= [];
+    }
+    for (const application of data.applications) {
+      application.engine_info ??= null;
     }
     return data;
   } catch {

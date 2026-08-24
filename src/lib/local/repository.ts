@@ -153,6 +153,7 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       brand: input.brand,
       model: input.model,
       vehicle_package: input.vehicle_package ?? null,
+      engine_info: input.engine_info ?? null,
       model_year: input.model_year ?? null,
       km: input.km ?? null,
       fuel_type: input.fuel_type ?? null,

@@ -26,6 +26,7 @@ export type ApplicationInput = {
   brand: string;
   model: string;
   vehicle_package: string | null;
+  engine_info: string | null;
   model_year: number | null;
   km: number | null;
   fuel_type: string | null;

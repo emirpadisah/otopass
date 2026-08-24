@@ -33,9 +33,10 @@ describe("application validation", () => {
   });
 
   it("accepts a strict Turkish mobile number without email", () => {
-    const parsed = parseApplicationInput(makeForm());
+    const parsed = parseApplicationInput(makeForm({ engine_info: "  1.6 TDI  " }));
     expect(parsed.owner_phone).toBe("+905551112233");
     expect(parsed.owner_email).toBeNull();
+    expect(parsed.engine_info).toBe("1.6 TDI");
     expect(parsed.body_condition).toEqual({ hood: "painted" });
     expect(() => parseApplicationInput(makeForm({ owner_phone: "0555 111 22 33" }))).toThrow();
   });
@@ -57,6 +58,7 @@ describe("application validation", () => {
     expect(() => parseApplicationInput(makeForm({ model_year: "1900" }))).toThrow();
     expect(() => parseApplicationInput(makeForm({ km: "-1" }))).toThrow();
     expect(() => parseApplicationInput(makeForm({ brand: "x".repeat(81) }))).toThrow();
+    expect(() => parseApplicationInput(makeForm({ engine_info: "x".repeat(121) }))).toThrow();
   });
 
   it("validates upload descriptors", () => {

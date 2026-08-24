@@ -47,6 +47,7 @@ export async function POST(request: Request) {
       brand: application.brand,
       model: application.model,
       vehicle_package: application.vehicle_package,
+      engine_info: application.engine_info,
       model_year: application.model_year,
       km: application.km,
       fuel_type: application.fuel_type,
