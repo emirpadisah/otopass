@@ -3,6 +3,7 @@ import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { getPublicSiteOrigin } from "@/lib/site-url";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -17,7 +18,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000"),
+  metadataBase: new URL(getPublicSiteOrigin()),
   title: "otoköprü | Araç başvurusu ve teklif yönetimi",
   description:
     "Araç başvurularını, ekspertiz bilgilerini ve teklif süreçlerini tek çalışma alanında yönetin.",

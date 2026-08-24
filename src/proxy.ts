@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isPlatformHostname } from "@/lib/site-url";
 
 const domainCache = new Map<string, { slug: string | null; expiresAt: number }>();
 
@@ -10,17 +11,6 @@ function getRequestHostname(request: NextRequest): string {
     .split(":")[0]
     .toLowerCase()
     .replace(/\.$/, "");
-}
-
-function isPlatformHostname(hostname: string): boolean {
-  if (!hostname || hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost") || hostname.endsWith(".vercel.app")) return true;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (!siteUrl) return false;
-  try {
-    return new URL(siteUrl).hostname.toLowerCase() === hostname;
-  } catch {
-    return false;
-  }
 }
 
 async function resolveCustomDomainSlug(hostname: string, url: string, anonKey: string): Promise<string | null> {

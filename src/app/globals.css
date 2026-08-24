@@ -3793,8 +3793,8 @@ html.theme-dark .vc-offer-visual {
 
 .vc-footer-grid {
   display: grid;
-  grid-template-columns: 1.6fr .7fr .7fr;
-  gap: 50px;
+  grid-template-columns: 1.55fr .65fr .65fr .8fr;
+  gap: 36px;
   padding-bottom: 48px;
 }
 

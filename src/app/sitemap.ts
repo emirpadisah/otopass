@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getPublicSiteOrigin } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const base = getPublicSiteOrigin();
   return [
     { url: base, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/terms`, changeFrequency: "monthly", priority: 0.3 },

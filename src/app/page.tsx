@@ -277,6 +277,7 @@ export default function Home() {
           <div><Link href="/" className="vc-brand" aria-label="otoköprü ana sayfa"><BrandLogo size="navigation" /></Link><p>Başvurudan teklife daha düzenli bir çalışma alanı.</p></div>
           <div><strong>Platform</strong><a href="#faydalar">Sistem faydaları</a><a href="#nasil-calisir">Nasıl çalışır?</a><a href="#roller">Kimler için?</a></div>
           <div><strong>Erişim</strong><Link href="/login">Panel girişi</Link><a href="#guven">Güvenlik yaklaşımı</a><Link href="/terms">Kullanım koşulları</Link></div>
+          <div><strong>İletişim</strong><a href="https://www.otokopru.com">www.otokopru.com</a><a href="mailto:info@otokopru.com">info@otokopru.com</a><a href="tel:+905536845821" dir="ltr">+90 553 684 58 21</a></div>
         </div>
         <div className="vc-container vc-footer-bottom"><span>© {new Date().getFullYear()} otoköprü</span><span>Araç alım operasyon platformu</span></div>
       </footer>

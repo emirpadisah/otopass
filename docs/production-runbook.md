@@ -1,4 +1,4 @@
-# POL-CAR Production Runbook
+# otoköprü Production Runbook
 
 ## Sorumluluklar
 
@@ -23,7 +23,7 @@ Vercel production ortamı:
 
 - `OTOPASS_DATA_MODE=supabase`
 - `OTOPASS_ENABLE_LOCAL_AUTH=false`
-- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SITE_URL=https://www.otokopru.com`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -41,6 +41,13 @@ GitHub Actions workflow'ları yeniden etkinleştirilirse:
 Vercel'in yerleşik Git entegrasyonu bu GitHub Actions secret'larına ihtiyaç duymaz.
 
 Secret değerlerini repoya, loglara veya olay kayıtlarına yazmayın. Bootstrap değişkenlerini ilk super admin oluşturulduktan hemen sonra silin.
+
+## Ana alan adı
+
+- Birincil adres `https://www.otokopru.com` olarak kullanılır.
+- `https://otokopru.com` kalıcı `308` yönlendirmesiyle birincil adrese gider.
+- Vercel projesinde iki alan adı da tanımlı olmalı; apex için sağlayıcının gösterdiği `A`, `www` için projeye özel `CNAME` kaydı kullanılmalıdır.
+- Supabase Auth Site URL `https://www.otokopru.com`, izinli yönlendirme adresi `https://www.otokopru.com/auth/callback` olmalıdır.
 
 ## Release kontrolü
 

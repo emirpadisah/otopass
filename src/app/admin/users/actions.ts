@@ -10,6 +10,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { getDealerById } from "@/lib/supabase/queries";
 import { validatePasswordPolicy } from "@/lib/validation/password";
+import { getPublicSiteOrigin } from "@/lib/site-url";
 
 const DEALER_ROLES: UserRole[] = ["dealer_owner", "dealer_manager", "dealer_viewer"];
 const ALL_ROLES = new Set<UserRole>([
@@ -47,7 +48,7 @@ export async function sendPasswordResetAction(_prevState: ActionResponse, formDa
   const { data, error } = await service.auth.admin.getUserById(userId);
   if (error || !data.user.email) return { ok: false, code: "USER_NOT_FOUND", message: "Kullanıcı bulunamadı." };
   const supabase = await createSupabaseServerClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const siteUrl = getPublicSiteOrigin();
   const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.user.email, { redirectTo: `${siteUrl}/auth/callback?next=/login/reset-password` });
   if (resetError) return { ok: false, code: "RESET_FAILED", message: "Yenileme bağlantısı gönderilemedi." };
   await service.from("activity_log").insert({ actor_user_id: actor.id, action: "ADMIN_PASSWORD_RESET_SENT", metadata: { target_user_id: userId } });

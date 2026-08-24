@@ -32,7 +32,7 @@ if (!user) {
 
 const { error: profileError } = await supabase.from("user_profiles").upsert({
   user_id: user.id,
-  full_name: "Otopass Super Admin",
+  full_name: "otoköprü Süper Yönetici",
   must_change_password: true,
   is_active: true,
   deactivated_at: null,

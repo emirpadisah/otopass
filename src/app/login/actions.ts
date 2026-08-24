@@ -15,6 +15,7 @@ import { resolvePostLoginRoute } from "@/lib/auth/roles";
 import { validatePasswordPolicy } from "@/lib/validation/password";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
+import { getPublicSiteOrigin } from "@/lib/site-url";
 
 type LoginState = {
   error: string | null;
@@ -117,7 +118,7 @@ export async function requestPasswordReset(
   const ip = getClientIp(await headers());
   const allowed = await consumeRateLimit(`${ip}:${email}`, { scope: "password-reset", limit: 3, windowSeconds: 3600 });
   if (!allowed) return { error: "Çok fazla yenileme isteği gönderildi. Lütfen daha sonra tekrar deneyin." };
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const siteUrl = getPublicSiteOrigin();
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/auth/callback?next=/login/reset-password`,

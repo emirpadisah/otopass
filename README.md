@@ -2,6 +2,8 @@
 
 otoköprü, galeri bazlı araç başvurusu, teklif ve satış operasyonlarını yöneten Next.js 16 uygulamasıdır. Production veri ve kimlik doğrulama katmanı Supabase; dağıtım Vercel; bot koruması Cloudflare Turnstile; hata izleme Sentry üzerinde çalışır.
 
+Production adresi `https://www.otokopru.com` olup `https://otokopru.com` bu adrese kalıcı olarak yönlenir.
+
 ## Yerel geliştirme
 
 ```bash
@@ -22,7 +24,7 @@ npx supabase link --project-ref <project-ref>
 npx supabase db push --linked
 ```
 
-3. Supabase Auth üzerinde public signup'ı kapalı tutun ve uygulama URL'si ile `/auth/callback` adresini izinli redirect listesine ekleyin.
+3. Supabase Auth üzerinde public signup'ı kapalı tutun; Site URL alanını `https://www.otokopru.com`, izinli redirect adresini `https://www.otokopru.com/auth/callback` olarak tanımlayın.
 4. İlk yöneticiyi bir kez oluşturun:
 
 ```bash
