@@ -3979,8 +3979,17 @@ html.theme-dark .vc-offer-visual {
 
   .vc-hero {
     min-height: 680px;
-    background-position: 64% 0;
-    background-size: auto 360px;
+    background-image:
+      linear-gradient(
+        90deg,
+        rgba(247, 249, 251, 0.98) 0%,
+        rgba(247, 249, 251, 0.94) 58%,
+        rgba(247, 249, 251, 0.4) 78%,
+        rgba(247, 249, 251, 0) 100%
+      ),
+      url("/images/otopass-hero-inspection.jpg");
+    background-position: 0 0, 64% 0;
+    background-size: 100% 360px, auto 360px;
   }
 
   .vc-hero-inner {
@@ -4002,14 +4011,20 @@ html.theme-dark .vc-offer-visual {
 
   .vc-hero-copy h1 {
     margin: 0;
+    color: #0f172a;
     font-size: 31px;
     line-height: 1.08;
   }
 
+  .vc-hero-copy h1 span {
+    color: #c9141c;
+  }
+
   .vc-hero-copy > p {
     margin-top: 12px;
-    color: #334155;
-    font-size: 12px;
+    color: #172033;
+    font-size: 13px;
+    font-weight: 550;
     line-height: 1.55;
   }
 
