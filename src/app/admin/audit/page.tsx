@@ -12,6 +12,7 @@ const actionLabels: Record<string, string> = {
   ADMIN_USER_CREATED: "Kullanıcı oluşturuldu",
   ADMIN_USER_DELETED: "Kullanıcı silindi",
   ADMIN_PASSWORD_RESET_SENT: "Şifre yenileme bağlantısı gönderildi",
+  ADMIN_PASSWORD_CHANGED: "Kullanıcı şifresi değiştirildi",
   ADMIN_SETTINGS_UPDATED: "Sistem ayarları güncellendi",
   APPLICATION_CREATED: "Başvuru oluşturuldu",
   APPLICATION_DELETE_REQUESTED: "Başvuru silme işlemi başlatıldı",

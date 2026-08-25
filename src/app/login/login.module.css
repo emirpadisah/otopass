@@ -104,36 +104,10 @@
   gap: 8px;
 }
 
-.field :global(label),
-.label {
+.field :global(label) {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 650;
-}
-
-.labelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.forgotLink {
-  flex: none;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 650;
-  text-underline-offset: 4px;
-}
-
-.forgotLink:hover {
-  text-decoration: underline;
-}
-
-.forgotLink:focus-visible {
-  border-radius: 4px;
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
 }
 
 .form :global(.input-base) {

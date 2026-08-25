@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
 import { isLocalDataMode } from "@/lib/data-mode";
-import { getLocalLatestFormSubmit, registerLocalFormSubmit } from "@/lib/local/repository";
+import { consumeLocalRateLimit } from "@/lib/local/repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 export type RateLimitRule = { scope: string; limit: number; windowSeconds: number };
@@ -25,10 +25,7 @@ export async function consumeRateLimit(key: string, rule: RateLimitRule): Promis
   const keyHash = hashRateLimitKey(key || "unknown");
   if (isLocalDataMode()) {
     const dealerSlug = rule.scope.startsWith("public-form:") ? rule.scope.slice("public-form:".length) : rule.scope;
-    const lastSubmit = await getLocalLatestFormSubmit(keyHash, dealerSlug);
-    const allowed = !lastSubmit || Date.now() - new Date(lastSubmit).getTime() >= rule.windowSeconds * 1000;
-    if (allowed) await registerLocalFormSubmit(keyHash, dealerSlug);
-    return allowed;
+    return consumeLocalRateLimit(keyHash, dealerSlug, rule.limit, rule.windowSeconds);
   }
 
   const supabase = createSupabaseServiceClient();

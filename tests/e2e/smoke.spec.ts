@@ -5,11 +5,6 @@ for (const path of ["/", "/login", "/form/test-galeri"]) {
   test(`${path} has no automatically detectable accessibility violations`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("body")).toBeVisible();
-    const revealItems = page.locator("[data-reveal]");
-    if (await revealItems.count()) {
-      await expect(page.locator(".vc-root")).toHaveClass(/vc-motion-ready/);
-      await page.locator(".vc-root").evaluate((element) => element.classList.remove("vc-motion-ready"));
-    }
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.map((violation) => ({
       id: violation.id,
@@ -51,23 +46,75 @@ test("landing pricing and contact form prepare a WhatsApp inquiry", async ({ pag
   });
 
   await page.goto("/");
-  const pricingCards = page.locator(".vc-pricing-card");
+  const pricingCards = page.getByTestId("pricing-card");
   await expect(pricingCards).toHaveCount(2);
   await expect(pricingCards.nth(0)).toContainText("₺5.000");
   await expect(pricingCards.nth(1)).toContainText("₺50.000");
 
-  const monthlyFeatures = await pricingCards.nth(0).locator(".vc-pricing-features li").allTextContents();
-  const annualFeatures = await pricingCards.nth(1).locator(".vc-pricing-features li").allTextContents();
-  expect(annualFeatures).toEqual(monthlyFeatures);
+  const monthlyFeatures = await pricingCards.nth(0).locator("li").allTextContents();
+  const annualFeatures = await pricingCards.nth(1).locator("li").allTextContents();
+  expect(annualFeatures.slice(0, -1)).toEqual(monthlyFeatures);
+  expect(annualFeatures.at(-1)).toContain("özel domain");
 
+  await page.locator("#iletisim").scrollIntoViewIfNeeded();
   await page.getByLabel("Ad soyad").fill("E2E Galeri");
   await page.getByLabel("Telefon veya e-posta").fill("galeri@example.com");
   await page.getByLabel("Mesajınız").fill("Kurulum hakkında bilgi almak istiyorum.");
-  await page.getByRole("button", { name: "WhatsApp'ta gönder" }).click();
+  await page.getByRole("button", { name: "WhatsApp'ta görüş" }).click();
 
   await expect(page.getByRole("status")).toContainText("WhatsApp görüşmesi açıldı");
   const openedUrl = await page.evaluate(() => (window as typeof window & { __contactUrl?: string }).__contactUrl);
   expect(openedUrl).toContain("https://wa.me/905536845821");
   expect(decodeURIComponent(openedUrl || "")).toContain("E2E Galeri");
   expect(decodeURIComponent(openedUrl || "")).toContain("galeri@example.com");
+});
+
+test("landing preserves viewport geometry and interaction behavior", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Başvuruyu alın. Aracı değerlendirin. Teklifi sonuçlandırın." })).toBeVisible();
+
+  const geometry = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    sectionIds: [...document.querySelectorAll("main > section")].map((section) => section.id),
+  }));
+  expect(geometry.scrollWidth).toBe(geometry.clientWidth);
+  expect(geometry.sectionIds).toEqual(["hakkimizda", "", "ozellikler", "", "surec", "fiyatlandirma", "iletisim"]);
+
+  const header = page.locator("header").first();
+  const initialHeaderHeight = await header.evaluate((element) => element.getBoundingClientRect().height);
+  await page.evaluate(() => window.scrollTo({ top: 180, behavior: "instant" }));
+  if (!(await page.getByRole("button", { name: "Menüyü aç" }).isVisible())) {
+    await expect.poll(async () => header.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(initialHeaderHeight);
+    await page.getByRole("link", { name: "Sistem", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+    await expect(page).toHaveURL(/#ozellikler$/);
+  }
+
+  if (await page.getByRole("button", { name: "Menüyü aç" }).isVisible()) {
+    await page.getByRole("button", { name: "Menüyü aç" }).click();
+    await expect(page.locator("#landing-mobile-menu")).toHaveAttribute("aria-hidden", "false");
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#landing-mobile-menu")).toHaveAttribute("aria-hidden", "true");
+  }
+});
+
+test("hero rings animate and respect reduced motion", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Ring animation sampling runs once on desktop Chromium.");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  const ring = page.locator('svg[aria-label="Birbirine bağlı iki süreç halkası"] > g').first();
+  const movingTransformOne = await ring.evaluate((element) => getComputedStyle(element).transform);
+  await page.waitForTimeout(500);
+  const movingTransformTwo = await ring.evaluate((element) => getComputedStyle(element).transform);
+  expect(movingTransformTwo).not.toBe(movingTransformOne);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  const reducedRing = page.locator('svg[aria-label="Birbirine bağlı iki süreç halkası"] > g').first();
+  const stillTransformOne = await reducedRing.evaluate((element) => getComputedStyle(element).transform);
+  await page.waitForTimeout(500);
+  const stillTransformTwo = await reducedRing.evaluate((element) => getComputedStyle(element).transform);
+  expect(stillTransformTwo).toBe(stillTransformOne);
 });

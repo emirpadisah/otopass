@@ -6,13 +6,13 @@ import { redirect } from "next/navigation";
 import type { ActionResponse, UserRole } from "@/lib/types";
 import { requireUser } from "@/lib/auth/session";
 import { requireAdminAccess } from "@/lib/auth/roles";
+import { getPasswordChangeRestriction, getUserDeletionRestriction } from "@/lib/auth/admin-user-management";
 import { createUserByAdmin } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { getCurrentUserRoles } from "@/lib/auth/roles";
 import { getDealerById } from "@/lib/supabase/queries";
 import { validatePasswordPolicy } from "@/lib/validation/password";
-import { getPublicSiteOrigin } from "@/lib/site-url";
 import { AdminUserCreationError } from "@/lib/supabase/admin-user-errors";
 
 const DEALER_ROLES: UserRole[] = ["dealer_owner", "dealer_manager", "dealer_viewer"];
@@ -55,33 +55,130 @@ export async function updateUserAction(_prevState: ActionResponse, formData: For
   return { ok: true, code: "USER_UPDATED", message: "Kullanıcı erişimi güncellendi." };
 }
 
-export async function sendPasswordResetAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
+export async function setUserPasswordAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const actor = await requireUser();
-  await requireAdminAccess();
+  const actorRoles = await requireAdminAccess();
   const userId = String(formData.get("userId") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const passwordConfirmation = String(formData.get("passwordConfirmation") ?? "");
   if (!UUID_PATTERN.test(userId)) return { ok: false, code: "VALIDATION", message: "Kullanıcı bilgisi geçersiz." };
+
+  if (password !== passwordConfirmation) {
+    return { ok: false, code: "PASSWORD_MISMATCH", message: "Yeni şifreler birbiriyle eşleşmiyor." };
+  }
+
+  try {
+    validatePasswordPolicy(password);
+  } catch (error) {
+    return {
+      ok: false,
+      code: "VALIDATION",
+      message: error instanceof Error ? error.message : "Şifre güvenlik koşullarını karşılamıyor.",
+    };
+  }
+
   const service = createSupabaseServiceClient();
-  const { data, error } = await service.auth.admin.getUserById(userId);
-  if (error || !data.user.email) return { ok: false, code: "USER_NOT_FOUND", message: "Kullanıcı bulunamadı." };
-  const supabase = await createSupabaseServerClient();
-  const siteUrl = getPublicSiteOrigin();
-  const { error: resetError } = await supabase.auth.resetPasswordForEmail(data.user.email, { redirectTo: `${siteUrl}/auth/callback?next=/login/reset-password` });
-  if (resetError) return { ok: false, code: "RESET_FAILED", message: "Yenileme bağlantısı gönderilemedi." };
-  await service.from("activity_log").insert({ actor_user_id: actor.id, action: "ADMIN_PASSWORD_RESET_SENT", metadata: { target_user_id: userId } });
-  return { ok: true, code: "RESET_SENT", message: "Şifre yenileme bağlantısı gönderildi." };
+  const [{ data: targetAuth, error: targetAuthError }, { data: targetRoleRows, error: targetRoleError }, { data: profile, error: profileError }] = await Promise.all([
+    service.auth.admin.getUserById(userId),
+    service.from("user_roles").select("role").eq("user_id", userId),
+    service.from("user_profiles").select("must_change_password").eq("user_id", userId).maybeSingle(),
+  ]);
+
+  if (targetAuthError || !targetAuth.user || targetRoleError || profileError || !profile) {
+    return { ok: false, code: "USER_NOT_FOUND", message: "Kullanıcı bulunamadı." };
+  }
+
+  const targetRoles = (targetRoleRows ?? []).map((item) => item.role as UserRole);
+  const restriction = getPasswordChangeRestriction({
+    actorUserId: actor.id,
+    actorRoles,
+    targetUserId: userId,
+    targetRoles,
+  });
+  if (restriction === "SELF_PASSWORD_CHANGE") {
+    return { ok: false, code: restriction, message: "Kendi şifrenizi kullanıcı yönetimi ekranından değiştiremezsiniz." };
+  }
+  if (restriction === "PRIVILEGED_TARGET") {
+    return { ok: false, code: restriction, message: "Yönetici hesaplarının şifresini yalnızca süper yönetici değiştirebilir." };
+  }
+
+  const updatedAt = new Date().toISOString();
+  const { error: profileUpdateError } = await service
+    .from("user_profiles")
+    .update({ must_change_password: true, updated_at: updatedAt })
+    .eq("user_id", userId);
+  if (profileUpdateError) return { ok: false, code: "PASSWORD_UPDATE_FAILED", message: "Kullanıcı şifresi güncellenemedi." };
+
+  const { error: passwordUpdateError } = await service.auth.admin.updateUserById(userId, { password });
+  if (passwordUpdateError) {
+    await service
+      .from("user_profiles")
+      .update({ must_change_password: profile.must_change_password, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
+    return { ok: false, code: "PASSWORD_UPDATE_FAILED", message: "Kullanıcı şifresi güncellenemedi." };
+  }
+
+  const { error: auditError } = await service.from("activity_log").insert({
+    actor_user_id: actor.id,
+    action: "ADMIN_PASSWORD_CHANGED",
+    metadata: { target_user_id: userId, must_change_password: true },
+  });
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { operation: "admin-password-change" }, extra: { targetUserId: userId } });
+  }
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/audit");
+  return { ok: true, code: "PASSWORD_UPDATED", message: "Geçici şifre güncellendi. Kullanıcı ilk girişte yeni şifre belirleyecek." };
 }
 
 export async function deleteUserAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const actor = await requireUser();
-  await requireAdminAccess();
-  const roles = await getCurrentUserRoles();
-  if (!roles.includes("super_admin")) return { ok: false, code: "FORBIDDEN", message: "Kalıcı silme işlemini yalnızca süper yönetici yapabilir." };
+  const actorRoles = await requireAdminAccess();
   const userId = String(formData.get("userId") ?? "").trim();
-  if (!UUID_PATTERN.test(userId) || userId === actor.id) return { ok: false, code: "SELF_DELETE", message: "Kendi hesabınızı silemezsiniz." };
+  if (!UUID_PATTERN.test(userId)) return { ok: false, code: "VALIDATION", message: "Kullanıcı bilgisi geçersiz." };
+
   const service = createSupabaseServiceClient();
-  await service.from("activity_log").insert({ actor_user_id: actor.id, action: "ADMIN_USER_DELETED", metadata: { target_user_id: userId } });
+  const [{ data: targetAuth, error: targetAuthError }, { data: targetRoleRows, error: targetRoleError }, { count: superAdminCount, error: countError }] = await Promise.all([
+    service.auth.admin.getUserById(userId),
+    service.from("user_roles").select("role").eq("user_id", userId),
+    service.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "super_admin"),
+  ]);
+  if (targetAuthError || !targetAuth.user || targetRoleError || countError) {
+    return { ok: false, code: "USER_NOT_FOUND", message: "Kullanıcı bulunamadı." };
+  }
+
+  const targetRoles = (targetRoleRows ?? []).map((item) => item.role as UserRole);
+  const restriction = getUserDeletionRestriction({
+    actorUserId: actor.id,
+    actorRoles,
+    targetUserId: userId,
+    targetRoles,
+    superAdminCount: superAdminCount ?? 0,
+  });
+  if (restriction === "DELETE_REQUIRES_SUPER_ADMIN") {
+    return { ok: false, code: restriction, message: "Kalıcı silme işlemini yalnızca süper yönetici yapabilir." };
+  }
+  if (restriction === "SELF_DELETE") {
+    return { ok: false, code: restriction, message: "Kendi hesabınızı silemezsiniz." };
+  }
+  if (restriction === "LAST_SUPER_ADMIN") {
+    return { ok: false, code: restriction, message: "Sistemdeki son süper yönetici hesabı silinemez." };
+  }
+
   const { error } = await service.auth.admin.deleteUser(userId);
   if (error) return { ok: false, code: "DELETE_FAILED", message: "Kullanıcı silinemedi." };
+
+  const { error: auditError } = await service.from("activity_log").insert({
+    actor_user_id: actor.id,
+    action: "ADMIN_USER_DELETED",
+    metadata: { target_user_id: userId, target_roles: targetRoles },
+  });
+  if (auditError) {
+    Sentry.captureException(auditError, { tags: { operation: "admin-user-delete" }, extra: { targetUserId: userId } });
+  }
+
   revalidatePath("/admin/users");
   revalidatePath("/admin/audit");
   redirect("/admin/users?deleted=1");

@@ -286,23 +286,28 @@ export async function respondToLocalOffer(
   });
 }
 
-export async function getLocalLatestFormSubmit(
+export async function consumeLocalRateLimit(
   ipHash: string,
-  dealerSlug: string
-): Promise<string | null> {
-  const data = await readLocalData();
-  const latest = data.form_rate_limits
-    .filter((item) => item.ip_hash === ipHash && item.dealer_slug === dealerSlug)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  return latest?.created_at ?? null;
-}
+  dealerSlug: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  return mutateLocalData((data) => {
+    const now = Date.now();
+    const cutoff = now - windowSeconds * 1000;
+    const recentAttempts = data.form_rate_limits.filter((item) => (
+      item.ip_hash === ipHash
+      && item.dealer_slug === dealerSlug
+      && new Date(item.created_at).getTime() >= cutoff
+    ));
 
-export async function registerLocalFormSubmit(ipHash: string, dealerSlug: string): Promise<void> {
-  await mutateLocalData((data) => {
+    if (recentAttempts.length >= limit) return false;
+
     data.form_rate_limits.push({
       ip_hash: ipHash,
       dealer_slug: dealerSlug,
-      created_at: new Date().toISOString(),
+      created_at: new Date(now).toISOString(),
     });
+    return true;
   });
 }

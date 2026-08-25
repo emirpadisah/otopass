@@ -62,9 +62,8 @@ export function MetricStrip({ metrics, label = "Temel metrikler" }: { metrics: P
       aria-label={label}
       data-count={Math.min(metrics.length, 5)}
     >
-      {metrics.map(({ label: itemLabel, value, note, icon: Icon, tone = "neutral", progress }, index) => {
+      {metrics.map(({ label: itemLabel, value, note, icon: Icon, tone = "neutral" }, index) => {
         const style = {
-          "--ops-metric-progress": `${Math.max(0, Math.min(progress ?? 0, 100))}%`,
           "--ops-item-delay": `${index * 45}ms`,
         } as CSSProperties;
 
@@ -76,7 +75,6 @@ export function MetricStrip({ metrics, label = "Temel metrikler" }: { metrics: P
             </div>
             <p className="ops-metric-value">{value}</p>
             {note ? <p className="ops-metric-note">{note}</p> : null}
-            {typeof progress === "number" ? <span className="ops-metric-track" aria-hidden="true"><i /></span> : null}
           </article>
         );
       })}

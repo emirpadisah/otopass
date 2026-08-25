@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, Field, Input } from "@/components/ui";
-import Link from "next/link";
 import { login } from "./actions";
 import styles from "./login.module.css";
 
@@ -39,11 +38,7 @@ export function LoginForm({ disabled = false }: { disabled?: boolean }) {
         />
       </Field>
 
-      <Field className={styles.field}>
-        <div className={styles.labelRow}>
-          <label htmlFor="password" className={styles.label}>Şifre</label>
-          {!disabled ? <Link href="/login/forgot-password" className={styles.forgotLink}>Şifremi unuttum</Link> : null}
-        </div>
+      <Field label="Şifre" labelFor="password" className={styles.field}>
         <Input
           id="password"
           name="password"

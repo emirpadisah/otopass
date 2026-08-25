@@ -23,27 +23,39 @@ export function MfaSetup({ redirectTo = "/dealer" }: MfaSetupProps) {
   useEffect(() => {
     let active = true;
     async function prepare() {
-      const supabase = getSupabaseBrowserClient();
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const verified = factors?.totp.find((factor) => factor.status === "verified");
-      if (verified) {
-        if (!active) return;
-        setEnrollment({ factorId: verified.id, qrCode: "", secret: "" });
-        setMessage("Kimlik doğrulayıcınızdaki 6 haneli kodu girin.");
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setMessage("Bu geliştirme ortamında iki adımlı doğrulama kullanılamaz.");
         setBusy(false);
         return;
       }
-      for (const factor of factors?.totp ?? []) await supabase.auth.mfa.unenroll({ factorId: factor.id });
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Galeri hesabı" });
-      if (!active) return;
-      if (error || !data.totp) {
+
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const verified = factors?.totp.find((factor) => factor.status === "verified");
+        if (verified) {
+          if (!active) return;
+          setEnrollment({ factorId: verified.id, qrCode: "", secret: "" });
+          setMessage("Kimlik doğrulayıcınızdaki 6 haneli kodu girin.");
+          setBusy(false);
+          return;
+        }
+        for (const factor of factors?.totp ?? []) await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Galeri hesabı" });
+        if (!active) return;
+        if (error || !data.totp) {
+          setMessage("İki adımlı doğrulama başlatılamadı. Sayfayı yenileyip tekrar deneyin.");
+          setBusy(false);
+          return;
+        }
+        setEnrollment({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
+        setMessage("QR kodu kimlik doğrulayıcı uygulamanızla tarayın.");
+        setBusy(false);
+      } catch {
+        if (!active) return;
         setMessage("İki adımlı doğrulama başlatılamadı. Sayfayı yenileyip tekrar deneyin.");
         setBusy(false);
-        return;
       }
-      setEnrollment({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
-      setMessage("QR kodu kimlik doğrulayıcı uygulamanızla tarayın.");
-      setBusy(false);
     }
     void prepare();
     return () => { active = false; };

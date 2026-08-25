@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
-import { KeyRound, Save, Trash2 } from "lucide-react";
+import { useActionState, useEffect, useRef } from "react";
+import { KeyRound, LoaderCircle, Save, Trash2 } from "lucide-react";
 import { Button, ConfirmSubmitButton, Field, Input } from "@/components/ui";
 import type { ActionResponse, UserRole } from "@/lib/types";
-import { deleteUserAction, sendPasswordResetAction, updateUserAction } from "../actions";
+import { deleteUserAction, setUserPasswordAction, updateUserAction } from "../actions";
 
 type UserData = { user_id: string; full_name: string | null; roles: string[]; dealer_ids: string[]; is_active: boolean };
 const initial: ActionResponse = { ok: false };
@@ -15,10 +15,17 @@ function Message({ state }: { state: ActionResponse }) {
 
 export function UserManageForm({ user, dealers, canDelete }: { user: UserData; dealers: Array<{ id: string; name: string }>; canDelete: boolean }) {
   const [updateState, updateAction, updatePending] = useActionState(updateUserAction, initial);
-  const [resetState, resetAction, resetPending] = useActionState(sendPasswordResetAction, initial);
+  const [passwordState, passwordAction, passwordPending] = useActionState(setUserPasswordAction, initial);
   const [deleteState, deleteAction, deletePending] = useActionState(deleteUserAction, initial);
+  const passwordFormRef = useRef<HTMLFormElement>(null);
   const role = (user.roles[0] || "dealer_viewer") as UserRole;
   const deleteFormId = `delete-user-${user.user_id}`;
+
+  useEffect(() => {
+    if (!passwordState.ok) return;
+    passwordFormRef.current?.reset();
+  }, [passwordState.ok]);
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <form action={updateAction} className="panel space-y-4 p-5 sm:p-6">
@@ -31,7 +38,24 @@ export function UserManageForm({ user, dealers, canDelete }: { user: UserData; d
         <Button type="submit" disabled={updatePending}><Save size={15} /> Değişiklikleri kaydet</Button>
       </form>
       <aside className="space-y-4">
-        <form action={resetAction} className="panel space-y-4 p-5"><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold">Şifre yenileme</h2><p className="text-sm text-[var(--text-muted)]">Kullanıcının e-posta adresine şifre yenileme bağlantısı gönderir.</p><Message state={resetState} /><Button type="submit" variant="secondary" disabled={resetPending}><KeyRound size={15} /> Bağlantı gönder</Button></form>
+        <form ref={passwordFormRef} action={passwordAction} className="panel space-y-4 p-5" aria-busy={passwordPending}>
+          <input type="hidden" name="userId" value={user.user_id} />
+          <div>
+            <h2 className="font-bold">Şifre değiştir</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">Geçici şifre atayın. Kullanıcı ilk girişte kendi şifresini belirler.</p>
+          </div>
+          <Field label="Yeni geçici şifre" labelFor="password" description="En az 12 karakter; büyük harf, küçük harf ve sayı içermelidir.">
+            <Input id="password" name="password" type="password" autoComplete="new-password" minLength={12} maxLength={128} required disabled={passwordPending} />
+          </Field>
+          <Field label="Yeni şifreyi doğrulayın" labelFor="passwordConfirmation">
+            <Input id="passwordConfirmation" name="passwordConfirmation" type="password" autoComplete="new-password" minLength={12} maxLength={128} required disabled={passwordPending} />
+          </Field>
+          <Message state={passwordState} />
+          <Button type="submit" variant="secondary" disabled={passwordPending}>
+            {passwordPending ? <LoaderCircle className="animate-spin" size={15} aria-hidden="true" /> : <KeyRound size={15} aria-hidden="true" />}
+            {passwordPending ? "Şifre güncelleniyor..." : "Şifreyi güncelle"}
+          </Button>
+        </form>
         {canDelete ? <form id={deleteFormId} action={deleteAction} className="panel space-y-4 border-[var(--danger)] p-5"><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold text-[var(--danger)]">Kalıcı silme</h2><Message state={deleteState} /><ConfirmSubmitButton formId={deleteFormId} title="Kullanıcı kalıcı olarak silinsin mi?" description="Hesap, rol ve galeri üyelikleri sistemden kaldırılacak." confirmLabel="Kullanıcıyı kalıcı olarak sil" details={["Kullanıcı artık giriş yapamaz", "Rol ve galeri erişimleri kaldırılır", "Bu işlem geri alınamaz"]} feedbackMessage={deleteState.message} feedbackTone={deleteState.ok ? "success" : "danger"} tone="danger" variant="danger" disabled={deletePending}><Trash2 size={15} /> Kullanıcıyı sil</ConfirmSubmitButton></form> : null}
       </aside>
     </div>

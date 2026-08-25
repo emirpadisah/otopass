@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Store,
   Users,
@@ -222,6 +224,7 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
 
   useEffect(() => {
@@ -244,7 +247,7 @@ export function AppShell({
   return (
     <div className="ops-shell">
       <div className="ops-shell-grid" aria-hidden="true" />
-      <div className="ops-layout">
+      <div className="ops-layout" data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}>
         <aside className="ops-sidebar ui-scrollbar">
           <ShellNav
             brandLogoSrc={activeBrandLogoSrc}
@@ -260,6 +263,18 @@ export function AppShell({
         <div className="min-w-0 flex-1">
           <header className="ops-topbar">
             <div className="flex min-w-0 items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ops-sidebar-toggle hidden h-9 w-9 px-0 lg:inline-flex"
+                type="button"
+                onClick={() => setSidebarCollapsed((value) => !value)}
+                aria-label={sidebarCollapsed ? "Yan menüyü aç" : "Yan menüyü daralt"}
+                title={sidebarCollapsed ? "Yan menüyü aç" : "Yan menüyü daralt"}
+              >
+                {sidebarCollapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}
+              </Button>
+              <span className="ops-topbar-divider hidden lg:block" aria-hidden="true" />
               <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
                 <Dialog.Trigger asChild>
                   <Button variant="secondary" size="sm" className="h-10 w-10 px-0 lg:hidden" aria-label="Menüyü aç">
@@ -305,7 +320,6 @@ export function AppShell({
                     <span>{activeNavigationLabel}</span>
                   </div>
                 ) : null}
-                <p className="ops-topbar-title">{headerTitle}</p>
               </div>
             </div>
 

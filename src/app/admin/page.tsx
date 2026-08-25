@@ -103,7 +103,7 @@ export default async function AdminDashboardPage() {
             <div className="grid gap-2">
               <Link
                 href="/admin/galleries"
-                className={cn(buttonVariants({ variant: "primary", size: "md" }), "w-full justify-between")}
+                className={cn(buttonVariants({ variant: "primary", size: "md" }), "ops-quick-action-primary w-full justify-between")}
               >
                 <span className="flex items-center gap-2"><Building2 size={16} aria-hidden="true" /> Galeri ekle</span>
                 <ArrowUpRight size={15} aria-hidden="true" />
