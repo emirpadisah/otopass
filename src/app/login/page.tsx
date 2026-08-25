@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { GradientMesh } from "@/components/ui/gradient-mesh";
 import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
@@ -41,12 +42,19 @@ export default function LoginPage() {
         <p className={styles.footnote}>Hesaplar sistem yöneticisi tarafından oluşturulur ve yetkinize göre yönlendirilir.</p>
       </section>
 
-      <aside className={styles.signalPanel} aria-hidden="true">
-        <div className={styles.signalFrame}>
-          <span />
-          <span />
-          <span />
-        </div>
+      <aside className={styles.meshPanel} aria-hidden="true">
+        <GradientMesh
+          className={styles.mesh}
+          colors={["#fecaca", "#ef4444", "#111827"]}
+          distortion={8}
+          swirl={0.2}
+          speed={0.8}
+          rotation={90}
+          waveAmp={0.2}
+          waveFreq={20}
+          waveSpeed={0.2}
+          grain={0.055}
+        />
       </aside>
     </main>
   );

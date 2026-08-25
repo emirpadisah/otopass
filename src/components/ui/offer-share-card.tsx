@@ -306,7 +306,9 @@ export function OfferShareCard(props: OfferShareCardProps) {
       );
 
       const { toBlob } = await import("html-to-image");
-      const exportWidth = Math.max(node.scrollWidth, OFFER_EXPORT_WIDTH);
+      // The export surface is deliberately fixed to the desktop composition.
+      // It must not inherit the narrow mobile preview geometry.
+      const exportWidth = OFFER_EXPORT_WIDTH;
       const exportHeight = node.scrollHeight;
       const blob = await toBlob(node, {
         backgroundColor: "#f7f8fa",
@@ -318,7 +320,13 @@ export function OfferShareCard(props: OfferShareCardProps) {
         // The hidden export surface is intentionally desktop-sized on every device.
         // This keeps iOS and Android downloads identical to the desktop PNG.
         pixelRatio: 1,
-        style: { width: `${exportWidth}px`, minWidth: `${exportWidth}px` },
+        skipAutoScale: true,
+        style: {
+          width: `${exportWidth}px`,
+          minWidth: `${exportWidth}px`,
+          maxWidth: "none",
+          transform: "none",
+        },
       });
       if (!blob) throw new Error("PNG blob could not be created");
 

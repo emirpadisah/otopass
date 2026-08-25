@@ -180,71 +180,42 @@
   text-align: center;
 }
 
-.signalPanel {
+.meshPanel {
   position: relative;
   display: none;
   min-width: 0;
   min-height: 100svh;
   overflow: hidden;
   border-left: 1px solid #242426;
+  background: #0b0b0c;
+}
+
+.mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    #101011;
-  background-size: 48px 48px;
+    radial-gradient(circle at 78% 20%, #fecaca, transparent 32%),
+    radial-gradient(circle at 22% 74%, #ef4444, transparent 38%),
+    #111827;
 }
 
-.signalPanel::before {
+.mesh :global(canvas) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.meshPanel::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent 36%, rgba(255, 255, 255, 0.06) 50%, transparent 64%);
-  animation: scan 8s linear infinite;
-}
-
-.signalFrame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  width: min(68%, 430px);
-  aspect-ratio: 1;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  transform: translate(-50%, -50%) rotate(-8deg);
-}
-
-.signalFrame::before,
-.signalFrame::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.44);
-}
-
-.signalFrame::after {
-  inset: 12%;
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-.signalFrame span {
-  align-self: center;
-  height: 76%;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 72%);
-}
-
-.signalFrame span:nth-child(2) {
-  height: 46%;
-}
-
-.signalFrame span:nth-child(3) {
-  height: 64%;
-}
-
-@keyframes scan {
-  from { transform: translateX(-40%); }
-  to { transform: translateX(40%); }
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 16%),
+    linear-gradient(180deg, transparent 72%, rgba(0, 0, 0, 0.14));
 }
 
 @media (min-width: 768px) {
@@ -262,7 +233,7 @@
     padding: 34px 44px;
   }
 
-  .signalPanel {
+  .meshPanel {
     display: block;
   }
 
@@ -295,7 +266,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .signalPanel::before {
+  .mesh :global(canvas) {
     animation: none;
   }
 }

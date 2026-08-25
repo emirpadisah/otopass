@@ -9,14 +9,16 @@ import {
   History,
   LayoutDashboard,
   LogOut,
+  Menu,
   Settings,
   Store,
   Users,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { DEALER_LOGO_UPDATED_EVENT } from "@/lib/dealer-branding";
 import { Button } from "./button";
@@ -98,6 +100,7 @@ function ShellNav({
   footerNote,
   logoutAction,
   onNavigate,
+  onCloseMobileMenu,
 }: {
   brandLogoSrc?: string | null;
   title: string;
@@ -107,9 +110,16 @@ function ShellNav({
   footerNote?: string;
   logoutAction: AppShellProps["logoutAction"];
   onNavigate?: () => void;
+  onCloseMobileMenu?: () => void;
 }) {
   return (
     <div className="flex h-full flex-col">
+      <div className="ops-mobile-menu-heading">
+        <span>Menü</span>
+        <button type="button" className="ops-mobile-menu-close" onClick={onCloseMobileMenu} aria-label="Menüyü kapat" title="Menüyü kapat">
+          <X size={20} strokeWidth={1.8} aria-hidden="true" />
+        </button>
+      </div>
       <div className="ops-workspace-card" data-custom-logo={brandLogoSrc ? "true" : "false"}>
         {brandLogoSrc ? (
           <span className="ops-workspace-logo" role="img" aria-label={`${title} logosu`}>
@@ -191,6 +201,9 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileNavigationRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setActiveBrandLogoSrc(brandLogoSrc);
@@ -206,6 +219,60 @@ export function AppShell({
     return () => window.removeEventListener(DEALER_LOGO_UPDATED_EVENT, handleDealerLogoUpdated);
   }, []);
 
+  useEffect(() => {
+    setMobileNavigationOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavigationOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const mobileNavigation = mobileNavigationRef.current;
+    const focusableSelector = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
+    document.body.style.overflow = "hidden";
+
+    function getFocusableElements() {
+      return Array.from(mobileNavigation?.querySelectorAll<HTMLElement>(focusableSelector) ?? [])
+        .filter((element) => !element.hasAttribute("disabled"));
+    }
+
+    function closeWithFocus() {
+      setMobileNavigationOpen(false);
+      requestAnimationFrame(() => mobileNavigationTriggerRef.current?.focus());
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeWithFocus();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements.at(-1);
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement?.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+
+    const focusTimer = requestAnimationFrame(() => getFocusableElements()[0]?.focus());
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      cancelAnimationFrame(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [mobileNavigationOpen]);
+
   const activeNavigationItem = navItems.find((item) => isItemActive(pathname, item.href));
   const activeNavigationLabel = activeNavigationItem?.label ?? headerTitle;
 
@@ -213,7 +280,13 @@ export function AppShell({
     <div className="ops-shell">
       <div className="ops-shell-grid" aria-hidden="true" />
       <div className="ops-layout">
-        <aside className="ops-sidebar ui-scrollbar" aria-label={`${sidebarTitle} navigasyonu`}>
+        <aside
+          ref={mobileNavigationRef}
+          id="ops-mobile-navigation"
+          className="ops-sidebar ui-scrollbar"
+          aria-label={`${sidebarTitle} navigasyonu`}
+          data-mobile-open={mobileNavigationOpen || undefined}
+        >
           <ShellNav
             brandLogoSrc={activeBrandLogoSrc}
             title={sidebarTitle}
@@ -222,12 +295,26 @@ export function AppShell({
             pathname={pathname}
             footerNote={footerNote}
             logoutAction={logoutAction}
+            onNavigate={() => setMobileNavigationOpen(false)}
+            onCloseMobileMenu={() => setMobileNavigationOpen(false)}
           />
         </aside>
 
         <div className="min-w-0 flex-1">
           <header className="ops-topbar" aria-label={headerSubtitle}>
             <div className="flex min-w-0 items-center gap-3">
+              <button
+                ref={mobileNavigationTriggerRef}
+                type="button"
+                className="ops-mobile-nav-trigger"
+                aria-expanded={mobileNavigationOpen}
+                aria-controls="ops-mobile-navigation"
+                aria-label={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
+                title={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
+                onClick={() => setMobileNavigationOpen((open) => !open)}
+              >
+                <Menu size={21} strokeWidth={1.8} aria-hidden="true" />
+              </button>
               <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
               <div className="hidden min-w-0 lg:block">
                 {brandLabel ? (

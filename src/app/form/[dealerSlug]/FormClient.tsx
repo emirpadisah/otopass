@@ -222,6 +222,33 @@ export function FormClient({
     return response.json() as Promise<{ ok?: boolean; referenceCode?: string; error?: string }>;
   }
 
+  async function uploadWithServerFallback({
+    sessionId,
+    finalizeToken,
+    path,
+    file,
+  }: {
+    sessionId: string;
+    finalizeToken: string;
+    path: string;
+    file: File;
+  }) {
+    const uploadData = new FormData();
+    uploadData.set("sessionId", sessionId);
+    uploadData.set("finalizeToken", finalizeToken);
+    uploadData.set("path", path);
+    uploadData.set("file", file, file.name);
+
+    const response = await fetch("/api/public/applications/upload", {
+      method: "POST",
+      body: uploadData,
+    });
+    const result = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) {
+      throw new Error(result.error || "Fotoğraf yüklenemedi. İnternet bağlantınızı kontrol edip yeniden deneyin.");
+    }
+  }
+
   async function submitSupabase(formData: FormData, compressed: File[]) {
     const initiate = await fetch("/api/public/applications/initiate", {
       method: "POST",
@@ -239,13 +266,36 @@ export function FormClient({
       throw new Error("Fotoğraf yükleme oturumu doğrulanamadı. Lütfen fotoğrafları yeniden seçin.");
     }
 
-    const supabase = getSupabaseBrowserClient();
+    let supabase: ReturnType<typeof getSupabaseBrowserClient> | null = null;
+    try {
+      supabase = getSupabaseBrowserClient();
+    } catch {
+      // The signed-upload fallback below does not rely on public Supabase environment values.
+    }
+
     for (const [index, upload] of initiated.uploads.entries()) {
-      const { error } = await supabase.storage.from("applications").uploadToSignedUrl(upload.path, upload.token, compressed[index], {
-        contentType: compressed[index].type,
-        upsert: false,
-      });
-      if (error) throw new Error("Fotoğraf yüklenemedi. İnternet bağlantınızı kontrol edip yeniden deneyin.");
+      let uploaded = false;
+      if (supabase) {
+        try {
+          const { error } = await supabase.storage.from("applications").uploadToSignedUrl(upload.path, upload.token, compressed[index], {
+            contentType: compressed[index].type,
+            upsert: false,
+          });
+          uploaded = !error;
+        } catch {
+          uploaded = false;
+        }
+      }
+
+      if (!uploaded) {
+        await uploadWithServerFallback({
+          sessionId: initiated.sessionId,
+          finalizeToken: initiated.finalizeToken,
+          path: upload.path,
+          file: compressed[index],
+        });
+      }
+
       setState({ tone: "working", message: `Fotoğraflar yükleniyor (${index + 1}/${compressed.length})`, progress: 25 + Math.round(((index + 1) / Math.max(compressed.length, 1)) * 65) });
     }
 
