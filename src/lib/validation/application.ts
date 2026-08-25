@@ -10,7 +10,7 @@ import {
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
 export const MAX_FILES = 10;
-export const PRIVACY_NOTICE_VERSION = "2026-08-17";
+export const PRIVACY_NOTICE_VERSION = "2026-08-25";
 
 export type PhotoDescriptor = {
   name: string;
@@ -101,7 +101,7 @@ export function validatePhotoDescriptors(input: unknown): PhotoDescriptor[] {
     name: z.string().trim().min(1).max(180),
     contentType: z.enum(ACCEPTED_IMAGE_TYPES),
     size: z.number().int().positive().max(MAX_FILE_SIZE),
-  })).max(MAX_FILES).safeParse(input);
+  })).min(1, "En az bir araç fotoğrafı zorunludur.").max(MAX_FILES).safeParse(input);
   if (!result.success) throw new Error(result.error.issues[0]?.message ?? "Fotoğraf listesi geçersiz.");
   return result.data;
 }

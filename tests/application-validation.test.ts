@@ -62,6 +62,7 @@ describe("application validation", () => {
   });
 
   it("validates upload descriptors", () => {
+    expect(() => validatePhotoDescriptors([])).toThrow();
     expect(() =>
       validatePhotoDescriptors([{ name: "arac.webp", contentType: "image/webp", size: 1024 }]),
     ).not.toThrow();

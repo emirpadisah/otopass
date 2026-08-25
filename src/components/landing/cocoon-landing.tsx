@@ -26,6 +26,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { VehicleConditionMap } from "@/components/ui/vehicle-condition-map";
+import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
 import styles from "./cocoon-landing.module.css";
 
 const contactPhone = "+90 553 684 58 21";
@@ -80,6 +82,13 @@ const sharedPlanFeatures = [
   "Galeriye özel marka görünümü",
 ];
 
+const landingInspectionCondition: VehicleBodyCondition = {
+  hood: "local_paint",
+  left_front_door: "painted",
+  right_rear_fender: "replaced",
+  trunk: "painted",
+};
+
 function ProductActivityCard() {
   return (
     <div className={styles.productCard} aria-label="Son başvurular önizlemesi">
@@ -106,23 +115,14 @@ function ProductActivityCard() {
 }
 
 function InspectionCard() {
-  const parts = ["#f5a524", "#e8ebef", "#2f7bd5", "#ef4050", "#e8ebef", "#2f7bd5", "#e8ebef"];
   return (
-    <div className={styles.productCard} aria-label="Ekspertiz özeti önizlemesi">
+    <div className={`${styles.productCard} ${styles.inspectionProductCard}`} aria-label="Ekspertiz özeti önizlemesi">
       <div className={styles.productCardHeader}>
         <span>Kaporta durumu</span>
         <small className={styles.healthy}>13 parça</small>
       </div>
       <div className={styles.inspectionPreview}>
-        <div className={styles.carMap} aria-hidden="true">
-          {parts.map((color, index) => <span key={index} style={{ backgroundColor: color }} />)}
-        </div>
-        <div className={styles.inspectionStats}>
-          <strong>Ekspertiz özeti</strong>
-          <p><span data-tone="local" />Lokal boyalı <b>1</b></p>
-          <p><span data-tone="painted" />Boyalı <b>2</b></p>
-          <p><span data-tone="changed" />Değişen <b>1</b></p>
-        </div>
+        <VehicleConditionMap value={landingInspectionCondition} readOnly compact captureMode />
       </div>
     </div>
   );

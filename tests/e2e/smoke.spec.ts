@@ -29,10 +29,30 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByRole("group", { name: "Parçaya uygulanacak durum" }).getByText("Boyalı", { exact: true }).click();
   await page.getByRole("button", { name: /Kaput, mevcut durum Orijinal/ }).click();
   await expect(page.getByRole("button", { name: /Kaput, mevcut durum Boyalı/ })).toBeVisible();
+  await page.locator("#photos").setInputFiles({
+    name: "arac.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAFAAH/e+m+7wAAAABJRU5ErkJggg==", "base64"),
+  });
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
   await page.getByRole("button", { name: "Başvuruyu gönder" }).click();
 
   await expect(page.getByRole("status")).toContainText("Başvuru referansı", { timeout: 15_000 });
+});
+
+test("public application requires at least one vehicle photo", async ({ page }) => {
+  await page.goto("/form/test-galeri");
+  await page.getByLabel(/Ad soyad/).fill("Fotoğraf Kontrolü");
+  await page.getByLabel(/Telefon numarası/).fill("05551234567");
+  await page.getByRole("button", { name: "Devam et" }).click();
+
+  await page.getByLabel("Marka").fill("Volkswagen");
+  await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
+  await page.getByRole("button", { name: "Devam et" }).click();
+  await page.getByLabel(/KVKK aydınlatma metnini/).check();
+  await page.getByRole("button", { name: "Başvuruyu gönder" }).click();
+
+  await expect(page.locator(".status-alert[role='alert']")).toContainText("en az bir araç fotoğrafı");
 });
 
 test("landing pricing and contact form prepare a WhatsApp inquiry", async ({ page }) => {

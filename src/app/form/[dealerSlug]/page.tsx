@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { BadgeCheck, Camera, Check, ClipboardCheck, Clock3, Mail, MessageCircle, PhoneCall, ShieldCheck, UserRound } from "lucide-react";
+import { BadgeCheck, Check, Clock3, Mail, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
 import { DealerLogo } from "@/components/dealer-logo";
 import { SocialLinkIcon } from "@/components/social-link-icon";
 import { ThemeToggle } from "@/components/ui";
@@ -11,28 +11,11 @@ import { getWhatsAppUrl } from "@/lib/phone";
 import { getDealerSocialLinks, getSocialLinkLabel } from "@/lib/social-links";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 import { FormClient } from "./FormClient";
+import styles from "./form.module.css";
 
 type PageProps = {
   params: Promise<{ dealerSlug: string }>;
 };
-
-const points = [
-  {
-    title: "Bilgileri paylaşın",
-    description: "İletişim, araç ve kondisyon bilgilerini üç kısa adımda tamamlayın.",
-    icon: ClipboardCheck,
-  },
-  {
-    title: "Fotoğrafları ekleyin",
-    description: "Net fotoğraflar daha hızlı ve isabetli bir ön değerlendirme sağlar.",
-    icon: Camera,
-  },
-  {
-    title: "Geri dönüş alın",
-    description: "Galeri ekibi inceleme sonrasında sizinle doğrudan iletişim kurar.",
-    icon: PhoneCall,
-  },
-];
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { dealerSlug } = await params;
@@ -77,7 +60,7 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
   );
 
   return (
-    <div className="intake-page">
+    <div className={`${styles.page} intake-page`}>
       <header className="intake-topbar">
         <div className="intake-shell intake-topbar-inner">
           <DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} priority />
@@ -85,19 +68,22 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
             <span>Araç ön değerlendirme</span>
             <strong>{dealer.name}</strong>
           </div>
-          <ThemeToggle compact className="ml-auto shrink-0" />
+          <div className="intake-topbar-actions">
+            <span>Başvuru alanı</span>
+            <ThemeToggle compact />
+          </div>
         </div>
       </header>
 
       <section className="intake-shell intake-intro" aria-labelledby="intake-page-title">
         <div className="intake-intro-copy">
-          <p className="section-label">{dealer.name} araç başvurusu</p>
-          <h1 id="intake-page-title">Aracınızı üç kısa adımda ön değerlendirmeye gönderin</h1>
-          <p>Araç ve iletişim bilgilerinizi paylaşın; {dealer.name} ekibi başvurunuzu inceledikten sonra sizinle iletişime geçsin.</p>
+          <p className="intake-eyebrow"><BadgeCheck size={15} aria-hidden="true" /> {dealer.name} için araç başvurusu</p>
+          <h1 id="intake-page-title">Aracınızı değerlendirmeye gönderin.</h1>
+          <p>Araç ve iletişim bilgilerinizi paylaşın. {dealer.name} ekibi inceleme sonrasında sizinle doğrudan iletişime geçer.</p>
         </div>
         <ul className="intake-trust-list" aria-label="Başvuru avantajları">
-          <li><Check size={14} aria-hidden="true" /> Bağlayıcı olmayan ön değerlendirme</li>
-          <li><ShieldCheck size={14} aria-hidden="true" /> Güvenli veri aktarımı</li>
+          <li><Check size={14} aria-hidden="true" /> 3 kısa adım</li>
+          <li><ShieldCheck size={14} aria-hidden="true" /> Güvenli bağlantı</li>
           <li><BadgeCheck size={14} aria-hidden="true" /> Doğrudan galeriye iletim</li>
         </ul>
       </section>
@@ -106,11 +92,11 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
         <main className="intake-form-panel panel">
           <header className="intake-heading">
             <div>
-              <p className="section-label">Araç başvuru formu</p>
-              <h2>Başvurunuzu oluşturun</h2>
-              <p>Her adımda ön değerlendirme için gerekli bilgileri paylaşın.</p>
+              <p className="intake-heading-eyebrow">Başvuru kaydı</p>
+              <h2>Başvuru bilgileri</h2>
+              <p>Ön değerlendirme için gerekli bilgileri üç adımda tamamlayın.</p>
             </div>
-            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> 3 kısa adım</span>
+            <span className="intake-time"><Clock3 size={15} aria-hidden="true" /> Yaklaşık 3 dk.</span>
           </header>
 
           <FormClient
@@ -123,25 +109,18 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
 
         <aside className="intake-aside glass-highlight">
           <header>
-            <span className="intake-aside-kicker"><BadgeCheck size={15} aria-hidden="true" /> Başvurunun gönderileceği galeri</span>
+            <span className="intake-aside-kicker"><BadgeCheck size={15} aria-hidden="true" /> Galeri bilgileri</span>
             <h2>{dealer.name}</h2>
             <p>Gönderdiğiniz bilgiler doğrudan bu galerinin yetkili ekibine iletilir.</p>
           </header>
 
           <div className="intake-response-time"><Clock3 size={16} aria-hidden="true" /><span><small>Süreç</small><strong>İnceleme sonrası geri dönüş</strong></span></div>
 
-          <ol className="intake-process">
-            {points.map(({ title, description, icon: Icon }, index) => (
-              <li key={title}>
-                <span className="intake-process-icon"><Icon size={16} aria-hidden="true" /></span>
-                <div>
-                  <small>0{index + 1}</small>
-                  <strong>{title}</strong>
-                  <p>{description}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <section className="intake-aside-flow" aria-label="Başvuru akışı">
+            <span>Başvuru akışı</span>
+            <strong>Bilgileriniz inceleme kuyruğuna kaydedilir.</strong>
+            <p>Teklif veya ek bilgi ihtiyacı olduğunda galeri ekibi paylaştığınız numaradan size ulaşır.</p>
+          </section>
 
           {hasContactInfo ? (
             <section className="intake-contact-card" aria-labelledby="dealer-contact-title">

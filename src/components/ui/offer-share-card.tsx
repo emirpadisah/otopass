@@ -177,6 +177,9 @@ type PreparedOfferVisual = {
 
 type ShareAttempt = "shared" | "cancelled" | "retry" | "unsupported" | "failed" | "opened";
 
+const OFFER_EXPORT_WIDTH = 1200;
+const OFFER_EXPORT_SCALE = 2;
+
 function canShareFile(file: File) {
   if (typeof navigator.share !== "function" || typeof navigator.canShare !== "function") {
     return false;
@@ -303,10 +306,19 @@ export function OfferShareCard(props: OfferShareCardProps) {
       );
 
       const { toBlob } = await import("html-to-image");
+      const exportWidth = Math.max(node.scrollWidth, OFFER_EXPORT_WIDTH);
+      const exportHeight = node.scrollHeight;
       const blob = await toBlob(node, {
         backgroundColor: "#f7f8fa",
         cacheBust: true,
-        pixelRatio: platform === "other" ? 2 : 1.5,
+        width: exportWidth,
+        height: exportHeight,
+        canvasWidth: exportWidth * OFFER_EXPORT_SCALE,
+        canvasHeight: exportHeight * OFFER_EXPORT_SCALE,
+        // The hidden export surface is intentionally desktop-sized on every device.
+        // This keeps iOS and Android downloads identical to the desktop PNG.
+        pixelRatio: 1,
+        style: { width: `${exportWidth}px`, minWidth: `${exportWidth}px` },
       });
       if (!blob) throw new Error("PNG blob could not be created");
 

@@ -1,6 +1,5 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
@@ -10,13 +9,9 @@ import {
   History,
   LayoutDashboard,
   LogOut,
-  Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
   Settings,
   Store,
   Users,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -82,43 +77,15 @@ function NavLink({
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
+      aria-label={label}
+      title={label}
       className="ops-nav-link"
       data-active={active ? "true" : "false"}
     >
-      <span className="ops-nav-icon">{Icon ? <Icon size={17} strokeWidth={1.8} aria-hidden="true" /> : null}</span>
+      <span className="ops-nav-icon">{Icon ? <Icon size={20} strokeWidth={1.8} aria-hidden="true" /> : null}</span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
       <ChevronRight className="ops-nav-arrow" size={14} aria-hidden="true" />
     </Link>
-  );
-}
-
-function Brand({
-  compact = false,
-  logoSrc,
-  title,
-}: {
-  compact?: boolean;
-  logoSrc?: string | null;
-  title: string;
-}) {
-  return (
-    <div className="ops-brand" data-custom-logo={logoSrc ? "true" : "false"}>
-      {logoSrc ? (
-        <span className="ops-brand-dealer-logo" role="img" aria-label={`${title} logosu`}>
-          <Image
-            src={logoSrc}
-            alt=""
-            fill
-            sizes={compact ? "104px" : "196px"}
-            loading="eager"
-            fetchPriority="high"
-            unoptimized
-          />
-        </span>
-      ) : (
-        <BrandLogo className="ops-brand-logo" size={compact ? "compact" : "navigation"} preload />
-      )}
-    </div>
   );
 }
 
@@ -223,8 +190,6 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
 
   useEffect(() => {
@@ -247,8 +212,8 @@ export function AppShell({
   return (
     <div className="ops-shell">
       <div className="ops-shell-grid" aria-hidden="true" />
-      <div className="ops-layout" data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}>
-        <aside className="ops-sidebar ui-scrollbar">
+      <div className="ops-layout">
+        <aside className="ops-sidebar ui-scrollbar" aria-label={`${sidebarTitle} navigasyonu`}>
           <ShellNav
             brandLogoSrc={activeBrandLogoSrc}
             title={sidebarTitle}
@@ -261,57 +226,9 @@ export function AppShell({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="ops-topbar">
+          <header className="ops-topbar" aria-label={headerSubtitle}>
             <div className="flex min-w-0 items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ops-sidebar-toggle hidden h-9 w-9 px-0 lg:inline-flex"
-                type="button"
-                onClick={() => setSidebarCollapsed((value) => !value)}
-                aria-label={sidebarCollapsed ? "Yan menüyü aç" : "Yan menüyü daralt"}
-                title={sidebarCollapsed ? "Yan menüyü aç" : "Yan menüyü daralt"}
-              >
-                {sidebarCollapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}
-              </Button>
-              <span className="ops-topbar-divider hidden lg:block" aria-hidden="true" />
-              <Dialog.Root open={mobileOpen} onOpenChange={setMobileOpen}>
-                <Dialog.Trigger asChild>
-                  <Button variant="secondary" size="sm" className="h-10 w-10 px-0 lg:hidden" aria-label="Menüyü aç">
-                    <Menu size={18} aria-hidden="true" />
-                  </Button>
-                </Dialog.Trigger>
-                <Dialog.Portal>
-                  <Dialog.Overlay className="ops-drawer-overlay" />
-                  <Dialog.Content className="ops-drawer-content" aria-describedby={undefined}>
-                    <div className="mb-5 flex items-center justify-between gap-3">
-                      <Dialog.Title className="sr-only">{sidebarTitle} menüsü</Dialog.Title>
-                      <span className="ops-nav-label">Menü</span>
-                      <Dialog.Close asChild>
-                        <Button variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Menüyü kapat">
-                          <X size={18} aria-hidden="true" />
-                        </Button>
-                      </Dialog.Close>
-                    </div>
-                    <div className="ops-drawer-nav">
-                      <ShellNav
-                        brandLogoSrc={activeBrandLogoSrc}
-                        title={sidebarTitle}
-                        subtitle={sidebarSubtitle}
-                        navItems={navItems}
-                        pathname={pathname}
-                        footerNote={footerNote}
-                        logoutAction={logoutAction}
-                        onNavigate={() => setMobileOpen(false)}
-                      />
-                    </div>
-                  </Dialog.Content>
-                </Dialog.Portal>
-              </Dialog.Root>
-
-              <div className="lg:hidden">
-                <Brand compact logoSrc={activeBrandLogoSrc} title={sidebarTitle} />
-              </div>
+              <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
               <div className="hidden min-w-0 lg:block">
                 {brandLabel ? (
                   <div className="ops-topbar-breadcrumb">
@@ -323,16 +240,6 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <p className="ops-topbar-subtitle hidden xl:block">{headerSubtitle}</p>
-              <span className="ops-topbar-divider hidden sm:block" aria-hidden="true" />
-              <ThemeToggle compact />
-              <form action={logoutAction} className="hidden sm:block lg:hidden">
-                <Button type="submit" variant="secondary" size="sm" className="h-10 w-10 px-0" aria-label="Çıkış yap" title="Çıkış yap">
-                  <LogOut size={16} aria-hidden="true" />
-                </Button>
-              </form>
-            </div>
           </header>
 
           <main className="ops-content">{children}</main>

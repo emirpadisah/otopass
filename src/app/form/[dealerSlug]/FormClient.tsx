@@ -41,6 +41,7 @@ type InitiateResponse = {
 
 const fuelOptions = ["Benzin", "Dizel", "LPG", "Hibrit", "Elektrik"];
 const transmissionOptions = ["Manuel", "Otomatik", "Yarı Otomatik"];
+const MIN_PHOTOS = 1;
 const formSteps = [
   { label: "İletişim", shortDescription: "İletişim bilgileriniz", icon: ContactRound },
   { label: "Araç", shortDescription: "Araç özellikleri", icon: CarFront },
@@ -234,6 +235,9 @@ export function FormClient({
     });
     const initiated = (await initiate.json()) as InitiateResponse;
     if (!initiate.ok) throw new Error(initiated.error || "Başvuru başlatılamadı.");
+    if (compressed.length < MIN_PHOTOS || initiated.uploads.length !== compressed.length) {
+      throw new Error("Fotoğraf yükleme oturumu doğrulanamadı. Lütfen fotoğrafları yeniden seçin.");
+    }
 
     const supabase = getSupabaseBrowserClient();
     for (const [index, upload] of initiated.uploads.entries()) {
@@ -259,6 +263,13 @@ export function FormClient({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state.tone === "working") return;
+    if (photos.length < MIN_PHOTOS) {
+      setFurthestStep((current) => Math.max(current, 2));
+      setCurrentStep(2);
+      setState({ tone: "danger", message: "Başvuruyu göndermek için en az bir araç fotoğrafı ekleyin.", progress: 0 });
+      window.requestAnimationFrame(() => document.getElementById("photos")?.focus());
+      return;
+    }
     if (!localMode && turnstileSiteKey && !captchaToken) {
       setState({ tone: "danger", message: "Lütfen güvenlik doğrulamasını tamamlayın.", progress: 0 });
       return;
@@ -271,6 +282,9 @@ export function FormClient({
       const compressed = photos.length
         ? await compressPhotos(photos, (progress) => setState({ tone: "working", message: "Fotoğraflar hazırlanıyor...", progress }))
         : [];
+      if (compressed.length < MIN_PHOTOS || compressed.length !== photos.length) {
+        throw new Error("Fotoğraflar hazırlanamadı. Lütfen fotoğrafları yeniden seçin.");
+      }
       setState({ tone: "working", message: "Güvenli yükleme başlatılıyor...", progress: 25 });
       const result = localMode ? await submitLocal(formData, compressed) : await submitSupabase(formData, compressed);
       if (!result.ok) throw new Error(result.error || "Başvuru gönderilemedi.");
@@ -354,7 +368,7 @@ export function FormClient({
             <div className="intake-step-track" aria-hidden="true"><span style={{ width: `${(currentStep / (formSteps.length - 1)) * 100}%` }} /></div>
           </nav>
 
-          <div className="intake-step-stage">
+          <div className="intake-step-stage" data-step={currentStep} aria-live="polite">
             <section className="intake-section" hidden={currentStep !== 0}>
               <FormSectionHeader
                 step={1}
@@ -411,7 +425,7 @@ export function FormClient({
               <FormSectionHeader
                 step={3}
                 title="Araç kondisyonunu paylaşın"
-                description="Kaporta durumu, hasar notları ve net fotoğraflar başvurunun daha hızlı incelenmesine yardımcı olur."
+                description="Kaporta durumu, hasar notları ve en az bir net araç fotoğrafı başvurunun daha hızlı incelenmesine yardımcı olur."
                 icon={Wrench}
                 headingRef={(element) => { stepHeadingRefs.current[2] = element; }}
               />
@@ -444,10 +458,10 @@ export function FormClient({
                     <span className="intake-upload-icon"><UploadCloud size={24} aria-hidden="true" /></span>
                     <span className="intake-upload-copy">
                       <strong id="photos-title">Araç fotoğraflarını buraya bırakın</strong>
-                      <small id="photo-format">JPG, PNG veya WebP · en fazla {MAX_FILES} fotoğraf · dosya başına 10 MB</small>
+                      <small id="photo-format">JPG, PNG veya WebP · en az {MIN_PHOTOS}, en fazla {MAX_FILES} fotoğraf · dosya başına 10 MB</small>
                     </span>
                     <span className="intake-upload-action"><ImagePlus size={15} aria-hidden="true" /> Fotoğraf seç</span>
-                    <input id="photos" type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" aria-describedby="photo-format" onChange={(event) => { selectPhotos(event.target.files); event.target.value = ""; }} />
+                    <input id="photos" type="file" multiple accept="image/jpeg,image/png,image/webp" className="sr-only" aria-describedby="photo-format" aria-required="true" onChange={(event) => { selectPhotos(event.target.files); event.target.value = ""; }} />
                   </label>
                   <div className="intake-photo-meter" aria-label={`${photos.length}/${MAX_FILES} fotoğraf seçildi`}>
                     <span style={{ width: `${(photos.length / MAX_FILES) * 100}%` }} />

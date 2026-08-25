@@ -44,7 +44,7 @@ export default async function DealerProfilePage() {
                 <p className="mono mt-2 break-all text-sm text-[var(--ops-text)]">{dealer ? `/form/${dealer.slug}` : "-"}</p>
               </div>
               {dealer ? (
-                <Link href={`/form/${dealer.slug}`} className={cn(buttonVariants({ variant: "primary", size: "md" }), "inline-flex shrink-0")}>
+                <Link href={`/form/${dealer.slug}`} className={cn(buttonVariants({ variant: "primary", size: "md" }), "dealer-open-form-button inline-flex shrink-0")}>
                   Formu aç <ExternalLink size={14} aria-hidden="true" />
                 </Link>
               ) : null}

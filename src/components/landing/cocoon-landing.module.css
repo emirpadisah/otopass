@@ -340,26 +340,39 @@
 .activityIcon[data-tone="offer"]::after { background: #fbbf24; }
 .activityIcon[data-tone="contact"]::after { background: #f87171; }
 
-.inspectionPreview { display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: 18px; }
-.carMap {
-  display: grid;
-  width: 82px;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4px;
-  justify-self: center;
+.inspectionProductCard { padding-bottom: 12px; }
+.inspectionPreview {
+  --bg: #f7f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #f2f4f7;
+  --surface-3: #e9edf2;
+  --surface-subtle: #eef1f5;
+  --text-primary: #101828;
+  --text-secondary: #344054;
+  --text-muted: #667085;
+  --border-soft: #d7dce4;
+  --border-strong: #aeb7c5;
+  --accent: #e1252b;
+  --accent-soft: #fbe7e8;
+  --focus-ring: rgba(225, 37, 43, .18);
+  position: relative;
+  height: 226px;
+  overflow: hidden;
 }
-.carMap span { height: 36px; border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px 10px 4px 10px; }
-.carMap span:nth-child(1),
-.carMap span:nth-child(4),
-.carMap span:nth-child(7) { grid-column: 1 / -1; width: 62px; height: 20px; justify-self: center; border-radius: 8px 8px 3px 3px; }
-.inspectionStats { display: grid; gap: 9px; }
-.inspectionStats > strong { margin-bottom: 2px; color: #e8e8ea; font-size: 11px; }
-.inspectionStats p { display: grid; grid-template-columns: 7px 1fr auto; gap: 6px; align-items: center; margin: 0; color: #929298; font-size: 9px; }
-.inspectionStats p > span { width: 7px; height: 7px; border-radius: 2px; }
-.inspectionStats p > span[data-tone="local"] { background: #f5a524; }
-.inspectionStats p > span[data-tone="painted"] { background: #2f7bd5; }
-.inspectionStats p > span[data-tone="changed"] { background: #ef4050; }
-.inspectionStats b { color: #e8e8ea; }
+.inspectionPreview :global(.vehicle-condition) {
+  width: 640px;
+  transform: scale(.372);
+  transform-origin: top left;
+}
+.inspectionPreview :global(.vehicle-condition-summary),
+.inspectionPreview :global(.vehicle-part-panel) { display: none; }
+.inspectionPreview :global(.vehicle-condition[data-compact="true"] .vehicle-condition-layout) { grid-template-columns: 1fr; }
+.inspectionPreview :global(.vehicle-map-panel) { border-right: 0; }
+.inspectionPreview :global(.vehicle-condition[data-compact="true"] .vehicle-map-canvas) {
+  min-height: 430px;
+  padding: 30px 18px;
+}
+.inspectionPreview :global(.vehicle-condition[data-compact="true"] .vehicle-map-svg) { width: min(100%, 410px); }
 
 .offerPreview { display: grid; gap: 9px; }
 .offerPreview > small { color: #7f7f84; font-size: 10px; }

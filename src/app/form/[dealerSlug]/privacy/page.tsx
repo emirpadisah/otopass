@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { DealerLogo } from "@/components/dealer-logo";
+import { LegalList, LegalNote, LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getDealerBySlug } from "@/lib/supabase/queries";
 
@@ -15,22 +14,54 @@ export default async function PrivacyPage({ params }: PageProps) {
   const { dealerSlug } = await params;
   const [dealer, requestHeaders] = await Promise.all([getDealerBySlug(dealerSlug), headers()]);
   if (!dealer) notFound();
+
   const controller = dealer.legal_name || dealer.name;
   const privacyEmail = dealer.privacy_contact_email || dealer.contact_email;
+  const backHref = requestHeaders.get("x-custom-domain") ? "/" : `/form/${dealerSlug}`;
 
   return (
-    <main className="legal-page">
-      <Link href={requestHeaders.get("x-custom-domain") ? "/" : `/form/${dealerSlug}`} className="legal-back"><ArrowLeft size={16} /> Başvuru formuna dön</Link>
-      <article className="panel legal-document">
-        <header><DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} /><ShieldCheck className="mt-5" size={26} aria-hidden="true" /><p className="section-label">Yürürlük tarihi: 17 Ağustos 2026</p><h1>KVKK aydınlatma metni</h1></header>
-        <p>Bu araç başvuru formu kapsamında işlenen kişisel verilerin veri sorumlusu <strong>{controller}</strong>’dır. otoköprü, başvuru sürecinin yürütüldüğü teknik altyapıyı sağlar.</p>
-        <h2>İşlenen kişisel veriler</h2><p>Ad soyad ve telefon numarası, araç özellikleri, tramer ve hasar açıklamaları, kaporta bilgileri, yüklenen fotoğraflar ile işlem güvenliği kayıtları işlenir.</p>
-        <h2>İşleme amaçları</h2><p>Veriler; araç başvurusunun alınması ve değerlendirilmesi, fiyat teklifi hazırlanması, başvuru sahibiyle iletişim kurulması, bilgi güvenliğinin sağlanması ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenir.</p>
-        <h2>Toplama yöntemi ve hukuki sebep</h2><p>Kişisel veriler bu elektronik form üzerinden otomatik yöntemle toplanır; sözleşmenin kurulmasıyla doğrudan ilgili olma, veri sorumlusunun hukuki yükümlülüğünü yerine getirmesi ve meşru menfaatleri hukuki sebeplerine dayanılarak işlenir.</p>
-        <h2>Verilerin aktarılması</h2><p>Veriler, başvurunun değerlendirilmesi ve sistemin güvenli biçimde işletilmesi amacıyla yetkili galeri personeline ve teknik hizmet sağlayıcılarına; yasal zorunluluk halinde yetkili kamu kurumlarına aktarılabilir.</p>
-        <h2>Saklama süresi</h2><p>Son işlemden sonra 365 gün saklanan başvuru arşivlenir; takip eden 30 gün içinde fotoğraflar silinir ve kişisel veriler anonimleştirilir.</p>
-        <h2>Haklarınız ve başvuru</h2><p>6698 sayılı Kanun’un 11. maddesi kapsamındaki haklarınıza ilişkin taleplerinizi {privacyEmail ? <><a href={`mailto:${privacyEmail}`}>{privacyEmail}</a> adresine iletebilirsiniz.</> : <>veri sorumlusunun kayıtlı iletişim kanalları üzerinden iletebilirsiniz.</>}</p>
-      </article>
-    </main>
+    <LegalPage
+      kicker="6698 sayılı Kanun"
+      title="KVKK aydınlatma metni"
+      description={`Bu metin, ${dealer.name} araç başvuru formu üzerinden işlenen kişisel veriler hakkında sizi bilgilendirmek için hazırlanmıştır.`}
+      effectiveDate="25 Ağustos 2026"
+      backHref={backHref}
+      backLabel="Başvuru formuna dön"
+      brand={<DealerLogo dealerName={dealer.name} logoSrc={getDealerLogoSrc(dealer)} priority />}
+    >
+      <LegalSection title="Veri sorumlusu ve iletişim">
+        <p>Bu form kapsamında işlenen kişisel verilerin veri sorumlusu <strong>{controller}</strong>’dır. otoköprü, başvuru sürecinin yürütüldüğü teknik altyapıyı sağlar.</p>
+        <p>{privacyEmail ? <>Kişisel verilerinizle ilgili taleplerinizi <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a> adresine iletebilirsiniz.</> : <>Kişisel verilerinizle ilgili taleplerinizi veri sorumlusunun kayıtlı iletişim kanalları üzerinden iletebilirsiniz.</>}</p>
+      </LegalSection>
+
+      <LegalSection title="İşlenen kişisel veriler">
+        <LegalList>
+          <li>Ad soyad ve telefon numarası.</li>
+          <li>Araç marka/modeli, teknik özellikleri, tramer ve hasar beyanları.</li>
+          <li>Kaporta parça durumları, yüklenen araç fotoğrafları ve başvuru işlem kayıtları.</li>
+        </LegalList>
+      </LegalSection>
+
+      <LegalSection title="İşleme amaçları">
+        <p>Veriler; araç başvurusunun alınması ve değerlendirilmesi, ön değerlendirme teklifi hazırlanması, başvuru sahibiyle iletişim kurulması, bilgi güvenliğinin sağlanması ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla işlenir.</p>
+      </LegalSection>
+
+      <LegalSection title="Toplama yöntemi ve hukuki sebep">
+        <p>Kişisel veriler elektronik başvuru formu üzerinden otomatik yöntemle toplanır. Başvurunun değerlendirilmesi bakımından sözleşmenin kurulması veya ifasıyla doğrudan ilgili olma, veri sorumlusunun hukuki yükümlülüğü ve temel haklara zarar vermemek kaydıyla meşru menfaati hukuki sebeplerine dayanılabilir.</p>
+      </LegalSection>
+
+      <LegalSection title="Aktarım yapılan taraflar">
+        <p>Veriler; başvurunun değerlendirilmesi için yetkili galeri personeline, sistemin güvenli biçimde işletilmesi için teknik hizmet sağlayıcılarına ve yasal zorunluluk halinde yetkili kamu kurumlarına, amaçla sınırlı olarak aktarılabilir.</p>
+      </LegalSection>
+
+      <LegalSection title="Saklama süresi">
+        <p>Başvuru, son işlemden sonra en fazla 365 gün aktif saklama süresinde tutulur ve ardından arşivlenir. Arşivden sonraki 30 gün içinde fotoğraflar silinir; iletişim ve hasar bilgileri anonimleştirilir. Yasal yükümlülük veya bir hakkın korunması daha uzun saklamayı gerektirirse süre uzatılabilir.</p>
+      </LegalSection>
+
+      <LegalSection title="Haklarınız">
+        <p>Kanun’un 11. maddesi uyarınca verileriniz hakkında bilgi talep etme, düzeltme, silme veya yok etme talebinde bulunma, aktarılan kişileri öğrenme, otomatik sistemlerle aleyhinize sonuç doğmasına itiraz etme ve zararınızın giderilmesini isteme haklarına sahipsiniz.</p>
+        <LegalNote>Bu metni okuduğunuza ilişkin form onayı, pazarlama iletisi izni veya açık rıza yerine geçmez; size yalnızca işleme hakkında bilgi verilmesini sağlar.</LegalNote>
+      </LegalSection>
+    </LegalPage>
   );
 }

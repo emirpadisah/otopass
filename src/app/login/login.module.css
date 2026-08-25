@@ -3,7 +3,8 @@
   min-height: 100svh;
   grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
-  background: var(--surface-solid);
+  background: #0b0b0c;
+  color: #f5f5f5;
 }
 
 .content {
@@ -13,7 +14,7 @@
   min-width: 0;
   min-height: 100svh;
   flex-direction: column;
-  background: var(--surface-solid);
+  background: #0b0b0c;
   padding: 22px;
 }
 
@@ -39,10 +40,26 @@
 
 .brandLink :global(.brand-lockup) {
   width: 112px;
+  color: #f5f5f5;
 }
 
 .brandLink :global(.brand-lockup-mark) {
   width: 66px;
+}
+
+.brandLink :global(.brand-lockup-image) {
+  filter: brightness(0) invert(1);
+}
+
+.toolbar :global(button) {
+  border-color: #303033;
+  background: #171719;
+  color: #f5f5f5;
+}
+
+.toolbar :global(button:hover) {
+  border-color: #59595d;
+  background: #222225;
 }
 
 .formViewport {
@@ -68,18 +85,18 @@
   min-height: 28px;
   align-items: center;
   gap: 7px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid #323236;
   border-radius: 999px;
-  background: var(--surface-2);
+  background: #161618;
   padding: 5px 10px;
-  color: var(--text-secondary);
+  color: #d4d4d8;
   font-size: 11px;
   font-weight: 700;
 }
 
 .title {
   margin-top: 18px;
-  color: var(--text-primary);
+  color: #fafafa;
   font-size: 28px;
   line-height: 1.2;
   font-weight: 760;
@@ -88,7 +105,7 @@
 .description {
   max-width: 340px;
   margin-top: 8px;
-  color: var(--text-muted);
+  color: #a1a1aa;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -105,35 +122,38 @@
 }
 
 .field :global(label) {
-  color: var(--text-secondary);
+  color: #d4d4d8;
   font-size: 13px;
   font-weight: 650;
 }
 
 .form :global(.input-base) {
   min-height: 46px;
-  border-color: var(--border-soft);
+  border-color: #353538;
   border-radius: 8px;
-  background: var(--surface-solid);
+  background: #111113;
   padding-inline: 13px;
-  color: var(--text-primary);
+  color: #fafafa;
   font-size: 14px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
 .form :global(.input-base:hover:not(:disabled)) {
-  border-color: var(--border-strong);
+  border-color: #5a5a60;
 }
 
 .form :global(.input-base:focus) {
-  border-color: var(--text-primary);
-  background: var(--surface-solid);
-  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: #fafafa;
+  background: #151517;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14);
 }
 
 .form :global(.status-alert) {
+  border-color: #4b4b50;
+  background: #171719;
+  color: #e4e4e7;
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.5;
@@ -142,51 +162,89 @@
 .submit {
   min-height: 46px;
   margin-top: 2px;
+  border-color: #fafafa !important;
   border-radius: 8px;
+  background: #fafafa !important;
+  color: #0b0b0c !important;
   box-shadow: none;
 }
 
+.submit:hover:not(:disabled) {
+  background: #d4d4d8 !important;
+}
+
 .footnote {
-  color: var(--text-muted);
+  color: #8d8d93;
   font-size: 11px;
   line-height: 1.5;
   text-align: center;
 }
 
-.meshPanel {
+.signalPanel {
   position: relative;
   display: none;
   min-width: 0;
   min-height: 100svh;
   overflow: hidden;
-  border-left: 1px solid var(--border-soft);
-  background: #111827;
-}
-
-.mesh {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
+  border-left: 1px solid #242426;
   background:
-    radial-gradient(circle at 78% 20%, #fecaca, transparent 32%),
-    radial-gradient(circle at 22% 74%, #ef4444, transparent 38%),
-    #111827;
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    #101011;
+  background-size: 48px 48px;
 }
 
-.mesh :global(canvas) {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.meshPanel::after {
+.signalPanel::before {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 16%),
-    linear-gradient(180deg, transparent 72%, rgba(0, 0, 0, 0.14));
+  background: linear-gradient(135deg, transparent 36%, rgba(255, 255, 255, 0.06) 50%, transparent 64%);
+  animation: scan 8s linear infinite;
+}
+
+.signalFrame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(68%, 430px);
+  aspect-ratio: 1;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  transform: translate(-50%, -50%) rotate(-8deg);
+}
+
+.signalFrame::before,
+.signalFrame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+}
+
+.signalFrame::after {
+  inset: 12%;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.signalFrame span {
+  align-self: center;
+  height: 76%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 72%);
+}
+
+.signalFrame span:nth-child(2) {
+  height: 46%;
+}
+
+.signalFrame span:nth-child(3) {
+  height: 64%;
+}
+
+@keyframes scan {
+  from { transform: translateX(-40%); }
+  to { transform: translateX(40%); }
 }
 
 @media (min-width: 768px) {
@@ -204,7 +262,7 @@
     padding: 34px 44px;
   }
 
-  .meshPanel {
+  .signalPanel {
     display: block;
   }
 
@@ -237,7 +295,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mesh :global(canvas) {
+  .signalPanel::before {
     animation: none;
   }
 }

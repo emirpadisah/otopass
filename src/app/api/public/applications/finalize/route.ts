@@ -56,7 +56,7 @@ async function readStoredSignature(path: string): Promise<Uint8Array> {
 }
 
 async function verifyStoredFiles(items: StoredItem[]): Promise<boolean> {
-  if (items.length === 0) return true;
+  if (items.length === 0) return false;
   if (items.length > MAX_FILES) return false;
   const supabase = createSupabaseServiceClient();
   const folder = items[0].path.split("/").slice(0, -1).join("/");
