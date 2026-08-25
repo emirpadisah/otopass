@@ -141,16 +141,22 @@ function ShellNav({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <Brand logoSrc={brandLogoSrc} title={title} />
-
-      <div className="ops-workspace-card">
+      <div className="ops-workspace-card" data-custom-logo={brandLogoSrc ? "true" : "false"}>
         {brandLogoSrc ? (
           <span className="ops-workspace-logo" role="img" aria-label={`${title} logosu`}>
-            <Image src={brandLogoSrc} alt="" fill sizes="42px" unoptimized />
+            <Image
+              src={brandLogoSrc}
+              alt=""
+              fill
+              sizes="42px"
+              loading="eager"
+              fetchPriority="high"
+              unoptimized
+            />
           </span>
         ) : (
-          <span className="ops-workspace-logo ops-workspace-logo-fallback" aria-hidden="true">
-            <Store size={18} strokeWidth={1.8} />
+          <span className="ops-workspace-logo ops-workspace-logo-fallback">
+            <BrandLogo size="compact" preload />
           </span>
         )}
         <div className="min-w-0">
@@ -232,6 +238,9 @@ export function AppShell({
     return () => window.removeEventListener(DEALER_LOGO_UPDATED_EVENT, handleDealerLogoUpdated);
   }, []);
 
+  const activeNavigationItem = navItems.find((item) => isItemActive(pathname, item.href));
+  const activeNavigationLabel = activeNavigationItem?.label ?? headerTitle;
+
   return (
     <div className="ops-shell">
       <div className="ops-shell-grid" aria-hidden="true" />
@@ -290,18 +299,18 @@ export function AppShell({
               </div>
               <div className="hidden min-w-0 lg:block">
                 {brandLabel ? (
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase text-[var(--ops-muted)]">
+                  <div className="ops-topbar-breadcrumb">
                     <span>{brandLabel}</span>
                     <ChevronRight size={12} aria-hidden="true" />
-                    <span>{sidebarTitle}</span>
+                    <span>{activeNavigationLabel}</span>
                   </div>
                 ) : null}
-                <p className={brandLabel ? "mt-1 truncate text-sm font-bold text-[var(--ops-text)]" : "truncate text-sm font-bold text-[var(--ops-text)]"}>{headerTitle}</p>
+                <p className="ops-topbar-title">{headerTitle}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <p className="hidden max-w-md truncate text-xs text-[var(--ops-muted)] xl:block">{headerSubtitle}</p>
+              <p className="ops-topbar-subtitle hidden xl:block">{headerSubtitle}</p>
               <span className="ops-topbar-divider hidden sm:block" aria-hidden="true" />
               <ThemeToggle compact />
               <form action={logoutAction} className="hidden sm:block lg:hidden">

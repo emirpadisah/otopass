@@ -1,7 +1,8 @@
 ﻿import type { Metadata } from "next";
-import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { JetBrains_Mono, Onest, Plus_Jakarta_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
+import "./orbyn-panels.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { getPublicSiteOrigin } from "@/lib/site-url";
 
@@ -13,6 +14,12 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const onest = Onest({
+  variable: "--font-onest",
   subsets: ["latin"],
   display: "swap",
 });
@@ -54,7 +61,7 @@ export default async function RootLayout({
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body className={`${plusJakarta.variable} ${jetBrainsMono.variable} antialiased`}>
+      <body className={`${plusJakarta.variable} ${jetBrainsMono.variable} ${onest.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

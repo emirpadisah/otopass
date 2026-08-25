@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button, Field, Input } from "@/components/ui";
 import Link from "next/link";
 import { login } from "./actions";
+import styles from "./login.module.css";
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -13,7 +14,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
     <Button
       type="submit"
       size="lg"
-      className="mt-2 w-full justify-center"
+      className={`${styles.submit} w-full justify-center`}
       disabled={disabled || pending}
     >
       {pending ? "Giriş yapılıyor..." : "Giriş yap"}
@@ -25,30 +26,34 @@ export function LoginForm({ disabled = false }: { disabled?: boolean }) {
   const [state, formAction] = useActionState(login, { error: null as string | null });
 
   return (
-    <form className="space-y-4" action={formAction}>
-      <Field label="E-posta" labelFor="email">
+    <form className={styles.form} action={formAction}>
+      <Field label="E-posta" labelFor="email" className={styles.field}>
         <Input
           id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
+          placeholder="ornek@firma.com"
           disabled={disabled}
         />
       </Field>
 
-      <Field label="Şifre" labelFor="password">
+      <Field className={styles.field}>
+        <div className={styles.labelRow}>
+          <label htmlFor="password" className={styles.label}>Şifre</label>
+          {!disabled ? <Link href="/login/forgot-password" className={styles.forgotLink}>Şifremi unuttum</Link> : null}
+        </div>
         <Input
           id="password"
           name="password"
           type="password"
           required
           autoComplete="current-password"
+          placeholder="Şifrenizi girin"
           disabled={disabled}
         />
       </Field>
-
-      {!disabled ? <div className="text-right"><Link href="/login/forgot-password" className="text-xs font-bold text-[var(--accent)] hover:underline">Şifremi unuttum</Link></div> : null}
 
       {disabled ? (
         <div className="status-alert" role="status">
