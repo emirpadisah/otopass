@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { GradientMesh } from "@/components/ui/gradient-mesh";
-import { ThemeToggle } from "@/components/ui";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
+import { LoginThemeToggle } from "./LoginThemeToggle";
 import styles from "./login.module.css";
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default function LoginPage() {
           <Link href="/" className={styles.brandLink} aria-label="OtoKöprü ana sayfasına dön">
             <BrandLogo size="compact" preload />
           </Link>
-          <ThemeToggle compact />
+          <LoginThemeToggle />
         </header>
 
         <div className={styles.formViewport}>
