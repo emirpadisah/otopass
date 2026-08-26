@@ -89,15 +89,28 @@ function OfferSheet({
       <header className="offer-sheet-header">
         <div className="offer-sheet-brand">
           {dealerLogoUrl ? (
-            <Image
-              src={dealerLogoUrl}
-              alt={`${dealerName} logosu`}
-              width={1548}
-              height={654}
-              sizes={exportMode ? "310px" : "(max-width: 640px) 170px, 250px"}
-              unoptimized
-              priority={exportMode}
-            />
+            exportMode ? (
+              // Export modunda off-screen capture için next/Image yerine düz img kullan
+              <img
+                src={dealerLogoUrl}
+                alt={`${dealerName} logosu`}
+                width={310}
+                height={131}
+                style={{ width: "310px", height: "auto", flex: "none" }}
+                loading="eager"
+                decoding="sync"
+              />
+            ) : (
+              <Image
+                src={dealerLogoUrl}
+                alt={`${dealerName} logosu`}
+                width={1548}
+                height={654}
+                sizes="(max-width: 640px) 170px, 250px"
+                unoptimized
+                priority={false}
+              />
+            )
           ) : (
             <span className="offer-sheet-brand-placeholder" role="img" aria-label={`${dealerName} logo alanı`}>
               <Store size={exportMode ? 38 : 25} strokeWidth={1.6} aria-hidden="true" />
