@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
-import { GradientMesh } from "@/components/ui/gradient-mesh";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import { LoginForm } from "./LoginForm";
+import { LoginGradientMesh } from "./LoginGradientMesh";
 import { LoginThemeToggle } from "./LoginThemeToggle";
 import styles from "./login.module.css";
 
@@ -43,17 +43,8 @@ export default function LoginPage() {
       </section>
 
       <aside className={styles.meshPanel} aria-hidden="true">
-        <GradientMesh
+        <LoginGradientMesh
           className={styles.mesh}
-          colors={["#fecaca", "#ef4444", "#111827"]}
-          distortion={8}
-          swirl={0.2}
-          speed={0.8}
-          rotation={90}
-          waveAmp={0.2}
-          waveFreq={20}
-          waveSpeed={0.2}
-          grain={0.055}
         />
       </aside>
     </main>

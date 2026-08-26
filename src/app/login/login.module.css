@@ -1,10 +1,78 @@
 .page {
+  --login-bg: #0b0b0c;
+  --login-text: #f5f5f5;
+  --login-border: #303033;
+  --login-border-hover: #59595d;
+  --login-surface: #171719;
+  --login-surface-hover: #222225;
+  --login-logo-filter: brightness(0) invert(1);
+  --login-badge-border: #323236;
+  --login-badge-bg: #161618;
+  --login-badge-text: #d4d4d8;
+  --login-title: #fafafa;
+  --login-muted: #a1a1aa;
+  --login-label: #d4d4d8;
+  --login-input-border: #353538;
+  --login-input-bg: #111113;
+  --login-input-text: #fafafa;
+  --login-input-hover: #5a5a60;
+  --login-input-focus-bg: #151517;
+  --login-input-focus-border: #fafafa;
+  --login-input-focus-ring: rgba(255, 255, 255, 0.14);
+  --login-status-border: #4b4b50;
+  --login-status-bg: #171719;
+  --login-status-text: #e4e4e7;
+  --login-submit-bg: #fafafa;
+  --login-submit-text: #0b0b0c;
+  --login-submit-hover: #d4d4d8;
+  --login-footnote: #8d8d93;
+  --login-mesh-border: #242426;
+  --login-mesh-bg: #0b0b0c;
+  --login-mesh-a: #fecaca;
+  --login-mesh-b: #ef4444;
+  --login-mesh-c: #111827;
+
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
-  background: #0b0b0c;
-  color: #f5f5f5;
+  background: var(--login-bg);
+  color: var(--login-text);
+}
+
+:global(html.theme-light) .page {
+  --login-bg: #f7f7f8;
+  --login-text: #18181b;
+  --login-border: #d4d4d8;
+  --login-border-hover: #a1a1aa;
+  --login-surface: #ffffff;
+  --login-surface-hover: #f4f4f5;
+  --login-logo-filter: none;
+  --login-badge-border: #e4e4e7;
+  --login-badge-bg: #ffffff;
+  --login-badge-text: #52525b;
+  --login-title: #18181b;
+  --login-muted: #52525b;
+  --login-label: #3f3f46;
+  --login-input-border: #d4d4d8;
+  --login-input-bg: #ffffff;
+  --login-input-text: #18181b;
+  --login-input-hover: #a1a1aa;
+  --login-input-focus-bg: #ffffff;
+  --login-input-focus-border: #18181b;
+  --login-input-focus-ring: rgba(24, 24, 27, 0.12);
+  --login-status-border: #d4d4d8;
+  --login-status-bg: #ffffff;
+  --login-status-text: #3f3f46;
+  --login-submit-bg: #18181b;
+  --login-submit-text: #ffffff;
+  --login-submit-hover: #27272a;
+  --login-footnote: #71717a;
+  --login-mesh-border: #e4e4e7;
+  --login-mesh-bg: #f4f4f5;
+  --login-mesh-a: #fff1f2;
+  --login-mesh-b: #fb7185;
+  --login-mesh-c: #e2e8f0;
 }
 
 .content {
@@ -14,7 +82,7 @@
   min-width: 0;
   min-height: 100svh;
   flex-direction: column;
-  background: #0b0b0c;
+  background: var(--login-bg);
   padding: 22px;
 }
 
@@ -40,7 +108,7 @@
 
 .brandLink :global(.brand-lockup) {
   width: 112px;
-  color: #f5f5f5;
+  color: var(--login-text);
 }
 
 .brandLink :global(.brand-lockup-mark) {
@@ -48,18 +116,18 @@
 }
 
 .brandLink :global(.brand-lockup-image) {
-  filter: brightness(0) invert(1);
+  filter: var(--login-logo-filter);
 }
 
 .toolbar :global(button) {
-  border-color: #303033;
-  background: #171719;
-  color: #f5f5f5;
+  border-color: var(--login-border);
+  background: var(--login-surface);
+  color: var(--login-text);
 }
 
 .toolbar :global(button:hover) {
-  border-color: #59595d;
-  background: #222225;
+  border-color: var(--login-border-hover);
+  background: var(--login-surface-hover);
 }
 
 .formViewport {
@@ -85,18 +153,18 @@
   min-height: 28px;
   align-items: center;
   gap: 7px;
-  border: 1px solid #323236;
+  border: 1px solid var(--login-badge-border);
   border-radius: 999px;
-  background: #161618;
+  background: var(--login-badge-bg);
   padding: 5px 10px;
-  color: #d4d4d8;
+  color: var(--login-badge-text);
   font-size: 11px;
   font-weight: 700;
 }
 
 .title {
   margin-top: 18px;
-  color: #fafafa;
+  color: var(--login-title);
   font-size: 28px;
   line-height: 1.2;
   font-weight: 760;
@@ -105,7 +173,7 @@
 .description {
   max-width: 340px;
   margin-top: 8px;
-  color: #a1a1aa;
+  color: var(--login-muted);
   font-size: 14px;
   line-height: 1.55;
 }
@@ -122,18 +190,18 @@
 }
 
 .field :global(label) {
-  color: #d4d4d8;
+  color: var(--login-label);
   font-size: 13px;
   font-weight: 650;
 }
 
 .form :global(.input-base) {
   min-height: 46px;
-  border-color: #353538;
+  border-color: var(--login-input-border);
   border-radius: 8px;
-  background: #111113;
+  background: var(--login-input-bg);
   padding-inline: 13px;
-  color: #fafafa;
+  color: var(--login-input-text);
   font-size: 14px;
   box-shadow: none;
   backdrop-filter: none;
@@ -141,19 +209,19 @@
 }
 
 .form :global(.input-base:hover:not(:disabled)) {
-  border-color: #5a5a60;
+  border-color: var(--login-input-hover);
 }
 
 .form :global(.input-base:focus) {
-  border-color: #fafafa;
-  background: #151517;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14);
+  border-color: var(--login-input-focus-border);
+  background: var(--login-input-focus-bg);
+  box-shadow: 0 0 0 3px var(--login-input-focus-ring);
 }
 
 .form :global(.status-alert) {
-  border-color: #4b4b50;
-  background: #171719;
-  color: #e4e4e7;
+  border-color: var(--login-status-border);
+  background: var(--login-status-bg);
+  color: var(--login-status-text);
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.5;
@@ -162,19 +230,19 @@
 .submit {
   min-height: 46px;
   margin-top: 2px;
-  border-color: #fafafa !important;
+  border-color: var(--login-submit-bg) !important;
   border-radius: 8px;
-  background: #fafafa !important;
-  color: #0b0b0c !important;
+  background: var(--login-submit-bg) !important;
+  color: var(--login-submit-text) !important;
   box-shadow: none;
 }
 
 .submit:hover:not(:disabled) {
-  background: #d4d4d8 !important;
+  background: var(--login-submit-hover) !important;
 }
 
 .footnote {
-  color: #8d8d93;
+  color: var(--login-footnote);
   font-size: 11px;
   line-height: 1.5;
   text-align: center;
@@ -186,8 +254,8 @@
   min-width: 0;
   min-height: 100svh;
   overflow: hidden;
-  border-left: 1px solid #242426;
-  background: #0b0b0c;
+  border-left: 1px solid var(--login-mesh-border);
+  background: var(--login-mesh-bg);
 }
 
 .mesh {
@@ -195,9 +263,9 @@
   inset: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 78% 20%, #fecaca, transparent 32%),
-    radial-gradient(circle at 22% 74%, #ef4444, transparent 38%),
-    #111827;
+    radial-gradient(circle at 78% 20%, var(--login-mesh-a), transparent 32%),
+    radial-gradient(circle at 22% 74%, var(--login-mesh-b), transparent 38%),
+    var(--login-mesh-c);
 }
 
 .mesh :global(canvas) {
@@ -216,6 +284,12 @@
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 16%),
     linear-gradient(180deg, transparent 72%, rgba(0, 0, 0, 0.14));
+}
+
+:global(html.theme-light) .meshPanel::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.28));
 }
 
 @media (min-width: 768px) {
