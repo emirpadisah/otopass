@@ -53,8 +53,29 @@ const stepFieldIds = [
   [],
 ] as const;
 
+// iOS Safari canvas'a WebP kodlamayı desteklemez; toBlob sessizce PNG döndürür.
+// Destek yoksa JPEG'e düşerek sunucudaki içerik-imzası doğrulamasının geçmesini sağlıyoruz.
+let webpEncodingSupported: boolean | null = null;
+
+async function canEncodeWebp(): Promise<boolean> {
+  if (webpEncodingSupported !== null) return webpEncodingSupported;
+  try {
+    const probe = document.createElement("canvas");
+    probe.width = 2;
+    probe.height = 2;
+    const blob = await new Promise<Blob | null>((resolve) => probe.toBlob(resolve, "image/webp", 0.8));
+    webpEncodingSupported = blob?.type === "image/webp";
+  } catch {
+    webpEncodingSupported = false;
+  }
+  return webpEncodingSupported;
+}
+
 async function compressPhotos(photos: PhotoItem[], onProgress: (value: number) => void): Promise<File[]> {
   const { default: imageCompression } = await import("browser-image-compression");
+  const useWebp = await canEncodeWebp();
+  const fileType = useWebp ? "image/webp" : "image/jpeg";
+  const extension = useWebp ? ".webp" : ".jpg";
   const output: File[] = [];
   for (const [index, photo] of photos.entries()) {
     const compressed = await imageCompression(photo.file, {
@@ -62,10 +83,10 @@ async function compressPhotos(photos: PhotoItem[], onProgress: (value: number) =
       maxWidthOrHeight: 2200,
       useWebWorker: true,
       preserveExif: false,
-      fileType: "image/webp",
+      fileType,
       initialQuality: 0.86,
     });
-    output.push(new File([compressed], `${photo.file.name.replace(/\.[^.]+$/, "")}.webp`, { type: "image/webp" }));
+    output.push(new File([compressed], `${photo.file.name.replace(/\.[^.]+$/, "")}${extension}`, { type: fileType }));
     onProgress(Math.round(((index + 1) / Math.max(photos.length, 1)) * 25));
   }
   return output;
