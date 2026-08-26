@@ -68,11 +68,6 @@
   --login-submit-text: #ffffff;
   --login-submit-hover: #27272a;
   --login-footnote: #71717a;
-  --login-mesh-border: #e4e4e7;
-  --login-mesh-bg: #f4f4f5;
-  --login-mesh-a: #fff1f2;
-  --login-mesh-b: #fb7185;
-  --login-mesh-c: #e2e8f0;
 }
 
 .content {
@@ -284,12 +279,6 @@
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 16%),
     linear-gradient(180deg, transparent 72%, rgba(0, 0, 0, 0.14));
-}
-
-:global(html.theme-light) .meshPanel::after {
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.28));
 }
 
 @media (min-width: 768px) {
