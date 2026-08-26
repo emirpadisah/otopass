@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
+  ChevronLeft,
   ChevronRight,
   ClipboardList,
   HandCoins,
@@ -10,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PanelLeft,
   Settings,
   Store,
   Users,
@@ -202,6 +204,12 @@ export function AppShell({
   const pathname = usePathname();
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ops-sidebar-collapsed") === "true";
+    }
+    return false;
+  });
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationRef = useRef<HTMLElement>(null);
 
@@ -273,6 +281,12 @@ export function AppShell({
     };
   }, [mobileNavigationOpen]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ops-sidebar-collapsed", String(sidebarCollapsed));
+    }
+  }, [sidebarCollapsed]);
+
   const activeNavigationItem = navItems.find((item) => isItemActive(pathname, item.href));
   const activeNavigationLabel = activeNavigationItem?.label ?? headerTitle;
 
@@ -281,57 +295,69 @@ export function AppShell({
       <div className="ops-shell-grid" aria-hidden="true" />
       <div className="ops-layout">
         <aside
-          ref={mobileNavigationRef}
-          id="ops-mobile-navigation"
-          className="ops-sidebar ui-scrollbar"
-          aria-label={`${sidebarTitle} navigasyonu`}
-          data-mobile-open={mobileNavigationOpen || undefined}
-        >
-          <ShellNav
-            brandLogoSrc={activeBrandLogoSrc}
-            title={sidebarTitle}
-            subtitle={sidebarSubtitle}
-            navItems={navItems}
-            pathname={pathname}
-            footerNote={footerNote}
-            logoutAction={logoutAction}
-            onNavigate={() => setMobileNavigationOpen(false)}
-            onCloseMobileMenu={() => setMobileNavigationOpen(false)}
-          />
-        </aside>
+                  ref={mobileNavigationRef}
+                  id="ops-mobile-navigation"
+                  className="ops-sidebar ui-scrollbar"
+                  aria-label={`${sidebarTitle} navigasyonu`}
+                  data-mobile-open={mobileNavigationOpen || undefined}
+                  data-collapsed={sidebarCollapsed || undefined}
+                >
+                  <ShellNav
+                    brandLogoSrc={activeBrandLogoSrc}
+                    title={sidebarTitle}
+                    subtitle={sidebarSubtitle}
+                    navItems={navItems}
+                    pathname={pathname}
+                    footerNote={footerNote}
+                    logoutAction={logoutAction}
+                    onNavigate={() => setMobileNavigationOpen(false)}
+                    onCloseMobileMenu={() => setMobileNavigationOpen(false)}
+                  />
+                </aside>
 
-        <div className="min-w-0 flex-1">
-          <header className="ops-topbar" aria-label={headerSubtitle}>
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                ref={mobileNavigationTriggerRef}
-                type="button"
-                className="ops-mobile-nav-trigger"
-                aria-expanded={mobileNavigationOpen}
-                aria-controls="ops-mobile-navigation"
-                aria-label={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
-                title={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
-                onClick={() => setMobileNavigationOpen((open) => !open)}
-              >
-                <Menu size={21} strokeWidth={1.8} aria-hidden="true" />
-              </button>
-              <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
-              <div className="hidden min-w-0 lg:block">
-                {brandLabel ? (
-                  <div className="ops-topbar-breadcrumb">
-                    <span>{brandLabel}</span>
-                    <ChevronRight size={12} aria-hidden="true" />
-                    <span>{activeNavigationLabel}</span>
-                  </div>
-                ) : null}
+                <div className="min-w-0 flex-1">
+                  <header className="ops-topbar" aria-label={headerSubtitle}>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <button
+                        ref={mobileNavigationTriggerRef}
+                        type="button"
+                        className="ops-mobile-nav-trigger"
+                        aria-expanded={mobileNavigationOpen}
+                        aria-controls="ops-mobile-navigation"
+                        aria-label={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
+                        title={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
+                        onClick={() => setMobileNavigationOpen((open) => !open)}
+                      >
+                        <Menu size={21} strokeWidth={1.8} aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="ops-desktop-nav-trigger lg:block hidden"
+                        aria-expanded={!sidebarCollapsed}
+                        aria-controls="ops-mobile-navigation"
+                        aria-label={sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt"}
+                        title={sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt"}
+                        onClick={() => setSidebarCollapsed((c) => !c)}
+                      >
+                        {sidebarCollapsed ? <ChevronLeft size={21} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeft size={21} strokeWidth={1.8} aria-hidden="true" />}
+                      </button>
+                      <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
+                      <div className="hidden min-w-0 lg:block">
+                        {brandLabel ? (
+                          <div className="ops-topbar-breadcrumb">
+                            <span>{brandLabel}</span>
+                            <ChevronRight size={12} aria-hidden="true" />
+                            <span>{activeNavigationLabel}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                  </header>
+
+                  <main className="ops-content" data-sidebar-collapsed={sidebarCollapsed || undefined}>{children}</main>
+                </div>
               </div>
             </div>
-
-          </header>
-
-          <main className="ops-content">{children}</main>
-        </div>
-      </div>
-    </div>
-  );
+          );
 }
