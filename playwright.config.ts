@@ -1,13 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
+import { resolve } from "node:path";
 
 const port = 3100;
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Local-mode E2E tests share one persisted data file; serialize workers so
+  // concurrent authentication mutations cannot overwrite one another.
+  workers: 1,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
@@ -26,7 +30,9 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       OTOPASS_DATA_MODE: "local",
-      OTOPASS_ENABLE_LOCAL_AUTH: "false",
+      OTOPASS_ENABLE_LOCAL_AUTH: "true",
+      OTOPASS_E2E_SEED_AUTH: "true",
+      OTOPASS_LOCAL_DATA_DIR: resolve(process.cwd(), "test-results", "e2e-local-data"),
       NEXT_PUBLIC_SITE_URL: `http://127.0.0.1:${port}`,
     },
   },

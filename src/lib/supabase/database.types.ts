@@ -168,6 +168,53 @@ export type Database = {
         Args: { p_scope: string; p_key_hash: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
       };
+      consume_login_rate_limits: {
+        Args: { p_ip_hash: string; p_account_hash: string };
+        Returns: { ip_allowed: boolean; account_allowed: boolean }[];
+      };
+      get_user_access_context: {
+        Args: { p_user_id: string };
+        Returns: {
+          user_id: string;
+          is_active: boolean;
+          must_change_password: boolean;
+          roles: string[];
+          dealer_id: string | null;
+          membership_role: string | null;
+          dealer: Json | null;
+        }[];
+      };
+      get_dealer_dashboard_snapshot: {
+        Args: { p_dealer_id: string };
+        Returns: Json;
+      };
+      get_admin_dashboard_snapshot: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_dealer_application_page: {
+        Args: {
+          p_dealer_id: string;
+          p_query: string;
+          p_status: string | null;
+          p_sort: string;
+          p_offset: number;
+          p_limit: number;
+        };
+        Returns: Json;
+      };
+      admin_list_users_page: {
+        Args: { p_query: string; p_status: string | null; p_sort: string; p_offset: number; p_limit: number };
+        Returns: Json;
+      };
+      admin_get_user: {
+        Args: { p_user_id: string };
+        Returns: Json;
+      };
+      admin_list_dealers_page: {
+        Args: { p_query: string; p_status: string | null; p_sort: string; p_offset: number; p_limit: number };
+        Returns: Json;
+      };
       create_dealer_offer: {
         Args: { p_application_id: string; p_amount: number; p_currency?: string; p_notes?: string | null };
         Returns: OfferRow;

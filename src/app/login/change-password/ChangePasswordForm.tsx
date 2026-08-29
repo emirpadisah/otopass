@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button, Field, Input, ThemeToggle } from "@/components/ui";
 import { changePassword } from "../actions";
@@ -31,9 +32,9 @@ export function ChangePasswordForm() {
     <main className={styles.page}>
       <section className={styles.content}>
         <header className={styles.toolbar}>
-          <a href="/" className={styles.brandLink} aria-label="OtoKöprü ana sayfasına dön">
+          <Link href="/" className={styles.brandLink} aria-label="OtoKöprü ana sayfasına dön">
             <BrandLogo size="compact" preload />
-          </a>
+          </Link>
           <ThemeToggle />
         </header>
 

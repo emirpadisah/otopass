@@ -17,7 +17,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { parsePagination } from "@/lib/pagination";
-import { listDealers } from "@/lib/supabase/queries";
+import { listAdminDealersPage } from "@/lib/supabase/queries";
 import { DealerCreateForm } from "./DealerCreateForm";
 
 type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string; created?: string; deleted?: string; cleanup?: string };
@@ -25,14 +25,8 @@ type Params = { q?: string; status?: string; page?: string; pageSize?: string; s
 export default async function AdminGalleriesPage({ searchParams }: { searchParams: Promise<Params> }) {
   const raw = await searchParams;
   const input = parsePagination(raw);
-  const dealers = await listDealers();
-  const query = input.q.toLocaleLowerCase("tr-TR");
-  const filteredDealers = dealers
-    .filter((dealer) => !input.status || (input.status === "active" ? dealer.is_active : !dealer.is_active))
-    .filter((dealer) => !query || [dealer.name, dealer.slug, dealer.contact_email, dealer.legal_name].some((value) => value?.toLocaleLowerCase("tr-TR").includes(query)))
-    .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
-  const pageCount = Math.max(1, Math.ceil(filteredDealers.length / input.pageSize));
-  const visibleDealers = filteredDealers.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
+  const data = await listAdminDealersPage(input);
+  const visibleDealers = data.items;
   const exportQuery = new URLSearchParams(Object.entries(raw).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString();
 
   return (
@@ -42,7 +36,7 @@ export default async function AdminGalleriesPage({ searchParams }: { searchParam
         title="Galeriler"
         description="Başvuru kabul edecek galerileri oluşturun, hesap durumlarını ve paylaşım adreslerini yönetin."
         icon={Building2}
-        meta={<span className="ops-chip">{filteredDealers.length} kayıtlı galeri</span>}
+        meta={<span className="ops-chip">{data.total} kayıtlı galeri</span>}
       />
 
       {raw.created === "1" ? (
@@ -92,7 +86,7 @@ export default async function AdminGalleriesPage({ searchParams }: { searchParam
               </TableBody>
             </Table>
           </DataTable>
-          <PaginationNav pathname="/admin/galleries" page={input.page} pageCount={pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
+          <PaginationNav pathname="/admin/galleries" page={data.page} pageCount={data.pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
         </PanelSection>
 
         <aside className="order-first xl:order-last xl:sticky xl:top-[102px] xl:self-start">

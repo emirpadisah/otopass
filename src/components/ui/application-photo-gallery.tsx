@@ -29,9 +29,11 @@ export function ApplicationPhotoGallery({ photos, downloadUrls = [], vehicleLabe
     setActiveIndex((current) => (current + offset + photos.length) % photos.length);
   };
 
+  const openFullscreenViewer = () => setDialogOpen(true);
+
   const beginSwipe = (event: ReactPointerEvent<HTMLElement>) => {
     if (photos.length < 2 || (event.pointerType === "mouse" && event.button !== 0)) return;
-    if ((event.target as HTMLElement).closest(".ops-photo-nav, .ops-photo-dialog-nav")) return;
+    if ((event.target as HTMLElement).closest(".ops-photo-nav, .ops-photo-dialog-nav, .ops-photo-expand")) return;
     swipeStartRef.current = { pointerId: event.pointerId, x: event.clientX };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -43,7 +45,10 @@ export function ApplicationPhotoGallery({ photos, downloadUrls = [], vehicleLabe
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
 
     const distance = event.clientX - start.x;
-    if (Math.abs(distance) < 48) return;
+    if (Math.abs(distance) < 48) {
+      if (suppressExpand) setDialogOpen(true);
+      return;
+    }
     if (suppressExpand) {
       suppressExpandRef.current = true;
       window.setTimeout(() => { suppressExpandRef.current = false; }, 0);
@@ -68,7 +73,7 @@ export function ApplicationPhotoGallery({ photos, downloadUrls = [], vehicleLabe
             className="ops-photo-main"
             onClick={() => {
               if (suppressExpandRef.current) return;
-              setDialogOpen(true);
+              openFullscreenViewer();
             }}
             aria-label={`${getPhotoLabel(vehicleLabel, activeIndex)} büyüt`}
           >
@@ -83,9 +88,21 @@ export function ApplicationPhotoGallery({ photos, downloadUrls = [], vehicleLabe
               priority
               draggable={false}
             />
-            <span className="ops-photo-expand" aria-hidden="true">
-              <Maximize2 size={17} />
-            </span>
+          </button>
+
+          <button
+            type="button"
+            className="ops-photo-expand"
+            aria-label={`${getPhotoLabel(vehicleLabel, activeIndex)} tam ekran görüntüle`}
+            title="Tam ekran görüntüle"
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              openFullscreenViewer();
+            }}
+          >
+            <Maximize2 size={17} aria-hidden="true" />
           </button>
 
           <span className="ops-photo-counter" aria-live="polite">

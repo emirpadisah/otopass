@@ -21,39 +21,35 @@ export async function listAdminApplications(input: PaginationInput): Promise<Pag
   await requireAdminAccess();
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
-  let query = supabase.from("applications").select("id, dealer_id, reference_code, owner_name, owner_phone, brand, model, status, created_at", { count: "exact" }).not("submitted_at", "is", null);
+  let query = supabase.from("applications").select("id, dealer_id, reference_code, owner_name, owner_phone, brand, model, status, created_at, dealers!applications_dealer_id_fkey(name)", { count: "exact" }).not("submitted_at", "is", null);
   if (input.status) query = query.eq("status", input.status);
   const q = safeSearchTerm(input.q || "");
   if (q) query = query.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
   const { data, count, error } = await query.order("created_at", { ascending: input.sort === "oldest" }).range(from, from + input.pageSize - 1);
   if (error) throw error;
-  const rows = data ?? [];
-  const dealerIds = [...new Set(rows.map((row) => row.dealer_id))];
-  const { data: dealers } = dealerIds.length ? await supabase.from("dealers").select("id, name").in("id", dealerIds) : { data: [] };
-  const names = new Map((dealers ?? []).map((dealer) => [dealer.id, dealer.name]));
-  return result(rows.map((row) => ({ ...row, dealer_name: names.get(row.dealer_id) || "-" })), count, input);
+  const rows = (data ?? []) as unknown as Array<Omit<Application, "dealer_name"> & { dealers: { name: string } | null }>;
+  return result(rows.map(({ dealers, ...row }) => ({ ...row, dealer_name: dealers?.name || "-" })), count, input);
 }
 
 export async function listAdminOffers(input: PaginationInput): Promise<PaginatedResult<Offer>> {
   await requireAdminAccess();
   const supabase = createSupabaseServiceClient();
   const from = (input.page - 1) * input.pageSize;
-  let query = supabase.from("offers").select("id, application_id, dealer_id, amount, currency, status, responded_at, created_at", { count: "exact" });
+  let query = supabase.from("offers").select("id, application_id, dealer_id, amount, currency, status, responded_at, created_at, dealers!offers_dealer_id_fkey(name), applications!offers_application_id_fkey(reference_code)", { count: "exact" });
   if (input.status) query = query.eq("status", input.status);
   const q = safeSearchTerm(input.q || "");
   if (q) query = query.ilike("notes", `%${q}%`);
   const { data, count, error } = await query.order("created_at", { ascending: input.sort === "oldest" }).range(from, from + input.pageSize - 1);
   if (error) throw error;
-  const rows = data ?? [];
-  const dealerIds = [...new Set(rows.map((row) => row.dealer_id))];
-  const appIds = [...new Set(rows.map((row) => row.application_id))];
-  const [{ data: dealers }, { data: applications }] = await Promise.all([
-    dealerIds.length ? supabase.from("dealers").select("id, name").in("id", dealerIds) : Promise.resolve({ data: [] }),
-    appIds.length ? supabase.from("applications").select("id, reference_code").in("id", appIds) : Promise.resolve({ data: [] }),
-  ]);
-  const names = new Map((dealers ?? []).map((dealer) => [dealer.id, dealer.name]));
-  const refs = new Map((applications ?? []).map((application) => [application.id, application.reference_code]));
-  return result(rows.map((row) => ({ ...row, dealer_name: names.get(row.dealer_id) || "-", application_reference: refs.get(row.application_id) || null })), count, input);
+  const rows = (data ?? []) as unknown as Array<Omit<Offer, "dealer_name" | "application_reference"> & {
+    dealers: { name: string } | null;
+    applications: { reference_code: string | null } | null;
+  }>;
+  return result(rows.map(({ dealers, applications, ...row }) => ({
+    ...row,
+    dealer_name: dealers?.name || "-",
+    application_reference: applications?.reference_code ?? null,
+  })), count, input);
 }
 
 export async function listAdminActivity(input: PaginationInput): Promise<PaginatedResult<Activity>> {

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { parsePagination } from "@/lib/pagination";
-import { listDealers, listUsersForAdmin } from "@/lib/supabase/queries";
+import { listAdminUsersPage, listDealerOptionsForAdmin } from "@/lib/supabase/queries";
 import { UserCreateForm } from "./UserCreateForm";
 
 type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string; created?: string; deleted?: string };
@@ -32,15 +32,8 @@ const roleLabels: Record<string, string> = {
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<Params> }) {
   const raw = await searchParams;
   const input = parsePagination(raw);
-  const [users, dealers] = await Promise.all([listUsersForAdmin(), listDealers()]);
-  const query = input.q.toLocaleLowerCase("tr-TR");
-  const filteredUsers = users
-    .filter((user) => !input.status || (input.status === "active" ? user.is_active : !user.is_active))
-    .filter((user) => !query || [user.email, user.full_name, ...user.roles].some((value) => value?.toLocaleLowerCase("tr-TR").includes(query)))
-    .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
-  const pageCount = Math.max(1, Math.ceil(filteredUsers.length / input.pageSize));
-  const visibleUsers = filteredUsers.slice((input.page - 1) * input.pageSize, input.page * input.pageSize);
-  const passwordResetCount = filteredUsers.filter((user) => user.must_change_password).length;
+  const [data, dealers] = await Promise.all([listAdminUsersPage(input), listDealerOptionsForAdmin()]);
+  const visibleUsers = data.items;
   const exportQuery = new URLSearchParams(Object.entries(raw).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString();
 
   return (
@@ -52,8 +45,8 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         icon={UsersRound}
         meta={
           <>
-            <span className="ops-chip">{filteredUsers.length} kullanıcı</span>
-            <span className="ops-chip">{passwordResetCount} ilk giriş bekliyor</span>
+            <span className="ops-chip">{data.total} kullanıcı</span>
+            <span className="ops-chip">{data.passwordResetCount} ilk giriş bekliyor</span>
           </>
         }
       />
@@ -116,7 +109,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               </TableBody>
             </Table>
           </DataTable>
-          <PaginationNav pathname="/admin/users" page={input.page} pageCount={pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
+          <PaginationNav pathname="/admin/users" page={data.page} pageCount={data.pageCount} params={{ q: input.q, status: input.status, sort: input.sort, pageSize: String(input.pageSize) }} />
         </PanelSection>
 
         <aside className="order-first xl:order-last xl:sticky xl:top-[102px] xl:self-start">

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { requireAdminAccess } from "@/lib/auth/roles";
-import { requireUser } from "@/lib/auth/session";
 import { logout } from "@/app/login/actions";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
@@ -21,7 +20,6 @@ const navItems: AppShellNavItem[] = [
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  await requireUser();
   await requireAdminAccess();
 
   return (

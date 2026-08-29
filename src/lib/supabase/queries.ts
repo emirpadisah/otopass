@@ -1,19 +1,16 @@
 import "server-only";
 
 import { cache } from "react";
+import { getRequestAccessContext } from "@/lib/auth/access-context";
 import { requireAdminAccess } from "@/lib/auth/roles";
-import { createSupabaseServerClient } from "./server";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
 import { isLocalDataMode } from "@/lib/data-mode";
 import {
   getLocalAdminDashboardCounts,
-  getLocalCurrentUserId,
   getLocalDealerApplicationForCurrentUser,
   getLocalDealerById,
   getLocalDealerBySlug,
-  getLocalDealerForCurrentUser,
-  getLocalDealerForCurrentUserWithDetails,
   getLocalUserRoles,
   listLocalDealerApplications,
   listLocalDealerOffers,
@@ -36,12 +33,6 @@ type DealerDashboardOffer = Pick<OfferRow, "id" | "application_id" | "amount" | 
 export type DealerApplicationPage = PaginatedResult<DealerApplicationListRow> & {
   statusCounts: Record<ApplicationStatus, number>;
   latestOfferByApplication: Record<string, number>;
-};
-
-type DealerLinkRow = {
-  dealer_id: string;
-  role: string;
-  created_at: string;
 };
 
 export type ApplicationInsert = Database["public"]["Tables"]["applications"]["Insert"];
@@ -68,24 +59,8 @@ export async function getDealerById(id: string): Promise<DealerRow | null> {
 }
 
 export const getCurrentUserId = cache(async (): Promise<string | null> => {
-  if (isLocalDataMode()) return getLocalCurrentUserId();
-
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error) throw error;
-  if (!user) return null;
-
-  const service = createSupabaseServiceClient();
-  const { data: profile, error: profileError } = await service
-    .from("user_profiles")
-    .select("is_active")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (profileError || profile?.is_active !== true) return null;
-  return user.id;
+  const context = await getRequestAccessContext();
+  return context?.isActive ? context.user.id : null;
 });
 
 export async function getUserRoles(userId: string): Promise<UserRole[]> {
@@ -108,47 +83,33 @@ export async function listDealers(): Promise<DealerRow[]> {
 }
 
 export const getDealerForCurrentUser = cache(async () => {
-  if (isLocalDataMode()) return getLocalDealerForCurrentUser();
-
-  const userId = await getCurrentUserId();
-  if (!userId) return null;
-
-  const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from("dealer_users")
-    .select("dealer_id, role, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  if (error) throw error;
-
-  const row = ((data as DealerLinkRow[] | null) ?? [])[0];
-  if (!row) return null;
-
-  const { data: activeDealer } = await supabase.from("dealers").select("id").eq("id", row.dealer_id).eq("is_active", true).maybeSingle();
-  if (!activeDealer) return null;
-
-  return {
-    dealer_id: row.dealer_id,
-    role: row.role,
-  };
+  const context = await getRequestAccessContext();
+  if (!context?.isActive || !context.dealerId || !context.membershipRole) return null;
+  return { dealer_id: context.dealerId, role: context.membershipRole };
 });
 
 export async function getDealerForCurrentUserWithDetails() {
-  if (isLocalDataMode()) return getLocalDealerForCurrentUserWithDetails();
+  const context = await getRequestAccessContext();
+  return context?.isActive ? context.dealer : null;
+}
 
-  const link = await getDealerForCurrentUser();
-  if (!link?.dealer_id) return null;
+export async function listDealerOptionsForAdmin(): Promise<Array<{ id: string; name: string }>> {
+  await requireAdminAccess();
+  if (isLocalDataMode()) {
+    return (await listLocalDealers())
+      .filter((dealer) => dealer.is_active)
+      .map(({ id, name }) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "tr-TR"));
+  }
 
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("dealers")
-    .select("*")
-    .eq("id", link.dealer_id)
-    .maybeSingle();
+    .select("id, name")
+    .eq("is_active", true)
+    .order("name");
   if (error) throw error;
-  return (data as DealerRow | null) ?? null;
+  return data ?? [];
 }
 
 export async function getDealerDomainByDealerId(dealerId: string): Promise<DealerDomainRow | null | undefined> {
@@ -236,49 +197,38 @@ export async function listDealerApplicationPage(
   }
 
   const supabase = createSupabaseServiceClient();
-  let pageQuery = supabase
-    .from("applications")
-    .select("id, reference_code, owner_name, owner_phone, brand, model, model_year, km, status, created_at", { count: "exact" })
-    .eq("dealer_id", dealerId)
-    .not("submitted_at", "is", null);
-  if (activeStatus) pageQuery = pageQuery.eq("status", activeStatus);
-  if (q) pageQuery = pageQuery.or(`reference_code.ilike.%${q}%,owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%,brand.ilike.%${q}%,model.ilike.%${q}%`);
-
-  const [pageResult, ...statusResults] = await Promise.all([
-    pageQuery.order("created_at", { ascending: input.sort === "oldest" }).range(from, from + input.pageSize - 1),
-    ...APPLICATION_STATUSES.map((status) => supabase
-      .from("applications")
-      .select("*", { count: "exact", head: true })
-      .eq("dealer_id", dealerId)
-      .eq("status", status)
-      .not("submitted_at", "is", null)),
-  ]);
-  const { data, count, error } = pageResult;
-  if (error) throw error;
-
-  const items = (data ?? []) as DealerApplicationListRow[];
-  const counts = emptyStatusCounts();
-  statusResults.forEach((statusResult, index) => {
-    if (statusResult.error) throw statusResult.error;
-    counts[APPLICATION_STATUSES[index]] = statusResult.count ?? 0;
+  const { data: rpcData, error } = await supabase.rpc("get_dealer_application_page", {
+    p_dealer_id: dealerId,
+    p_query: q,
+    p_status: activeStatus,
+    p_sort: input.sort === "oldest" ? "oldest" : "newest",
+    p_offset: from,
+    p_limit: input.pageSize,
   });
-  const latestOfferByApplication: Record<string, number> = {};
-  if (items.length > 0) {
-    const { data: offers, error: offersError } = await supabase
-      .from("offers")
-      .select("application_id, amount, created_at")
-      .eq("dealer_id", dealerId)
-      .in("application_id", items.map((item) => item.id))
-      .order("created_at", { ascending: false });
-    if (offersError) throw offersError;
-    (offers ?? []).forEach((offer) => {
-      if (latestOfferByApplication[offer.application_id] === undefined) {
-        latestOfferByApplication[offer.application_id] = offer.amount;
-      }
-    });
-  }
-
-  const total = count ?? 0;
+  if (error) throw error;
+  const payload = rpcData as unknown as {
+    items?: Array<DealerApplicationListRow & { latest_offer: number | null }>;
+    total?: number;
+    statusCounts?: Partial<Record<ApplicationStatus, number>>;
+  };
+  const rpcItems = payload.items ?? [];
+  const items = rpcItems.map((item) => ({
+    id: item.id,
+    reference_code: item.reference_code,
+    owner_name: item.owner_name,
+    owner_phone: item.owner_phone,
+    brand: item.brand,
+    model: item.model,
+    model_year: item.model_year,
+    km: item.km,
+    status: item.status,
+    created_at: item.created_at,
+  }));
+  const counts = { ...emptyStatusCounts(), ...(payload.statusCounts ?? {}) };
+  const latestOfferByApplication = Object.fromEntries(
+    rpcItems.filter((item) => item.latest_offer !== null).map((item) => [item.id, Number(item.latest_offer)]),
+  );
+  const total = Number(payload.total ?? 0);
   return {
     items,
     total,
@@ -361,30 +311,30 @@ export async function getDealerDashboardData(dealerId: string): Promise<{
   }
 
   const supabase = createSupabaseServiceClient();
-  const [applicationsCount, pendingCount, offeredCount, soldCount, offersCount, recentOffers] = await Promise.all([
-    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).not("submitted_at", "is", null),
-    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "pending").not("submitted_at", "is", null),
-    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "offered").not("submitted_at", "is", null),
-    supabase.from("applications").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId).eq("status", "sold").not("submitted_at", "is", null),
-    supabase.from("offers").select("*", { count: "exact", head: true }).eq("dealer_id", dealerId),
-    supabase.from("offers").select("id, application_id, amount, created_at").eq("dealer_id", dealerId).order("created_at", { ascending: false }).limit(8),
-  ]);
-  const failedCount = [applicationsCount, pendingCount, offeredCount, soldCount, offersCount].find((result) => result.error);
-  if (failedCount?.error) throw failedCount.error;
-  if (recentOffers.error) throw recentOffers.error;
-  const applicationIds = [...new Set((recentOffers.data ?? []).map((offer) => offer.application_id))];
-  const applicationResult = applicationIds.length > 0
-    ? await supabase.from("applications").select("id, brand, model").in("id", applicationIds)
-    : { data: [], error: null };
-  if (applicationResult.error) throw applicationResult.error;
+  const { data: rpcData, error } = await supabase.rpc("get_dealer_dashboard_snapshot", { p_dealer_id: dealerId });
+  if (error) throw error;
+  const payload = rpcData as unknown as {
+    applicationCount?: number;
+    pendingCount?: number;
+    offeredCount?: number;
+    soldCount?: number;
+    offerCount?: number;
+    recentOffers?: Array<DealerDashboardOffer & { brand: string | null; model: string | null }>;
+  };
+  const recentOffers = payload.recentOffers ?? [];
   return {
-    applications: (applicationResult.data ?? []) as DealerDashboardApplication[],
-    offers: (recentOffers.data ?? []) as DealerDashboardOffer[],
-    applicationCount: applicationsCount.count ?? 0,
-    pendingCount: pendingCount.count ?? 0,
-    offeredCount: offeredCount.count ?? 0,
-    soldCount: soldCount.count ?? 0,
-    offerCount: offersCount.count ?? 0,
+    applications: recentOffers.map((offer) => ({ id: offer.application_id, brand: offer.brand ?? "", model: offer.model ?? "" })),
+    offers: recentOffers.map((offer) => ({
+      id: offer.id,
+      application_id: offer.application_id,
+      amount: offer.amount,
+      created_at: offer.created_at,
+    })),
+    applicationCount: Number(payload.applicationCount ?? 0),
+    pendingCount: Number(payload.pendingCount ?? 0),
+    offeredCount: Number(payload.offeredCount ?? 0),
+    soldCount: Number(payload.soldCount ?? 0),
+    offerCount: Number(payload.offerCount ?? 0),
   };
 }
 
@@ -458,6 +408,120 @@ export async function listUsersForAdmin() {
   }));
 }
 
+export type AdminUserListRow = {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  must_change_password: boolean;
+  is_active: boolean;
+  created_at: string;
+  roles: string[];
+  dealer_ids: string[];
+};
+
+export type AdminUserPage = PaginatedResult<AdminUserListRow> & { passwordResetCount: number };
+
+export async function getAdminUser(userId: string): Promise<AdminUserListRow | null> {
+  await requireAdminAccess();
+  if (isLocalDataMode()) {
+    return (await listLocalUsersForAdmin()).find((user) => user.user_id === userId) as AdminUserListRow | undefined ?? null;
+  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.rpc("admin_get_user", { p_user_id: userId });
+  if (error) throw error;
+  return data as unknown as AdminUserListRow | null;
+}
+
+export async function listAdminUsersPage(input: PaginationInput): Promise<AdminUserPage> {
+  await requireAdminAccess();
+  const q = safeSearchTerm(input.q || "");
+  const status = input.status === "active" || input.status === "inactive" ? input.status : null;
+  const from = (input.page - 1) * input.pageSize;
+
+  if (isLocalDataMode()) {
+    const users = await listLocalUsersForAdmin();
+    const normalizedQuery = q.toLocaleLowerCase("tr-TR");
+    const filtered = users
+      .filter((user) => !status || (status === "active" ? user.is_active : !user.is_active))
+      .filter((user) => !normalizedQuery || [user.email, user.full_name, ...user.roles]
+        .some((value) => value?.toLocaleLowerCase("tr-TR").includes(normalizedQuery)))
+      .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
+    const items = filtered.slice(from, from + input.pageSize) as AdminUserListRow[];
+    return {
+      items,
+      total: filtered.length,
+      page: input.page,
+      pageSize: input.pageSize,
+      pageCount: Math.max(1, Math.ceil(filtered.length / input.pageSize)),
+      passwordResetCount: filtered.filter((user) => user.must_change_password).length,
+    };
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data: rpcData, error } = await supabase.rpc("admin_list_users_page", {
+    p_query: q,
+    p_status: status,
+    p_sort: input.sort === "oldest" ? "oldest" : "newest",
+    p_offset: from,
+    p_limit: input.pageSize,
+  });
+  if (error) throw error;
+  const payload = rpcData as unknown as { items?: AdminUserListRow[]; total?: number; passwordResetCount?: number };
+  const total = Number(payload.total ?? 0);
+  return {
+    items: payload.items ?? [],
+    total,
+    page: input.page,
+    pageSize: input.pageSize,
+    pageCount: Math.max(1, Math.ceil(total / input.pageSize)),
+    passwordResetCount: Number(payload.passwordResetCount ?? 0),
+  };
+}
+
+export async function listAdminDealersPage(input: PaginationInput): Promise<PaginatedResult<DealerRow>> {
+  await requireAdminAccess();
+  const q = safeSearchTerm(input.q || "");
+  const status = input.status === "active" || input.status === "inactive" ? input.status : null;
+  const from = (input.page - 1) * input.pageSize;
+
+  if (isLocalDataMode()) {
+    const dealers = await listLocalDealers();
+    const normalizedQuery = q.toLocaleLowerCase("tr-TR");
+    const filtered = dealers
+      .filter((dealer) => !status || (status === "active" ? dealer.is_active : !dealer.is_active))
+      .filter((dealer) => !normalizedQuery || [dealer.name, dealer.slug, dealer.contact_email, dealer.legal_name]
+        .some((value) => value?.toLocaleLowerCase("tr-TR").includes(normalizedQuery)))
+      .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
+    const items = filtered.slice(from, from + input.pageSize);
+    return {
+      items,
+      total: filtered.length,
+      page: input.page,
+      pageSize: input.pageSize,
+      pageCount: Math.max(1, Math.ceil(filtered.length / input.pageSize)),
+    };
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data: rpcData, error } = await supabase.rpc("admin_list_dealers_page", {
+    p_query: q,
+    p_status: status,
+    p_sort: input.sort === "oldest" ? "oldest" : "newest",
+    p_offset: from,
+    p_limit: input.pageSize,
+  });
+  if (error) throw error;
+  const payload = rpcData as unknown as { items?: DealerRow[]; total?: number };
+  const total = Number(payload.total ?? 0);
+  return {
+    items: payload.items ?? [],
+    total,
+    page: input.page,
+    pageSize: input.pageSize,
+    pageCount: Math.max(1, Math.ceil(total / input.pageSize)),
+  };
+}
+
 export async function getAdminDashboardCounts(): Promise<{
   applications: number;
   dealers: number;
@@ -467,15 +531,12 @@ export async function getAdminDashboardCounts(): Promise<{
   if (isLocalDataMode()) return getLocalAdminDashboardCounts();
 
   const supabase = createSupabaseServiceClient();
-  const [{ count: applications }, { count: dealers }, { count: offers }] = await Promise.all([
-    supabase.from("applications").select("*", { count: "exact", head: true }),
-    supabase.from("dealers").select("*", { count: "exact", head: true }),
-    supabase.from("offers").select("*", { count: "exact", head: true }),
-  ]);
-
+  const { data: rpcData, error } = await supabase.rpc("get_admin_dashboard_snapshot");
+  if (error) throw error;
+  const payload = rpcData as unknown as { applications?: number; dealers?: number; offers?: number };
   return {
-    applications: applications ?? 0,
-    dealers: dealers ?? 0,
-    offers: offers ?? 0,
+    applications: Number(payload.applications ?? 0),
+    dealers: Number(payload.dealers ?? 0),
+    offers: Number(payload.offers ?? 0),
   };
 }

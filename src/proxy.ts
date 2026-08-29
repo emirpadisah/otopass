@@ -5,6 +5,29 @@ import { getPublicSiteOrigin, isPlatformHostname } from "@/lib/site-url";
 
 const domainCache = new Map<string, { slug: string | null; expiresAt: number }>();
 
+export function shouldRefreshAuthSession(pathname: string): boolean {
+  return pathname === "/admin"
+    || pathname.startsWith("/admin/")
+    || pathname === "/dealer"
+    || pathname.startsWith("/dealer/")
+    || pathname === "/login/change-password"
+    || pathname === "/login/reset-password"
+    || pathname === "/login/mfa/setup"
+    || pathname.startsWith("/api/admin/")
+    || pathname.startsWith("/api/dealer/")
+    || pathname.startsWith("/api/applications/");
+}
+
+export function createSanitizedRequestHeaders(source: Headers, nonce: string): Headers {
+  const requestHeaders = new Headers(source);
+  requestHeaders.delete("x-custom-domain");
+  requestHeaders.delete("x-custom-dealer-slug");
+  requestHeaders.delete("x-auth-user-id");
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
+  return requestHeaders;
+}
+
 function getRequestHostname(request: NextRequest): string {
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   return (forwardedHost || request.headers.get("host") || request.nextUrl.hostname)
@@ -78,11 +101,7 @@ function buildCsp(nonce: string): string {
 
 export async function proxy(request: NextRequest) {
   const nonce = randomBytes(16).toString("base64");
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.delete("x-custom-domain");
-  requestHeaders.delete("x-custom-dealer-slug");
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
+  const requestHeaders = createSanitizedRequestHeaders(request.headers, nonce);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -111,7 +130,7 @@ export async function proxy(request: NextRequest) {
     : NextResponse.next({ request: { headers: requestHeaders } });
   let response = createResponse();
 
-  if (url && anonKey) {
+  if (url && anonKey && shouldRefreshAuthSession(request.nextUrl.pathname)) {
     const supabase = createServerClient(url, anonKey, {
       cookies: {
         getAll: () => request.cookies.getAll(),

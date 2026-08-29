@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(39);
+select plan(47);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -104,6 +104,47 @@ select is_empty($$ update public.activity_log set action = 'TAMPERED' returning 
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000106', true);
 select throws_ok($$ select public.admin_update_user_access('00000000-0000-4000-8000-000000000106', 'Super', 'super_admin', null, false) $$, 'CANNOT_DEACTIVATE_SELF', 'super admin cannot deactivate the current account');
+
+set local role service_role;
+select is(
+  (select is_active from public.get_user_access_context('00000000-0000-4000-8000-000000000102')),
+  true,
+  'service role reads the active access context in one call'
+);
+select results_eq(
+  $$ select unnest(roles) from public.get_user_access_context('00000000-0000-4000-8000-000000000102') $$,
+  $$ values ('dealer_manager'::text) $$,
+  'access context includes current roles'
+);
+select is(
+  (public.get_dealer_dashboard_snapshot('00000000-0000-4000-8000-000000000201')->>'applicationCount')::integer,
+  2,
+  'dealer dashboard snapshot aggregates submitted applications'
+);
+select is(
+  (public.get_dealer_application_page('00000000-0000-4000-8000-000000000201', '', null, 'newest', 0, 25)->>'total')::integer,
+  2,
+  'dealer application page returns its filtered total'
+);
+select is(
+  (public.admin_list_users_page('', null, 'newest', 0, 25)->>'total')::integer,
+  6,
+  'admin user page is assembled in one server-only call'
+);
+select ok(
+  (select ip_allowed and account_allowed from public.consume_login_rate_limits(repeat('a', 64), repeat('b', 64))),
+  'combined login limiter consumes both buckets in one call'
+);
+select isnt(
+  has_function_privilege('authenticated', 'public.get_user_access_context(uuid)', 'EXECUTE'),
+  true,
+  'authenticated clients cannot execute the access-context RPC directly'
+);
+select isnt(
+  has_function_privilege('anon', 'public.get_dealer_dashboard_snapshot(uuid)', 'EXECUTE'),
+  true,
+  'anonymous clients cannot execute panel snapshot RPCs'
+);
 
 set local role anon;
 select results_eq(

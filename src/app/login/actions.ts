@@ -11,9 +11,11 @@ import {
 } from "@/lib/local/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { loadAccessContextForUser } from "@/lib/auth/access-context";
 import { resolvePostLoginRoute } from "@/lib/auth/roles";
+import { resolveRouteForRoles } from "@/lib/auth/route";
 import { validatePasswordPolicy } from "@/lib/validation/password";
-import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { consumeLoginRateLimits, consumeRateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
 import { getPublicSiteOrigin } from "@/lib/site-url";
 
@@ -46,11 +48,9 @@ export async function login(
 
     const ip = getClientIp(await headers());
     const normalizedEmail = email.toLowerCase();
-    const [ipAllowed, accountAllowed] = await Promise.all([
-      consumeRateLimit(ip, { scope: "login-ip", limit: 30, windowSeconds: 900 }),
-      consumeRateLimit(normalizedEmail, { scope: "login-account", limit: 8, windowSeconds: 900 }),
-    ]);
-    if (!ipAllowed || !accountAllowed) return { error: "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin." };
+    if (!(await consumeLoginRateLimits(ip, normalizedEmail))) {
+      return { error: "Çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin." };
+    }
 
     if (isLocalDataMode()) {
       if (!isLocalUserAuthEnabled()) {
@@ -77,29 +77,22 @@ export async function login(
     }
 
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("must_change_password")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (profile?.must_change_password) {
-        redirect("/login/change-password");
-      }
+    const user = signInData.user;
+    if (!user) return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
+    const access = await loadAccessContextForUser(user.id, user.email ?? null);
+    if (!access.isActive) {
+      await supabase.auth.signOut();
+      return { error: "Bu hesap aktif değil. Sistem yöneticinizle iletişime geçin." };
     }
+    if (access.mustChangePassword) redirect("/login/change-password");
 
-    const targetRoute = await resolvePostLoginRoute();
+    const targetRoute = resolveRouteForRoles(access.roles);
     if (targetRoute === "/login") {
       await supabase.auth.signOut();
       return { error: "Bu hesap için erişim yetkisi bulunmuyor. Sistem yöneticinizle iletişime geçin." };

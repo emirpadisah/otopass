@@ -194,6 +194,13 @@
 
 ## Pre-Delivery Checklist
 
+### Responsive Navigation Contract
+
+- At `1024px` and above, use one persistent, collapsible sidebar and a single `PanelLeftClose` / `PanelLeftOpen` control in the top bar.
+- In the collapsed desktop sidebar, theme and logout actions are separate, vertically stacked `40px` square icon buttons. Preserve accessible names and tooltips while hiding their visible labels.
+- Below `1024px`, do not render a permanent icon rail or a hamburger control. Show exactly one `PanelLeftOpen` trigger that opens the full-width navigation drawer.
+- A saved desktop collapsed preference must not constrain the mobile drawer: mobile navigation always shows full labels, the close control, theme action, and logout action.
+
 Before delivering any UI code, verify:
 
 - [ ] No emojis used as icons (use SVG instead)

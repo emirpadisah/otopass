@@ -5,7 +5,6 @@ import { logout } from "@/app/login/actions";
 import { requireDealerAccess } from "@/lib/auth/roles";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerForCurrentUser, getDealerForCurrentUserWithDetails } from "@/lib/supabase/queries";
-import { requireUser } from "@/lib/auth/session";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { AppShell, type AppShellNavItem } from "@/components/ui";
 
@@ -22,7 +21,6 @@ const navItems: AppShellNavItem[] = [
 ];
 
 export default async function DealerLayout({ children }: { children: ReactNode }) {
-  await requireUser();
   await requireDealerAccess();
 
   const [dealer, membership] = await Promise.all([

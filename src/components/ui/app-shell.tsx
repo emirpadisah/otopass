@@ -3,23 +3,22 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
-  ChevronLeft,
   ChevronRight,
   ClipboardList,
   HandCoins,
   History,
   LayoutDashboard,
   LogOut,
-  Menu,
-  PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Store,
   Users,
   X,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { DEALER_LOGO_UPDATED_EVENT } from "@/lib/dealer-branding";
@@ -75,11 +74,19 @@ function NavLink({
   onNavigate?: () => void;
 }) {
   const Icon = icon ? navIcons[icon] : undefined;
+  const router = useRouter();
+
+  function prefetchOnIntent() {
+    router.prefetch(href);
+  }
 
   return (
     <Link
       href={href}
+      prefetch={false}
       onClick={onNavigate}
+      onMouseEnter={prefetchOnIntent}
+      onFocus={prefetchOnIntent}
       aria-current={active ? "page" : undefined}
       aria-label={label}
       title={label}
@@ -88,9 +95,15 @@ function NavLink({
     >
       <span className="ops-nav-icon">{Icon ? <Icon size={20} strokeWidth={1.8} aria-hidden="true" /> : null}</span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
+      <NavPendingIndicator />
       <ChevronRight className="ops-nav-arrow" size={14} aria-hidden="true" />
     </Link>
   );
+}
+
+function NavPendingIndicator() {
+  const { pending } = useLinkStatus();
+  return <span className="ops-nav-pending" data-pending={pending || undefined} aria-hidden="true" />;
 }
 
 function ShellNav({
@@ -103,6 +116,7 @@ function ShellNav({
   logoutAction,
   onNavigate,
   onCloseMobileMenu,
+  compactActions = false,
 }: {
   brandLogoSrc?: string | null;
   title: string;
@@ -113,6 +127,7 @@ function ShellNav({
   logoutAction: AppShellProps["logoutAction"];
   onNavigate?: () => void;
   onCloseMobileMenu?: () => void;
+  compactActions?: boolean;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -169,9 +184,9 @@ function ShellNav({
             <span>{footerNote}</span>
           </div>
         ) : null}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <ThemeToggle className="w-full justify-start" />
-          <form action={logoutAction}>
+        <div className="ops-sidebar-actions">
+          <ThemeToggle className="ops-sidebar-theme-toggle" compact={compactActions} />
+          <form action={logoutAction} className="ops-sidebar-logout">
             <Button
               type="submit"
               variant="secondary"
@@ -204,6 +219,7 @@ export function AppShell({
   const pathname = usePathname();
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [desktopNavigation, setDesktopNavigation] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("ops-sidebar-collapsed") === "true";
@@ -230,6 +246,18 @@ export function AppShell({
   useEffect(() => {
     setMobileNavigationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const desktopMedia = window.matchMedia("(min-width: 1024px)");
+    const syncNavigationMode = () => {
+      setDesktopNavigation(desktopMedia.matches);
+      if (desktopMedia.matches) setMobileNavigationOpen(false);
+    };
+
+    syncNavigationMode();
+    desktopMedia.addEventListener("change", syncNavigationMode);
+    return () => desktopMedia.removeEventListener("change", syncNavigationMode);
+  }, []);
 
   useEffect(() => {
     if (!mobileNavigationOpen) return;
@@ -295,69 +323,61 @@ export function AppShell({
       <div className="ops-shell-grid" aria-hidden="true" />
       <div className="ops-layout">
         <aside
-                  ref={mobileNavigationRef}
-                  id="ops-mobile-navigation"
-                  className="ops-sidebar ui-scrollbar"
-                  aria-label={`${sidebarTitle} navigasyonu`}
-                  data-mobile-open={mobileNavigationOpen || undefined}
-                  data-collapsed={sidebarCollapsed || undefined}
-                >
-                  <ShellNav
-                    brandLogoSrc={activeBrandLogoSrc}
-                    title={sidebarTitle}
-                    subtitle={sidebarSubtitle}
-                    navItems={navItems}
-                    pathname={pathname}
-                    footerNote={footerNote}
-                    logoutAction={logoutAction}
-                    onNavigate={() => setMobileNavigationOpen(false)}
-                    onCloseMobileMenu={() => setMobileNavigationOpen(false)}
-                  />
-                </aside>
+          ref={mobileNavigationRef}
+          id="ops-mobile-navigation"
+          className="ops-sidebar ui-scrollbar"
+          aria-label={`${sidebarTitle} navigasyonu`}
+          data-mobile-open={mobileNavigationOpen || undefined}
+          data-collapsed={sidebarCollapsed || undefined}
+        >
+          <ShellNav
+            brandLogoSrc={activeBrandLogoSrc}
+            title={sidebarTitle}
+            subtitle={sidebarSubtitle}
+            navItems={navItems}
+            pathname={pathname}
+            footerNote={footerNote}
+            logoutAction={logoutAction}
+            onNavigate={() => setMobileNavigationOpen(false)}
+            onCloseMobileMenu={() => setMobileNavigationOpen(false)}
+            compactActions={desktopNavigation && sidebarCollapsed}
+          />
+        </aside>
 
-                <div className="min-w-0 flex-1">
-                  <header className="ops-topbar" aria-label={headerSubtitle}>
-                    <div className="flex min-w-0 items-center gap-3">
-                      <button
-                        ref={mobileNavigationTriggerRef}
-                        type="button"
-                        className="ops-mobile-nav-trigger"
-                        aria-expanded={mobileNavigationOpen}
-                        aria-controls="ops-mobile-navigation"
-                        aria-label={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
-                        title={mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç"}
-                        onClick={() => setMobileNavigationOpen((open) => !open)}
-                      >
-                        <Menu size={21} strokeWidth={1.8} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="ops-desktop-nav-trigger lg:block hidden"
-                        aria-expanded={!sidebarCollapsed}
-                        aria-controls="ops-mobile-navigation"
-                        aria-label={sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt"}
-                        title={sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt"}
-                        onClick={() => setSidebarCollapsed((c) => !c)}
-                      >
-                        {sidebarCollapsed ? <ChevronLeft size={21} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeft size={21} strokeWidth={1.8} aria-hidden="true" />}
-                      </button>
-                      <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
-                      <div className="hidden min-w-0 lg:block">
-                        {brandLabel ? (
-                          <div className="ops-topbar-breadcrumb">
-                            <span>{brandLabel}</span>
-                            <ChevronRight size={12} aria-hidden="true" />
-                            <span>{activeNavigationLabel}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-
-                  </header>
-
-                  <main className="ops-content" data-sidebar-collapsed={sidebarCollapsed || undefined}>{children}</main>
-                </div>
+        <div className="min-w-0 flex-1">
+          <header className="ops-topbar" aria-label={headerSubtitle}>
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                ref={mobileNavigationTriggerRef}
+                type="button"
+                className="ops-sidebar-nav-trigger"
+                aria-expanded={desktopNavigation ? !sidebarCollapsed : mobileNavigationOpen}
+                aria-controls="ops-mobile-navigation"
+                aria-label={desktopNavigation ? (sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt") : (mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç")}
+                title={desktopNavigation ? (sidebarCollapsed ? "Yan menüyü genişlet" : "Yan menüyü daralt") : (mobileNavigationOpen ? "Menüyü kapat" : "Menüyü aç")}
+                onClick={() => {
+                  if (desktopNavigation) setSidebarCollapsed((collapsed) => !collapsed);
+                  else setMobileNavigationOpen((open) => !open);
+                }}
+              >
+                {desktopNavigation && !sidebarCollapsed ? <PanelLeftClose size={21} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftOpen size={21} strokeWidth={1.8} aria-hidden="true" />}
+              </button>
+              <span className="ops-mobile-page-label lg:hidden">{activeNavigationLabel}</span>
+              <div className="hidden min-w-0 lg:block">
+                {brandLabel ? (
+                  <div className="ops-topbar-breadcrumb">
+                    <span>{brandLabel}</span>
+                    <ChevronRight size={12} aria-hidden="true" />
+                    <span>{activeNavigationLabel}</span>
+                  </div>
+                ) : null}
               </div>
             </div>
-          );
+          </header>
+
+          <main className="ops-content" data-sidebar-collapsed={sidebarCollapsed || undefined}>{children}</main>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -38,3 +38,22 @@ export async function consumeRateLimit(key: string, rule: RateLimitRule): Promis
   if (error) throw error;
   return data === true;
 }
+
+export async function consumeLoginRateLimits(ip: string, account: string): Promise<boolean> {
+  if (isLocalDataMode()) {
+    const [ipAllowed, accountAllowed] = await Promise.all([
+      consumeRateLimit(ip, { scope: "login-ip", limit: 30, windowSeconds: 900 }),
+      consumeRateLimit(account, { scope: "login-account", limit: 8, windowSeconds: 900 }),
+    ]);
+    return ipAllowed && accountAllowed;
+  }
+
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.rpc("consume_login_rate_limits", {
+    p_ip_hash: hashRateLimitKey(ip || "unknown"),
+    p_account_hash: hashRateLimitKey(account),
+  });
+  if (error) throw error;
+  const result = data?.[0];
+  return result?.ip_allowed === true && result.account_allowed === true;
+}

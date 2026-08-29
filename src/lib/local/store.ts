@@ -89,9 +89,52 @@ function createSeedData(): LocalData {
   const offeredApplicationId = "20000000-0000-4000-8000-000000000002";
   const soldApplicationId = "20000000-0000-4000-8000-000000000003";
 
+  const e2eUsers: LocalUserRecord[] = process.env.OTOPASS_E2E_SEED_AUTH === "true" ? [
+    {
+      id: "30000000-0000-4000-8000-000000000001",
+      email: "dealer.e2e@otokopru.local",
+      password_hash: hashLocalPassword("DealerE2e123!"),
+      full_name: "E2E Galeri Yöneticisi",
+      must_change_password: false,
+      roles: ["dealer_manager"],
+      dealer_ids: [dealerId],
+      created_at: isoOffset(-2),
+    },
+    {
+      id: "30000000-0000-4000-8000-000000000002",
+      email: "admin.e2e@otokopru.local",
+      password_hash: hashLocalPassword("AdminE2e123!"),
+      full_name: "E2E Sistem Yöneticisi",
+      must_change_password: false,
+      roles: ["super_admin"],
+      dealer_ids: [],
+      created_at: isoOffset(-2),
+    },
+    {
+      id: "30000000-0000-4000-8000-000000000003",
+      email: "dealer.mobile.e2e@otokopru.local",
+      password_hash: hashLocalPassword("DealerMobileE2e123!"),
+      full_name: "E2E Mobil Galeri Yöneticisi",
+      must_change_password: false,
+      roles: ["dealer_manager"],
+      dealer_ids: [dealerId],
+      created_at: isoOffset(-2),
+    },
+    {
+      id: "30000000-0000-4000-8000-000000000004",
+      email: "admin.mobile.e2e@otokopru.local",
+      password_hash: hashLocalPassword("AdminMobileE2e123!"),
+      full_name: "E2E Mobil Sistem Yöneticisi",
+      must_change_password: false,
+      roles: ["super_admin"],
+      dealer_ids: [],
+      created_at: isoOffset(-2),
+    },
+  ] : [];
+
   return {
     version: 2,
-    users: [],
+    users: e2eUsers,
     sessions: [],
     dealers: [
       {
