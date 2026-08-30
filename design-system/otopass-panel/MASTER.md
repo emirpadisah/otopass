@@ -201,6 +201,13 @@
 - Below `1024px`, do not render a permanent icon rail or a hamburger control. Show exactly one `PanelLeftOpen` trigger that opens the full-width navigation drawer.
 - A saved desktop collapsed preference must not constrain the mobile drawer: mobile navigation always shows full labels, the close control, theme action, and logout action.
 
+### Navigation Feedback Contract
+
+- Internal panel navigation must acknowledge a click within `100ms`. Fast transitions may complete without showing a blocking state; slower transitions show the shared loading layer.
+- The loading layer keeps the current panel visible beneath a translucent surface, uses an indeterminate progress line and spinner, and names the pending destination or action.
+- Dynamic application-detail links use the same feedback as sidebar and pagination links. Filter submissions announce that filtered records are loading.
+- Loading feedback clears when the URL commits and has a `15s` safety timeout. Reduced-motion mode removes continuous spinner and progress animations.
+
 Before delivering any UI code, verify:
 
 - [ ] No emojis used as icons (use SVG instead)

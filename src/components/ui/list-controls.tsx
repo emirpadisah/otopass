@@ -6,6 +6,7 @@ import { type FormEvent, useTransition } from "react";
 import { Download, Search } from "lucide-react";
 import { buttonVariants } from "./button";
 import { cn } from "@/lib/cn";
+import { announceNavigationStart } from "@/lib/navigation-feedback";
 
 export function ListControls({ q, status, sort = "newest", pageSize = 25, statuses = [], exportHref }: { q?: string; status?: string; sort?: string; pageSize?: number; statuses?: Array<{ value: string; label: string }>; exportHref?: string }) {
   const router = useRouter();
@@ -20,6 +21,7 @@ export function ListControls({ q, status, sort = "newest", pageSize = 25, status
       const normalized = String(value).trim();
       if (normalized) params.set(key, normalized);
     }
+    announceNavigationStart("Filtrelenen kayıtlar yükleniyor");
     startTransition(() => router.replace(params.size ? `${pathname}?${params}` : pathname));
   }
 

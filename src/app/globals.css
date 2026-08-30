@@ -499,29 +499,6 @@ html.theme-light .ops-shell {
   padding-top: 10px;
 }
 
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-actions {
-  grid-template-columns: 40px;
-  gap: 8px;
-  justify-content: center;
-  justify-items: center;
-}
-
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-theme-toggle,
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-logout,
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-logout button {
-  width: 40px;
-  min-width: 40px;
-}
-
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-theme-toggle {
-  justify-content: center;
-  padding-inline: 0;
-}
-
-.ops-sidebar[data-collapsed="true"] .ops-sidebar-theme-toggle > span {
-  display: none;
-}
-
 .ops-sidebar-nav-trigger {
   display: flex;
   align-items: center;

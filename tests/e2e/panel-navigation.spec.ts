@@ -50,6 +50,7 @@ test("dealer login and panel navigation stay client-side", async ({ page }, test
     expect(themeBox?.width).toBeCloseTo(40, 0);
     expect(logoutBox?.width).toBeCloseTo(40, 0);
     expect(themeBox?.x).toBeCloseTo(logoutBox?.x ?? 0, 0);
+    expect((logoutBox?.y ?? 0) - ((themeBox?.y ?? 0) + (themeBox?.height ?? 0))).toBeGreaterThanOrEqual(7);
 
     const screenshotPath = testInfo.outputPath("collapsed-sidebar.png");
     await page.screenshot({ path: screenshotPath });
@@ -66,6 +67,20 @@ test("dealer login and panel navigation stay client-side", async ({ page }, test
   await page.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/q=Renault/);
   await expect(page.locator(".ops-layout")).toBeVisible();
+
+  await page.route(/\/dealer\/applications\/[^?]+(?:\?.*)?$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.continue();
+  });
+  const applicationLink = page.getByRole("link", { name: /başvurusunu görüntüle/ }).first();
+  const applicationNavigation = applicationLink.click();
+  await expect(page.getByRole("status", { name: "Sayfa yükleniyor" })).toBeVisible();
+  await expect(page.getByText("Araç incelemesi açılıyor")).toBeVisible();
+  const loadingScreenshotPath = testInfo.outputPath("navigation-feedback.png");
+  await page.screenshot({ path: loadingScreenshotPath });
+  await testInfo.attach("navigation feedback", { path: loadingScreenshotPath, contentType: "image/png" });
+  await applicationNavigation;
+  await expect(page).toHaveURL(/\/dealer\/applications\/[^/?]+$/);
   expect(consoleErrors).toEqual([]);
   expect(pageErrors).toEqual([]);
   expect(failedResponses).toEqual([]);

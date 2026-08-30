@@ -125,8 +125,10 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                         <div className="inline-flex items-center gap-2">
                           <Link
                             href={`/dealer/applications/${application.id}`}
+                            prefetch={false}
                             className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "inline-flex")}
                             aria-label={`${application.brand} ${application.model} başvurusunu görüntüle`}
+                            data-navigation-label="Araç incelemesi açılıyor"
                           >
                             İncele
                             <ArrowUpRight size={14} aria-hidden="true" />

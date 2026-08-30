@@ -8,6 +8,7 @@ import {
   HandCoins,
   History,
   LayoutDashboard,
+  LoaderCircle,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -18,10 +19,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link, { useLinkStatus } from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { DEALER_LOGO_UPDATED_EVENT } from "@/lib/dealer-branding";
+import { NAVIGATION_FEEDBACK_EVENT } from "@/lib/navigation-feedback";
 import { Button } from "./button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -184,7 +186,7 @@ function ShellNav({
             <span>{footerNote}</span>
           </div>
         ) : null}
-        <div className="ops-sidebar-actions">
+        <div className="ops-sidebar-actions" data-compact={compactActions || undefined}>
           <ThemeToggle className="ops-sidebar-theme-toggle" compact={compactActions} />
           <form action={logoutAction} className="ops-sidebar-logout">
             <Button
@@ -217,9 +219,12 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const navigationLocation = `${pathname}?${searchParams.toString()}`;
   const [activeBrandLogoSrc, setActiveBrandLogoSrc] = useState(brandLogoSrc);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [desktopNavigation, setDesktopNavigation] = useState(false);
+  const [navigationFeedback, setNavigationFeedback] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("ops-sidebar-collapsed") === "true";
@@ -228,6 +233,7 @@ export function AppShell({
   });
   const mobileNavigationTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileNavigationRef = useRef<HTMLElement>(null);
+  const currentLocationRef = useRef<string | null>(null);
 
   useEffect(() => {
     setActiveBrandLogoSrc(brandLogoSrc);
@@ -246,6 +252,57 @@ export function AppShell({
   useEffect(() => {
     setMobileNavigationOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (currentLocationRef.current !== navigationLocation) {
+      currentLocationRef.current = navigationLocation;
+      setNavigationFeedback(null);
+    }
+  }, [navigationLocation]);
+
+  useEffect(() => {
+    function showNavigationFeedback(label: string) {
+      setNavigationFeedback(label || "Sayfa hazırlanıyor");
+    }
+
+    function handleNavigationRequest(event: Event) {
+      const label = (event as CustomEvent<{ label?: string }>).detail?.label;
+      showNavigationFeedback(label ?? "Sayfa hazırlanıyor");
+    }
+
+    function handleLinkClick(event: MouseEvent) {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!(event.target instanceof Element)) return;
+
+      const link = event.target.closest<HTMLAnchorElement>("a[href]");
+      if (!link || link.target === "_blank" || link.hasAttribute("download") || link.getAttribute("aria-disabled") === "true") return;
+
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin || destination.pathname.startsWith("/api/")) return;
+      const currentTarget = `${window.location.pathname}${window.location.search}`;
+      const nextTarget = `${destination.pathname}${destination.search}`;
+      if (currentTarget === nextTarget) return;
+
+      const label = link.dataset.navigationLabel
+        ?? link.getAttribute("aria-label")
+        ?? link.textContent?.trim()
+        ?? "Sayfa hazırlanıyor";
+      showNavigationFeedback(label);
+    }
+
+    window.addEventListener(NAVIGATION_FEEDBACK_EVENT, handleNavigationRequest);
+    document.addEventListener("click", handleLinkClick, true);
+    return () => {
+      window.removeEventListener(NAVIGATION_FEEDBACK_EVENT, handleNavigationRequest);
+      document.removeEventListener("click", handleLinkClick, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!navigationFeedback) return;
+    const timeout = window.setTimeout(() => setNavigationFeedback(null), 15_000);
+    return () => window.clearTimeout(timeout);
+  }, [navigationFeedback]);
 
   useEffect(() => {
     const desktopMedia = window.matchMedia("(min-width: 1024px)");
@@ -375,9 +432,23 @@ export function AppShell({
             </div>
           </header>
 
-          <main className="ops-content" data-sidebar-collapsed={sidebarCollapsed || undefined}>{children}</main>
+          <main className="ops-content" data-sidebar-collapsed={sidebarCollapsed || undefined} aria-busy={Boolean(navigationFeedback)}>
+            {children}
+          </main>
         </div>
       </div>
+      {navigationFeedback ? (
+        <div className="ops-navigation-feedback" role="status" aria-live="polite" aria-label="Sayfa yükleniyor">
+          <span className="ops-navigation-progress" aria-hidden="true" />
+          <div className="ops-navigation-feedback-card">
+            <LoaderCircle className="ops-navigation-spinner" size={24} strokeWidth={1.8} aria-hidden="true" />
+            <span>
+              <strong>Sayfa hazırlanıyor</strong>
+              <small>{navigationFeedback}</small>
+            </span>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
