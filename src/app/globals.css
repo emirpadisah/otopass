@@ -4977,6 +4977,132 @@ html.theme-dark .vc-offer-visual {
   }
 }
 
+.cookie-consent {
+  position: fixed;
+  z-index: 50;
+  right: 20px;
+  bottom: 20px;
+  left: 20px;
+  display: grid;
+  width: min(760px, calc(100vw - 40px));
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-inline: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-solid);
+  padding: 16px;
+  color: var(--text-primary);
+  box-shadow: 0 20px 54px color-mix(in srgb, var(--text-primary) 18%, transparent);
+}
+
+.cookie-consent-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.cookie-consent-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.cookie-consent-copy strong {
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.cookie-consent-copy p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.cookie-consent-copy a {
+  width: fit-content;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cookie-consent-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cookie-consent-button,
+.cookie-preferences-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 680;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.cookie-consent-button[data-variant="secondary"],
+.cookie-preferences-button {
+  background: var(--surface-1);
+  color: var(--text-secondary);
+}
+
+.cookie-consent-button[data-variant="primary"] {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.cookie-consent-button:hover,
+.cookie-preferences-button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.cookie-consent-button:focus-visible,
+.cookie-preferences-button:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 3px;
+}
+
+.cookie-preferences-button {
+  margin-top: 8px;
+}
+
+@media (max-width: 700px) {
+  .cookie-consent {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: calc(100vw - 24px);
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .cookie-consent-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Public intake redesign: staged vehicle appraisal flow */
 .intake-page {
   min-height: 100vh;

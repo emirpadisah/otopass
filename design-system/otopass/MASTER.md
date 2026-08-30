@@ -194,6 +194,13 @@
 
 ## Pre-Delivery Checklist
 
+### Measurement Consent Contract
+
+- GA4 and Google Ads tags remain unloaded until the visitor explicitly accepts measurement.
+- The consent surface uses equal-access accept and reject actions, explains both purposes in plain Turkish, and links to the privacy policy.
+- A saved choice is reusable and reversible from the privacy policy. Protected admin and dealer paths are excluded from measurement.
+- Virtual page views contain the pathname only; query parameters and protected record identifiers are not sent.
+
 Before delivering any UI code, verify:
 
 - [ ] No emojis used as icons (use SVG instead)

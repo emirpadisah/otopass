@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSanitizedRequestHeaders, shouldRefreshAuthSession } from "../src/proxy";
+import { buildCsp, createSanitizedRequestHeaders, shouldRefreshAuthSession } from "../src/proxy";
 
 describe("proxy auth refresh routing", () => {
   it.each([
@@ -36,5 +36,19 @@ describe("proxy auth refresh routing", () => {
     expect(headers.get("x-custom-dealer-slug")).toBeNull();
     expect(headers.get("x-nonce")).toBe("test-nonce");
     expect(headers.get("content-security-policy")).toContain("'nonce-test-nonce'");
+  });
+
+  it("allows Google measurement endpoints only when measurement is configured", () => {
+    const disabledCsp = buildCsp("nonce", { analyticsId: null, adsId: null });
+    expect(disabledCsp).not.toContain("googletagmanager.com");
+
+    const analyticsCsp = buildCsp("nonce", { analyticsId: "G-TEST1234", adsId: null });
+    expect(analyticsCsp).toContain("https://www.googletagmanager.com");
+    expect(analyticsCsp).toContain("https://*.google-analytics.com");
+    expect(analyticsCsp).not.toContain("https://www.googleadservices.com");
+
+    const adsCsp = buildCsp("nonce", { analyticsId: null, adsId: "AW-123456789" });
+    expect(adsCsp).toContain("https://www.googletagmanager.com");
+    expect(adsCsp).toContain("https://www.googleadservices.com");
   });
 });

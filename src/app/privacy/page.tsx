@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { CookiePreferencesButton } from "@/components/google-measurement";
 import { LegalList, LegalNote, LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { hasGoogleMeasurementIds } from "@/lib/google-measurement-config";
 
 export const metadata: Metadata = {
   title: "Gizlilik politikası | otoköprü",
@@ -7,12 +9,13 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicyPage() {
+  const googleMeasurementEnabled = hasGoogleMeasurementIds();
   return (
     <LegalPage
       kicker="Yasal bilgiler"
       title="Gizlilik politikası"
       description="otoköprü; araç başvuru ve teklif süreçlerinde işlenen bilgilerin hangi amaçlarla kullanıldığını, hangi tarafların erişebildiğini ve sistemin veriyi korumak için nasıl çalıştığını açıklar."
-      effectiveDate="25 Ağustos 2026"
+      effectiveDate="30 Ağustos 2026"
     >
       <LegalSection title="Kapsam ve roller">
         <p>Bu politika otoköprü ana sitesi, paneli ve platformun teknik bileşenleri için geçerlidir. Bir araç başvurusunda başvuruyu alan galeri, kendi ticari değerlendirmesi ve müşteri iletişimi bakımından ayrı veri sorumlusudur. Formdaki galeriye özel KVKK aydınlatma metni, o başvuru için öncelikle uygulanır.</p>
@@ -46,7 +49,9 @@ export default function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection title="Güvenlik ve tercih teknolojileri">
-        <p>Yetki kontrolleri, oturum çerezleri, erişim kısıtları, kayıt izleri ve güvenlik doğrulamaları; hizmeti korumak için kullanılır. Tema tercihi tarayıcınızda saklanabilir. Platform, pazarlama amacıyla zorunlu olmayan takip teknolojilerini bu politika ile onaylamış saymaz.</p>
+        <p>Yetki kontrolleri, oturum çerezleri, erişim kısıtları, kayıt izleri ve güvenlik doğrulamaları; hizmeti korumak için kullanılır. Tema tercihi tarayıcınızda saklanabilir.</p>
+        <p>Açık tercihinizle Google Analytics 4, site kullanımını ölçmek; Google Ads ise reklam performansını ve dönüşümleri değerlendirmek için kullanılabilir. Kabul etmediğiniz sürece Google ölçüm etiketleri yüklenmez. Panel yolları ölçüm kapsamı dışındadır ve ölçüm sayfa adreslerine sorgu parametreleri eklenmez.</p>
+        {googleMeasurementEnabled ? <CookiePreferencesButton /> : null}
       </LegalSection>
 
       <LegalSection title="İletişim">

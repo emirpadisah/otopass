@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPublicSiteOrigin, isPlatformHostname } from "@/lib/site-url";
+import { getGoogleMeasurementIds } from "@/lib/google-measurement-config";
 
 const domainCache = new Map<string, { slug: string | null; expiresAt: number }>();
 
@@ -79,17 +80,28 @@ function getRewriteUrl(request: NextRequest, slug: string | null): URL | null {
   return destination;
 }
 
-function buildCsp(nonce: string): string {
+export function buildCsp(nonce: string, googleMeasurement = getGoogleMeasurementIds()): string {
   const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : "";
   const developmentEval = process.env.NODE_ENV === "production" ? "" : "'unsafe-eval'";
+  const googleTagManagerSource = googleMeasurement.analyticsId || googleMeasurement.adsId ? "https://www.googletagmanager.com" : "";
+  const googleAnalyticsConnectSources = googleMeasurement.analyticsId
+    ? "https://*.google-analytics.com https://*.analytics.google.com"
+    : "";
+  const googleAdsScriptSources = googleMeasurement.adsId
+    ? "https://www.googleadservices.com https://www.google.com https://www.google.com.tr https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net"
+    : "";
+  const googleAdsConnectSources = googleMeasurement.adsId
+    ? "https://*.g.doubleclick.net https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://google.com https://www.google.com.tr https://google.com.tr"
+    : "";
+  const googleFrameSources = googleMeasurement.adsId ? "https://www.googletagmanager.com" : "";
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${developmentEval} https://challenges.cloudflare.com`.replace(/\s+/g, " "),
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${developmentEval} https://challenges.cloudflare.com ${googleTagManagerSource} ${googleAdsScriptSources}`.replace(/\s+/g, " "),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data: https:",
     "font-src 'self' data:",
-    `connect-src 'self' ${supabaseOrigin} https://challenges.cloudflare.com https://*.ingest.sentry.io`.trim(),
-    "frame-src https://challenges.cloudflare.com",
+    `connect-src 'self' ${supabaseOrigin} https://challenges.cloudflare.com https://*.ingest.sentry.io ${googleTagManagerSource} ${googleAnalyticsConnectSources} ${googleAdsConnectSources}`.replace(/\s+/g, " ").trim(),
+    `frame-src https://challenges.cloudflare.com ${googleFrameSources}`.trim(),
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
