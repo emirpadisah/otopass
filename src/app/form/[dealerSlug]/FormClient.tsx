@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -24,6 +24,8 @@ import { formatTurkishMobileInput } from "@/lib/phone";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, MAX_FILE_SIZE } from "@/lib/validation/application";
 import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
+import { captureDraft, DRAFT_FIELDS, draftKey, hasDraftContent, parseDraft } from "@/lib/application-draft";
+import { getModelSuggestions, vehicleBrands } from "@/lib/vehicle-suggestions";
 
 type PhotoItem = { id: string; file: File; preview: string };
 type SubmissionState = {
@@ -160,6 +162,84 @@ export function FormClient({
   const [dragActive, setDragActive] = useState(false);
   const [bodyCondition, setBodyCondition] = useState<VehicleBodyCondition>({});
   const [state, setState] = useState<SubmissionState>({ tone: "idle", message: "", progress: 0 });
+  const [brand, setBrand] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftAvailable, setDraftAvailable] = useState(false);
+  const draftReady = useRef(false);
+  const draftEnabled = useRef(true);
+  const saveDraft = useCallback(() => {
+    if (!draftReady.current || !draftEnabled.current || !formRef.current) return;
+    try {
+      const draft = captureDraft(formRef.current);
+      if (hasDraftContent(draft)) localStorage.setItem(draftKey(dealerSlug), JSON.stringify(draft));
+      else localStorage.removeItem(draftKey(dealerSlug));
+    } catch { setDraftAvailable(false); }
+  }, [dealerSlug]);
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const frame = requestAnimationFrame(() => {
+      try {
+        const key = draftKey(dealerSlug);
+        const draft = parseDraft(localStorage.getItem(key));
+        if (draft) {
+          for (const name of DRAFT_FIELDS) {
+            const field = form.elements.namedItem(name);
+            if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) field.value = draft.fields[name] ?? "";
+          }
+          const valid = (names: readonly string[]) => names.every((name) => {
+            const field = form.elements.namedItem(name);
+            return field instanceof HTMLInputElement && field.checkValidity();
+          });
+          const allowedStep = valid(stepFieldIds[0]) ? valid(stepFieldIds[1]) ? 2 : 1 : 0;
+          setBodyCondition(draft.bodyCondition);
+          setBrand(draft.fields.brand ?? "");
+          setCurrentStep(Math.min(draft.step, allowedStep));
+          setFurthestStep(Math.min(draft.furthestStep, allowedStep));
+          setDraftRestored(true);
+        } else localStorage.removeItem(key);
+        // Probe writes too: private browsing and storage quotas may prohibit saving.
+        localStorage.setItem(`${key}:probe`, "1");
+        localStorage.removeItem(`${key}:probe`);
+        setDraftAvailable(true);
+      } catch { setDraftAvailable(false); }
+      draftReady.current = true;
+    });
+    const scheduleSave = () => { clearTimeout(timer); timer = setTimeout(saveDraft, 250); };
+    const flush = () => { clearTimeout(timer); saveDraft(); };
+    form.addEventListener("input", scheduleSave);
+    form.addEventListener("change", scheduleSave);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      cancelAnimationFrame(frame);
+      flush();
+      draftReady.current = false;
+      form.removeEventListener("input", scheduleSave);
+      form.removeEventListener("change", scheduleSave);
+      window.removeEventListener("pagehide", flush);
+    };
+  }, [dealerSlug, saveDraft]);
+
+  useEffect(() => { saveDraft(); }, [bodyCondition, currentStep, furthestStep, saveDraft]);
+
+  function discardDraft() {
+    draftEnabled.current = false;
+    try { localStorage.removeItem(draftKey(dealerSlug)); } catch { /* Saving may be unavailable. */ }
+    formRef.current?.reset();
+    photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
+    setPhotos([]);
+    setBrand("");
+    setBodyCondition({});
+    setCurrentStep(0);
+    setFurthestStep(0);
+    setDraftRestored(false);
+    setCaptchaToken("");
+    turnstileRef.current?.reset();
+    setState({ tone: "idle", message: "", progress: 0 });
+    draftEnabled.current = true;
+  }
 
   useEffect(() => {
     photosRef.current = photos;
@@ -360,6 +440,11 @@ export function FormClient({
       const result = localMode ? await submitLocal(formData, compressed) : await submitSupabase(formData, compressed);
       if (!result.ok) throw new Error(result.error || "Başvuru gönderilemedi.");
 
+      draftEnabled.current = false;
+      try { localStorage.removeItem(draftKey(dealerSlug)); } catch { /* Submission still succeeded. */ }
+      setDraftRestored(false);
+      setBrand("");
+
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
       setPhotos([]);
       setBodyCondition({});
@@ -380,6 +465,7 @@ export function FormClient({
   }
 
   function startNewApplication() {
+    draftEnabled.current = true;
     setCurrentStep(0);
     setFurthestStep(0);
     setState({ tone: "idle", message: "", progress: 0 });
@@ -389,7 +475,7 @@ export function FormClient({
   const working = state.tone === "working";
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="intake-form">
+    <form ref={formRef} onSubmit={handleSubmit} className="intake-form" data-step={currentStep} data-furthest-step={furthestStep}>
       <input type="hidden" name="dealer_slug" value={dealerSlug} />
       <input type="hidden" name="body_condition" value={JSON.stringify(bodyCondition)} />
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
@@ -411,6 +497,10 @@ export function FormClient({
         </section>
       ) : (
         <>
+          {draftAvailable ? <div className="text-sm text-[var(--text-muted)]">
+            <p>{draftRestored ? "Kaldığınız yerden devam edebilirsiniz. Fotoğrafları yeniden seçin." : "Bilgileriniz bu tarayıcıda 7 gün saklanır; daha sonra devam edebilirsiniz."}</p>
+            <button type="button" className="mt-1 underline underline-offset-4" onClick={discardDraft} disabled={working}>Taslağı sil ve baştan başla</button>
+          </div> : null}
           <nav className="intake-stepper" aria-label="Başvuru adımları">
             <ol>
               {formSteps.map(({ label, shortDescription, icon: Icon }, index) => {
@@ -477,8 +567,12 @@ export function FormClient({
                 headingRef={(element) => { stepHeadingRefs.current[1] = element; }}
               />
               <div className="intake-field-grid intake-vehicle-grid">
-                <Field label="Marka *" labelFor="brand"><Input id="brand" name="brand" placeholder="Örn. Volkswagen" required /></Field>
-                <Field label="Model *" labelFor="model"><Input id="model" name="model" placeholder="Örn. Golf" required /></Field>
+                <Field label="Marka *" labelFor="brand"><Input id="brand" name="brand" list="vehicle-brand-suggestions" placeholder="Örn. Volkswagen" required onChange={(event) => setBrand(event.target.value)} />
+                  <datalist id="vehicle-brand-suggestions">{vehicleBrands.map((item) => <option key={item} value={item} />)}</datalist>
+                </Field>
+                <Field label="Model *" labelFor="model" description="Önerilerden seçebilir veya kendiniz yazabilirsiniz."><Input id="model" name="model" list="vehicle-model-suggestions" placeholder="Örn. Golf" required />
+                  <datalist id="vehicle-model-suggestions">{getModelSuggestions(brand).map((item) => <option key={item} value={item} />)}</datalist>
+                </Field>
                 <Field label="Paket" labelFor="vehicle_package"><Input id="vehicle_package" name="vehicle_package" placeholder="Örn. Comfortline" /></Field>
                 <Field label="Motor" labelFor="engine_info"><Input id="engine_info" name="engine_info" maxLength={120} placeholder="Örn. 1.6 TDI" /></Field>
                 <Field label="Model yılı" labelFor="model_year"><Input id="model_year" name="model_year" type="number" min={1950} max={new Date().getFullYear() + 1} inputMode="numeric" placeholder="2022" /></Field>

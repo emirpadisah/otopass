@@ -177,7 +177,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               </dl>
             </PanelSection>
           </div>
-          <ApplicationFollowups applicationId={application.id} canManage={canManage && !application.purged_at} closed={["sold", "archived"].includes(application.status)} />
+          <ApplicationFollowups applicationId={application.id} canManage={canManage && !application.purged_at} closed={["sold", "archived"].includes(application.status)} offers={offers} />
         </div>
 
         {canManage ? (
