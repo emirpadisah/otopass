@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ClipboardList, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, ClipboardList, Clock3, SlidersHorizontal } from "lucide-react";
 import {
   DataTable,
   ListControls,
@@ -22,6 +22,7 @@ import { parsePagination } from "@/lib/pagination";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerForCurrentUser, listDealerApplicationPage } from "@/lib/supabase/queries";
 import { SoldButtonForm } from "./SoldButtonForm";
+import { getWaitingLabel } from "@/lib/application-followup";
 
 type StatusFilter = "all" | "pending" | "offered" | "accepted" | "rejected" | "sold" | "archived";
 
@@ -43,6 +44,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
   const canManage = canManageDealerMembership(dealer.role);
   const rawParams = await searchParams;
   const input = parsePagination(rawParams);
+  input.sort = ["newest", "oldest", "waiting"].includes(input.sort) ? input.sort : "newest";
   const activeFilter: StatusFilter = ["pending", "offered", "accepted", "rejected", "sold", "archived"].includes(input.status ?? "")
     ? (input.status as StatusFilter)
     : "all";
@@ -50,6 +52,12 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
   const data = await listDealerApplicationPage(dealer.dealer_id, { ...input, status: activeFilter === "all" ? undefined : activeFilter });
   const counts = { all: Object.values(data.statusCounts).reduce((sum, count) => sum + count, 0), ...data.statusCounts };
   const visibleApplications = data.items;
+  // Authenticated async Server Component: use one request-time snapshot for all rows.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const waitingParams = new URLSearchParams({ sort: "waiting", pageSize: String(input.pageSize) });
+  if (input.q) waitingParams.set("q", input.q);
+  if (input.status) waitingParams.set("status", input.status);
   const statusOptions = [
     { value: "pending", label: `Bekleyen (${counts.pending})` },
     { value: "offered", label: `Teklif verildi (${counts.offered})` },
@@ -69,6 +77,10 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
           : "Atanan araçları ve mevcut teklif durumlarını salt okunur görünümde inceleyin."}
         icon={ClipboardList}
         meta={<span className="ops-chip">{counts.all} toplam başvuru</span>}
+        actions={<Link href={`/dealer/applications?${waitingParams}`} prefetch={false}
+          className={cn(buttonVariants({ variant: input.sort === "waiting" ? "primary" : "secondary", size: "sm" }), "inline-flex gap-2")}>
+          <Clock3 size={14} aria-hidden="true" /> En uzun bekleyenler
+        </Link>}
       />
 
       {rawParams.deleted === "1" ? (
@@ -84,7 +96,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
         title="Başvuru listesi"
         description={`${data.total} kayıttan ${visibleApplications.length} tanesi gösteriliyor`}
         icon={SlidersHorizontal}
-        meta={<ListControls q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={statusOptions} />}
+        meta={<ListControls key={`${input.q}:${input.status}:${input.sort}:${input.pageSize}`} q={input.q} status={input.status} sort={input.sort} pageSize={input.pageSize} statuses={statusOptions} waitingSort />}
         contentClassName="ops-section-flush"
       >
         <DataTable>
@@ -105,6 +117,7 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
               ) : (
                 visibleApplications.map((application) => {
                   const latestOffer = data.latestOfferByApplication[application.id];
+                  const waitingLabel = getWaitingLabel(application.status, application.waiting_since, now);
                   return (
                     <TableRow key={application.id}>
                       <TableCell data-label="Araç sahibi" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
@@ -120,7 +133,10 @@ export default async function DealerApplicationsPage({ searchParams }: PageProps
                       <TableCell data-label="Son teklif" className="whitespace-nowrap font-bold text-[var(--ops-text)]">
                         {latestOffer ? formatCurrency(latestOffer) : "-"}
                       </TableCell>
-                      <TableCell data-label="Durum" className="whitespace-nowrap"><StatusBadge status={application.status} /></TableCell>
+                      <TableCell data-label="Durum">
+                        <StatusBadge status={application.status} />
+                        {waitingLabel ? <p className="mt-1 max-w-44 text-xs text-[var(--text-muted)]" title="Mevcut aşamanın bekleme süresi">{waitingLabel}</p> : null}
+                      </TableCell>
                       <TableCell data-label="İşlem" className="whitespace-nowrap text-right">
                         <div className="inline-flex items-center gap-2">
                           <Link

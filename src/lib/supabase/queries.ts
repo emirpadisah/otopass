@@ -19,6 +19,7 @@ import {
 } from "@/lib/local/repository";
 import type { ApplicationStatus, PaginatedResult, PaginationInput, UserRole } from "@/lib/types";
 import { safeSearchTerm } from "@/lib/pagination";
+import { getApplicationWaitingSince } from "@/lib/application-followup";
 
 type DealerRow = Database["public"]["Tables"]["dealers"]["Row"];
 type ApplicationRow = Database["public"]["Tables"]["applications"]["Row"];
@@ -26,7 +27,7 @@ type OfferRow = Database["public"]["Tables"]["offers"]["Row"];
 type DealerDomainRow = Database["public"]["Tables"]["dealer_domains"]["Row"];
 type DealerApplicationListRow = Pick<ApplicationRow,
   "id" | "reference_code" | "owner_name" | "owner_phone" | "brand" | "model" | "model_year" | "km" | "status" | "created_at"
->;
+> & { waiting_since: string | null };
 type DealerDashboardApplication = Pick<ApplicationRow, "id" | "brand" | "model">;
 type DealerDashboardOffer = Pick<OfferRow, "id" | "application_id" | "amount" | "created_at">;
 
@@ -157,14 +158,30 @@ export async function listDealerApplicationPage(
 
   if (isLocalDataMode()) {
     const applications = await listLocalDealerApplications(dealerId);
+    const offers = await listLocalDealerOffers(dealerId);
+    const latestOffers = new Map<string, OfferRow>();
+    for (const offer of offers) {
+      if (!latestOffers.has(offer.application_id)) latestOffers.set(offer.application_id, offer);
+    }
     const counts = emptyStatusCounts();
     applications.forEach((application) => { counts[application.status as ApplicationStatus] += 1; });
     const normalizedQuery = q.toLocaleLowerCase("tr-TR");
     const filtered = applications
+      .map((application) => ({ ...application, waiting_since: getApplicationWaitingSince(application, latestOffers.get(application.id)?.created_at ?? null) }))
       .filter((application) => !activeStatus || application.status === activeStatus)
       .filter((application) => !normalizedQuery || [application.reference_code, application.owner_name, application.owner_phone, application.owner_email, application.brand, application.model]
         .some((value) => value?.toLocaleLowerCase("tr-TR").includes(normalizedQuery)))
-      .sort((a, b) => input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at));
+      .sort((a, b) => {
+        if (input.sort === "waiting") {
+          if (a.waiting_since && !b.waiting_since) return -1;
+          if (!a.waiting_since && b.waiting_since) return 1;
+          if (a.waiting_since && b.waiting_since) {
+            const waitingOrder = Date.parse(a.waiting_since) - Date.parse(b.waiting_since);
+            if (waitingOrder) return waitingOrder;
+          }
+        }
+        return (input.sort === "oldest" ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at)) || a.id.localeCompare(b.id);
+      });
     const items = filtered.slice(from, from + input.pageSize).map((application) => ({
       id: application.id,
       reference_code: application.reference_code,
@@ -176,9 +193,9 @@ export async function listDealerApplicationPage(
       km: application.km,
       status: application.status,
       created_at: application.created_at,
+      waiting_since: application.waiting_since,
     }));
     const visibleIds = new Set(items.map((item) => item.id));
-    const offers = await listLocalDealerOffers(dealerId);
     const latestOfferByApplication: Record<string, number> = {};
     offers.forEach((offer) => {
       if (visibleIds.has(offer.application_id) && latestOfferByApplication[offer.application_id] === undefined) {
@@ -201,7 +218,7 @@ export async function listDealerApplicationPage(
     p_dealer_id: dealerId,
     p_query: q,
     p_status: activeStatus,
-    p_sort: input.sort === "oldest" ? "oldest" : "newest",
+    p_sort: input.sort === "waiting" ? "waiting" : input.sort === "oldest" ? "oldest" : "newest",
     p_offset: from,
     p_limit: input.pageSize,
   });
@@ -223,6 +240,7 @@ export async function listDealerApplicationPage(
     km: item.km,
     status: item.status,
     created_at: item.created_at,
+    waiting_since: item.waiting_since,
   }));
   const counts = { ...emptyStatusCounts(), ...(payload.statusCounts ?? {}) };
   const latestOfferByApplication = Object.fromEntries(

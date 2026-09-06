@@ -86,6 +86,15 @@ type TableShape<Row, Insert = Partial<Row>, Update = Partial<Insert>> = {
 export type Database = {
   public: {
     Tables: {
+      application_followups: TableShape<{
+        id: string;
+        application_id: string;
+        note: string;
+        reminder_at: string | null;
+        completed_at: string | null;
+        created_by: string | null;
+        created_at: string;
+      }>;
       dealers: TableShape<DealerRow, Partial<DealerRow> & Pick<DealerRow, "name" | "slug">>;
       dealer_domains: TableShape<
         DealerDomainRow,
@@ -164,6 +173,18 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      add_application_followup: {
+        Args: { p_application_id: string; p_note: string; p_reminder_at: string | null };
+        Returns: string;
+      };
+      complete_application_followup: {
+        Args: { p_followup_id: string };
+        Returns: string;
+      };
+      get_dealer_due_followups: {
+        Args: { p_dealer_id: string };
+        Returns: Json;
+      };
       consume_rate_limit: {
         Args: { p_scope: string; p_key_hash: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;

@@ -21,6 +21,9 @@ import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentU
 import { OfferForm } from "./OfferForm";
 import { OfferDecisionForm } from "./OfferDecisionForm";
 import { SoldButtonForm } from "../SoldButtonForm";
+import { ApplicationFollowups } from "@/components/ui/application-followups";
+import { WhatsAppMessageComposer } from "@/components/ui/whatsapp-message-composer";
+import { getApplicationWaitingSince, getWaitingLabel } from "@/lib/application-followup";
 import { deleteDealerApplicationAction } from "./delete-actions";
 
 type PageProps = {
@@ -47,6 +50,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
     getDealerById(dealer.dealer_id),
   ]);
   const bodyCondition = normalizeVehicleBodyCondition(application.body_condition);
+  const waitingLabel = getWaitingLabel(application.status, getApplicationWaitingSince(application, currentOffer?.created_at ?? null));
 
   const facts = [
     { label: "Araç sahibi", value: application.owner_name ?? "-", icon: UserRound },
@@ -71,6 +75,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         meta={
           <>
             <StatusBadge status={application.status} />
+            {waitingLabel ? <span className="ops-chip">{waitingLabel}</span> : null}
             <span className="ops-chip"><Camera size={13} aria-hidden="true" /> {photoUrls.viewUrls.length} fotoğraf</span>
           </>
         }
@@ -172,10 +177,11 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               </dl>
             </PanelSection>
           </div>
+          <ApplicationFollowups applicationId={application.id} canManage={canManage && !application.purged_at} closed={["sold", "archived"].includes(application.status)} />
         </div>
 
         {canManage ? (
-          <aside className="xl:sticky xl:top-[102px] xl:self-start">
+          <aside className="grid gap-4 xl:self-start">
             <PanelSection
               title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
               description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"
@@ -201,6 +207,14 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               ) : (
                 <div className="status-alert" role="status">Bu başvuruda bekleyen bir işlem bulunmuyor.</div>
               )}
+            </PanelSection>
+            <PanelSection title="Hazır WhatsApp mesajı" description="Araç bilgileriyle hazırlanan mesajı düzenleyip paylaşın" icon={Phone}>
+              <WhatsAppMessageComposer key={`${currentOffer?.id ?? "no-offer"}:${application.status}`}
+                phone={application.owner_phone} ownerName={application.owner_name}
+                dealerName={dealerDetails?.name ?? "Galeri"}
+                vehicleLabel={`${application.brand} ${application.model}`}
+                referenceCode={application.reference_code}
+                offer={currentOffer && ["offered", "accepted"].includes(application.status) ? { amount: currentOffer.amount, currency: currentOffer.currency, notes: currentOffer.notes } : null} />
             </PanelSection>
           </aside>
         ) : null}

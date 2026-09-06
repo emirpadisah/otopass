@@ -49,6 +49,7 @@ export type LocalData = {
   dealers: DealerRow[];
   applications: ApplicationRow[];
   offers: OfferRow[];
+  application_followups: Database["public"]["Tables"]["application_followups"]["Row"][];
   activity_log: LocalActivityRecord[];
   form_rate_limits: LocalRateLimitRecord[];
 };
@@ -288,6 +289,7 @@ function createSeedData(): LocalData {
       },
     ],
     form_rate_limits: [],
+    application_followups: [],
   };
 }
 
@@ -310,6 +312,7 @@ export async function readLocalData(): Promise<LocalData> {
 
   try {
     const data = JSON.parse(raw) as LocalData;
+    data.application_followups ??= [];
     for (const dealer of data.dealers) {
       dealer.contact_name ??= null;
       dealer.contact_phone ??= null;

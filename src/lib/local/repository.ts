@@ -237,6 +237,7 @@ export async function deleteLocalApplication(
     );
     data.applications.splice(applicationIndex, 1);
     data.offers = data.offers.filter((offer) => offer.application_id !== applicationId);
+    data.application_followups = data.application_followups.filter((note) => note.application_id !== applicationId);
     data.activity_log.forEach((record) => {
       if (record.application_id === applicationId) record.application_id = null;
       if (record.offer_id && deletedOfferIds.has(record.offer_id)) record.offer_id = null;

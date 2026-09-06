@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/cn";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { getDealerDashboardData, getDealerForCurrentUser } from "@/lib/supabase/queries";
+import { DueFollowups } from "@/components/ui/application-followups";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("tr-TR", {
@@ -113,6 +114,7 @@ export default async function DealerDashboardPage() {
       />
 
       <MetricStrip metrics={metrics} />
+      <DueFollowups canManage={canManage} />
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(300px,.72fr)_minmax(0,1.28fr)]">
         <PanelSection title="Başvuru durumu" description="Kayıtların mevcut aşamalara göre dağılımı" icon={Gauge}>
