@@ -43,6 +43,7 @@ type LocalActivityRecord = {
 };
 
 export type LocalData = {
+  offer_links?: import("@/lib/offer-link-types").OfferLink[];
   version: 1 | 2;
   users: LocalUserRecord[];
   sessions: LocalSessionRecord[];

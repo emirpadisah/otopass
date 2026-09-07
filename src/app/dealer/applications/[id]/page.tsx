@@ -1,3 +1,5 @@
+import { similarApplications } from "@/lib/offer-links";
+import { OfferLinkForm } from "@/components/ui/offer-link-form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
@@ -43,6 +45,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
     listDealerOffersForApplicationCurrentUser(id),
   ]);
   if (!application || !dealer) return notFound();
+  const similar = await similarApplications(id);
   const canManage = canManageDealerMembership(dealer.role);
   const currentOffer = offers.find((offer) => offer.application_id === application.id) ?? null;
   const [photoUrls, dealerDetails] = await Promise.all([
@@ -100,6 +103,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         }
       />
 
+      {similar.length > 0 ? <section className="status-alert mt-4" aria-label="Benzer başvurular"><strong>Benzer başvuru bulundu</strong><p>Aynı telefon ve araç bilgileriyle kayıtlı başvurular:</p><ul>{similar.map(item => <li key={item.id}><Link className="underline" href={"/dealer/applications/" + item.id}>{item.reference} · {new Date(item.date).toLocaleDateString("tr-TR")}</Link> <StatusBadge status={item.status}/></li>)}</ul></section> : null}
       <div className={cn("mt-4 grid gap-4", canManage && "xl:grid-cols-[minmax(0,1.35fr)_360px]")}>
         <div className="grid min-w-0 gap-4">
           <PanelSection
@@ -182,6 +186,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
 
         {canManage ? (
           <aside className="grid gap-4 xl:self-start">
+            {application.status === "offered" && currentOffer ? <PanelSection title="Müşteriye özel teklif bağlantısı" description="Müşteriniz teklifini görüp görüşme talebi iletebilir."><OfferLinkForm applicationId={application.id}/></PanelSection> : null}
             <PanelSection
               title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
               description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"

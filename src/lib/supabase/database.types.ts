@@ -86,6 +86,7 @@ type TableShape<Row, Insert = Partial<Row>, Update = Partial<Insert>> = {
 export type Database = {
   public: {
     Tables: {
+      offer_links: TableShape<import("@/lib/offer-link-types").OfferLink>;
       application_followups: TableShape<{
         id: string;
         application_id: string;
@@ -173,6 +174,7 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      respond_public_offer: { Args: { p_hash: string; p_response: string }; Returns: boolean };
       add_application_followup: {
         Args: { p_application_id: string; p_note: string; p_reminder_at: string | null };
         Returns: string;
