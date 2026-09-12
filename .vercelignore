@@ -1,0 +1,26 @@
+# Local state, credentials, generated output and audit evidence are not deploy inputs.
+.git
+.vercel
+.local-data
+.env*
+node_modules
+.next
+out
+build
+coverage
+.playwright-cli
+output
+playwright-report
+test-results
+*.tsbuildinfo
+*.pem
+*.log
+video_check*.png
+
+# Only the application is deployed; database changes use a separate release step.
+.github
+docs
+/supabase
+tests
+design-system
+AGENTS.md

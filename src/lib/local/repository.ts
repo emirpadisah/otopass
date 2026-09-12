@@ -53,14 +53,27 @@ export async function getLocalDealerForCurrentUserWithDetails(): Promise<DealerR
 export async function listLocalDealerApplications(dealerId: string): Promise<ApplicationRow[]> {
   const data = await readLocalData();
   return data.applications
-    .filter((application) => application.dealer_id === dealerId)
+    .filter((application) => (
+      application.dealer_id === dealerId
+      && application.submitted_at !== null
+      && application.purged_at === null
+    ))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export async function listLocalDealerOffers(dealerId: string): Promise<OfferRow[]> {
   const data = await readLocalData();
+  const visibleApplicationIds = new Set(
+    data.applications
+      .filter((application) => (
+        application.dealer_id === dealerId
+        && application.submitted_at !== null
+        && application.purged_at === null
+      ))
+      .map((application) => application.id),
+  );
   return data.offers
-    .filter((offer) => offer.dealer_id === dealerId)
+    .filter((offer) => offer.dealer_id === dealerId && visibleApplicationIds.has(offer.application_id))
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
@@ -76,7 +89,11 @@ export async function getLocalDealerApplicationForCurrentUser(
   if (!dealer) return null;
 
   const application = await getLocalApplicationById(applicationId);
-  return application?.dealer_id === dealer.dealer_id ? application : null;
+  return application?.dealer_id === dealer.dealer_id
+    && application.submitted_at !== null
+    && application.purged_at === null
+    ? application
+    : null;
 }
 
 export async function listLocalUsersForAdmin() {
@@ -163,6 +180,8 @@ export async function createLocalApplication(input: ApplicationInsert): Promise<
       body_condition: input.body_condition ?? {},
       photo_paths: input.photo_paths ?? [],
       reference_code: input.reference_code ?? null,
+      tracking_token_hash: input.tracking_token_hash ?? null,
+      review_started_at: input.review_started_at ?? null,
       status: input.status ?? "pending",
       created_at: input.created_at ?? new Date().toISOString(),
       submitted_at: input.submitted_at ?? new Date().toISOString(),
@@ -188,6 +207,12 @@ export async function createLocalOffer(input: {
       (candidate) => candidate.id === input.applicationId && candidate.dealer_id === input.dealerId
     );
     if (!application) throw new Error("Başvuru bulunamadı.");
+    if (application.submitted_at === null || application.purged_at !== null) {
+      throw new Error("Bu başvuru henüz gönderilmemiş veya silinmiş.");
+    }
+    if (!['pending', 'rejected'].includes(application.status)) {
+      throw new Error("Bu başvuruya mevcut durumunda teklif verilemez.");
+    }
 
     const offer: OfferRow = {
       id: randomUUID(),

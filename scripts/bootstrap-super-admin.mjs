@@ -10,6 +10,7 @@ const url = required("NEXT_PUBLIC_SUPABASE_URL");
 const serviceRoleKey = required("SUPABASE_SERVICE_ROLE_KEY");
 const email = required("BOOTSTRAP_SUPER_ADMIN_EMAIL").toLowerCase();
 const password = required("BOOTSTRAP_SUPER_ADMIN_PASSWORD");
+const emailVerificationRequired = process.env.OTOPASS_EMAIL_VERIFICATION_REQUIRED?.trim().toLowerCase() !== "false";
 if (email.length > 254 || !/^\S+@\S+\.\S+$/.test(email)) throw new Error("BOOTSTRAP_SUPER_ADMIN_EMAIL is invalid.");
 if (password.length < 12 || password.length > 128 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
   throw new Error("BOOTSTRAP_SUPER_ADMIN_PASSWORD must be 12-128 characters and contain upper/lowercase letters and a number.");
@@ -48,11 +49,11 @@ if ((existingSuperAdmins ?? 0) > 0) {
 }
 
 if (!user) {
-  const { data, error } = await supabase.auth.admin.createUser({ email, password, email_confirm: true });
+  const { data, error } = await supabase.auth.admin.createUser({ email, password, email_confirm: !emailVerificationRequired });
   if (error || !data.user) throw error || new Error("Super admin could not be created.");
   user = data.user;
 } else {
-  const { error } = await supabase.auth.admin.updateUserById(user.id, { password, email_confirm: true });
+  const { error } = await supabase.auth.admin.updateUserById(user.id, { password });
   if (error) throw error;
 }
 
@@ -73,4 +74,6 @@ if (membershipDeleteError) throw membershipDeleteError;
 const { error: auditError } = await supabase.from("activity_log").insert({ actor_user_id: user.id, action: "SUPER_ADMIN_BOOTSTRAPPED", metadata: { email } });
 if (auditError) throw auditError;
 
-console.log(`Super admin ready: ${email}`);
+console.log(emailVerificationRequired
+  ? 'Super admin created. Verify the email at /login/verify-email before signing in and setting up MFA.'
+  : 'Super admin created. Sign in with the temporary password and complete MFA and password change.');

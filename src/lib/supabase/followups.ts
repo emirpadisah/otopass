@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { getRequestAccessContext } from "@/lib/auth/access-context";
+import { getProtectedAccessContext } from "@/lib/auth/access-context";
 import { canManageDealerMembership } from "@/lib/auth/route";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { mutateLocalData, readLocalData } from "@/lib/local/store";
@@ -13,7 +13,7 @@ export type ApplicationFollowup = Database["public"]["Tables"]["application_foll
 export type DueFollowup = ApplicationFollowup & { brand: string; model: string; owner_name: string | null };
 
 async function requireFollowupAccess(manage = false) {
-  const context = await getRequestAccessContext();
+  const context = await getProtectedAccessContext();
   if (!context?.isActive || !context.dealerId || context.mustChangePassword) throw new Error("Galeri oturumu gerekli.");
   if (manage && !canManageDealerMembership(context.membershipRole ?? "")) throw new Error("Bu işlem için galeri yönetim yetkisi gerekli.");
   return context;

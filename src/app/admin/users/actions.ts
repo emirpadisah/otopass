@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { ActionResponse, UserRole } from "@/lib/types";
 import { requireUser } from "@/lib/auth/session";
 import { requireAdminAccess } from "@/lib/auth/roles";
-import { getPasswordChangeRestriction, getUserDeletionRestriction } from "@/lib/auth/admin-user-management";
+import { canAssignRole, canUpdateUserAccess, getPasswordChangeRestriction, getUserDeletionRestriction } from "@/lib/auth/admin-user-management";
 import { createUserByAdmin } from "@/lib/supabase/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -39,13 +39,11 @@ export async function updateUserAction(_prevState: ActionResponse, formData: For
   if (dealerId && !UUID_PATTERN.test(dealerId)) return { ok: false, code: "VALIDATION", message: "Galeri bilgisi geçersiz." };
 
   const actorRoles = await getCurrentUserRoles();
-  const actorIsSuperAdmin = actorRoles.includes("super_admin");
   const service = createSupabaseServiceClient();
   const { data: targetRoles, error: targetRoleError } = await service.from("user_roles").select("role").eq("user_id", userId);
   if (targetRoleError) return { ok: false, code: "UPDATE_FAILED", message: "Kullanıcı güncellenemedi." };
-  const targetIsSuperAdmin = targetRoles?.some((item) => item.role === "super_admin") ?? false;
-  if (!actorIsSuperAdmin && (role === "super_admin" || targetIsSuperAdmin)) {
-    return { ok: false, code: "FORBIDDEN", message: "Süper yönetici hesaplarını yalnızca başka bir süper yönetici düzenleyebilir." };
+  if (!canUpdateUserAccess(actorRoles, (targetRoles ?? []).map((item) => item.role as UserRole), role)) {
+    return { ok: false, code: "FORBIDDEN", message: "Yönetici hesaplarını ve yönetici rollerini yalnızca süper yönetici düzenleyebilir." };
   }
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("admin_update_user_access", { p_user_id: userId, p_full_name: fullName, p_role: role, p_dealer_id: dealerId, p_is_active: isActive });
@@ -58,6 +56,9 @@ export async function updateUserAction(_prevState: ActionResponse, formData: For
 export async function setUserPasswordAction(_prevState: ActionResponse, formData: FormData): Promise<ActionResponse> {
   const actor = await requireUser();
   const actorRoles = await requireAdminAccess();
+  if (!actorRoles.includes("super_admin")) {
+    return { ok: false, code: "PASSWORD_REQUIRES_SUPER_ADMIN", message: "Geçici şifre atamak için süper yönetici yetkisi gerekli." };
+  }
   const userId = String(formData.get("userId") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const passwordConfirmation = String(formData.get("passwordConfirmation") ?? "");
@@ -219,8 +220,8 @@ export async function createUserAction(
     return { ok: false, code: "VALIDATION", message: "Geçersiz kullanıcı rolü." };
   }
 
-  if (role === "super_admin" && !actorRoles.includes("super_admin")) {
-    return { ok: false, code: "FORBIDDEN", message: "Süper yönetici rolünü yalnızca mevcut bir süper yönetici atayabilir." };
+  if (!canAssignRole(actorRoles, role)) {
+    return { ok: false, code: "FORBIDDEN", message: "Yönetici rolünü yalnızca süper yönetici atayabilir." };
   }
 
   if (fullName && fullName.length > 120) {

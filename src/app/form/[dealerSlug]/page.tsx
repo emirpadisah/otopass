@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Check, Clock3, Mail, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
@@ -119,7 +120,7 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
           <section className="intake-aside-flow" aria-label="Başvuru akışı">
             <span>Başvuru akışı</span>
             <strong>Bilgileriniz inceleme kuyruğuna kaydedilir.</strong>
-            <p>Teklif veya ek bilgi ihtiyacı olduğunda galeri ekibi paylaştığınız numaradan size ulaşır.</p>
+            <p>Başvuru sonunda verilen özel bağlantıdan inceleme ve teklif durumunuzu takip edebilirsiniz. Galeri ekibi gerektiğinde paylaştığınız numaradan size ulaşır.</p>
           </section>
 
           {hasContactInfo ? (
@@ -186,6 +187,10 @@ export default async function DealerPublicFormPage({ params }: PageProps) {
           </div>
         </aside>
       </div>
+      <footer className={`${styles.siteFooter} intake-shell`}>
+        <div><ShieldCheck size={17} aria-hidden="true" /><p><strong>Güvenli başvuru, doğrudan galeriye.</strong><span>Bilgileriniz {dealer.name} tarafından değerlendirilir.</span></p></div>
+        <nav aria-label="Başvuru sayfası alt bağlantıları"><Link href={requestHeaders.get("x-custom-domain") ? "/privacy" : `/form/${encodeURIComponent(dealerSlug)}/privacy`}>KVKK aydınlatma metni</Link><span>otoköprü altyapısıyla</span></nav>
+      </footer>
     </div>
   );
 }

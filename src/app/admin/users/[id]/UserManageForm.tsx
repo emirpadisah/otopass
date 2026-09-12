@@ -29,16 +29,19 @@ export function UserManageForm({ user, dealers, canDelete }: { user: UserData; d
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <form action={updateAction} className="panel space-y-4 p-5 sm:p-6">
+        <fieldset className="space-y-4" disabled={updatePending || (!canDelete && user.roles.some((value) => value === "admin" || value === "super_admin"))}>
         <input type="hidden" name="userId" value={user.user_id} />
         <Field label="Ad soyad" labelFor="fullName"><Input id="fullName" name="fullName" defaultValue={user.full_name ?? ""} /></Field>
-        <Field label="Rol" labelFor="role"><select id="role" name="role" className="input-base" defaultValue={role}><option value="super_admin">Süper yönetici</option><option value="admin">Yönetici</option><option value="dealer_owner">Galeri sahibi</option><option value="dealer_manager">Galeri yöneticisi</option><option value="dealer_viewer">Görüntüleyici</option></select></Field>
+        <Field label="Rol" labelFor="role"><select id="role" name="role" className="input-base" defaultValue={role}>{canDelete || role === "super_admin" ? <option value="super_admin">Süper yönetici</option> : null}{canDelete || role === "admin" ? <option value="admin">Yönetici</option> : null}<option value="dealer_owner">Galeri sahibi</option><option value="dealer_manager">Galeri yöneticisi</option><option value="dealer_viewer">Görüntüleyici</option></select></Field>
         <Field label="Galeri" labelFor="dealerId"><select id="dealerId" name="dealerId" className="input-base" defaultValue={user.dealer_ids[0] ?? ""}><option value="">Galeri yok</option>{dealers.map((dealer) => <option key={dealer.id} value={dealer.id}>{dealer.name}</option>)}</select></Field>
         <label className="checkbox-row"><input type="checkbox" name="isActive" defaultChecked={user.is_active} /><span>Hesap aktif</span></label>
         <Message state={updateState} />
         <Button type="submit" disabled={updatePending}><Save size={15} /> Değişiklikleri kaydet</Button>
+        </fieldset>
+        {!canDelete && user.roles.some((value) => value === "admin" || value === "super_admin") ? <p className="text-sm text-[var(--text-muted)]">Yönetici hesaplarını yalnızca süper yönetici düzenleyebilir.</p> : null}
       </form>
       <aside className="space-y-4">
-        <form ref={passwordFormRef} action={passwordAction} className="panel space-y-4 p-5" aria-busy={passwordPending}>
+        {canDelete ? <form ref={passwordFormRef} action={passwordAction} className="panel space-y-4 p-5" aria-busy={passwordPending}>
           <input type="hidden" name="userId" value={user.user_id} />
           <div>
             <h2 className="font-bold">Şifre değiştir</h2>
@@ -55,7 +58,7 @@ export function UserManageForm({ user, dealers, canDelete }: { user: UserData; d
             {passwordPending ? <LoaderCircle className="animate-spin" size={15} aria-hidden="true" /> : <KeyRound size={15} aria-hidden="true" />}
             {passwordPending ? "Şifre güncelleniyor..." : "Şifreyi güncelle"}
           </Button>
-        </form>
+        </form> : <p className="panel p-5 text-sm">Geçici şifre atamak için süper yöneticiye başvurun.</p>}
         {canDelete ? <form id={deleteFormId} action={deleteAction} className="panel space-y-4 border-[var(--danger)] p-5"><input type="hidden" name="userId" value={user.user_id} /><h2 className="font-bold text-[var(--danger)]">Kalıcı silme</h2><Message state={deleteState} /><ConfirmSubmitButton formId={deleteFormId} title="Kullanıcı kalıcı olarak silinsin mi?" description="Hesap, rol ve galeri üyelikleri sistemden kaldırılacak." confirmLabel="Kullanıcıyı kalıcı olarak sil" details={["Kullanıcı artık giriş yapamaz", "Rol ve galeri erişimleri kaldırılır", "Bu işlem geri alınamaz"]} feedbackMessage={deleteState.message} feedbackTone={deleteState.ok ? "success" : "danger"} tone="danger" variant="danger" disabled={deletePending}><Trash2 size={15} /> Kullanıcıyı sil</ConfirmSubmitButton></form> : null}
       </aside>
     </div>

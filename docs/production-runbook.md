@@ -103,3 +103,12 @@ Vercel Cron `/api/cron/maintenance` endpoint'ini çağırır. Endpoint yalnız `
 - Son hareketten 365 gün sonra başvuruları arşivler.
 - 30 günlük ek süreden sonra fotoğrafları siler ve kişisel verileri anonimleştirir.
 Cron hatalarında önce Sentry ve Vercel loglarını kontrol edin; aynı job'ı manuel çağırmadan önce önceki çalışmanın tamamlandığını doğrulayın.
+
+## Müşteri başvuru takibi
+
+- Bu sürümü yayınlamadan önce `202609070002_application_tracking.sql` migration'ını Supabase'e uygulayın. İki nullable alan ve bir indeks ekler; mevcut kayıtları değiştirmez. Uygulama geri alınırsa bu alanlar kalabilir.
+- Takip bağlantısı başvuru akışında otomatik oluşturulur ve yalnızca tamamlanan başvurularda kullanılabilir. Başarı ekranındaki **Başvurumu takip et** düğmesi müşteriyi doğrudan kendi durum sayfasına götürür. Özel galeri alan adlarından gelen başvuruların takip bağlantıları platformun `NEXT_PUBLIC_SITE_URL` adresini kullanır.
+- Galeri panelinde takip bağlantısı oluşturma veya yenileme işlemi bulunmaz. Otomatik oluşturulan bağlantı süreç boyunca aynı kalır; daha önce verilmiş bağlantılar da geçerliliğini korur.
+- **İncelemeyi başlat** işlemi inceleme aşamasını açar. Teklif oluşturulunca aynı bağlantı teklifin hazırlandığını gösterir. Kabul, ret, satış ve arşiv sonuçları da ayrı metinlerle gösterilir.
+- Sayfa açıkken durum her dakika yenilenir. Bağlantı; müşteri adı, telefonu, fotoğrafları veya iç notları göstermez. Silinen/anonimleştirilen başvurular ve pasif galeriler için erişim kapanır. Takip sayfaları arama motorlarına ve Google ölçümüne kapalıdır.
+- Yayın sonrası gerçek fotoğrafla yeni bir başvuru yapın, başarı ekranındaki bağlantıyı oturum açılmamış bir tarayıcıda açın; incelemeyi başlatıp teklif oluşturduktan sonra durumların güncellendiğini doğrulayın.

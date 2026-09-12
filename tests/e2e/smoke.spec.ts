@@ -23,7 +23,7 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByLabel("Marka").fill("Volkswagen");
-  await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
+  await page.getByRole("combobox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByRole("group", { name: "Parçaya uygulanacak durum" }).getByText("Boyalı", { exact: true }).click();
@@ -38,6 +38,15 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await page.getByRole("button", { name: "Başvuruyu gönder" }).click();
 
   await expect(page.getByRole("status")).toContainText("Başvuru referansı", { timeout: 15_000 });
+  const trackingLink = page.getByRole("link", { name: "Başvurumu takip et" });
+  await expect(trackingLink).toHaveAttribute("href", /\/takip\/[a-f0-9]{64}$/);
+  await expect(page.getByRole("textbox", { name: "Müşteriye özel takip bağlantısı" })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("application-success.png"), fullPage: true });
+  await trackingLink.click();
+  await expect(page.getByRole("heading", { name: "Başvurunuz alındı", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Volkswagen · Golf" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Başvurunuz alındı", exact: true })).toBeVisible();
 });
 
 test("public application requires at least one vehicle photo", async ({ page }) => {
@@ -47,7 +56,7 @@ test("public application requires at least one vehicle photo", async ({ page }) 
   await page.getByRole("button", { name: "Devam et" }).click();
 
   await page.getByLabel("Marka").fill("Volkswagen");
-  await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
+  await page.getByRole("combobox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();
   await page.getByLabel(/KVKK aydınlatma metnini/).check();
   await page.getByRole("button", { name: "Başvuruyu gönder" }).click();

@@ -7,7 +7,15 @@ type CredentialPolicyInput = {
   targetRoles: UserRole[];
 };
 
-export type PasswordChangeRestriction = "SELF_PASSWORD_CHANGE" | "PRIVILEGED_TARGET" | null;
+export type PasswordChangeRestriction = "SELF_PASSWORD_CHANGE" | "PRIVILEGED_TARGET" | "PASSWORD_REQUIRES_SUPER_ADMIN" | null;
+export function canAssignRole(actorRoles: UserRole[], role: UserRole): boolean {
+  return actorRoles.includes("super_admin") || (actorRoles.includes("admin") && role.startsWith("dealer_"));
+}
+
+export function canUpdateUserAccess(actorRoles: UserRole[], targetRoles: UserRole[], role: UserRole): boolean {
+  return canAssignRole(actorRoles, role) && (actorRoles.includes("super_admin") ||
+    !targetRoles.some((targetRole) => targetRole === "admin" || targetRole === "super_admin"));
+}
 export type UserDeletionRestriction =
   | "DELETE_REQUIRES_SUPER_ADMIN"
   | "SELF_DELETE"
@@ -24,7 +32,9 @@ export function getPasswordChangeRestriction({
 
   const actorIsSuperAdmin = actorRoles.includes("super_admin");
   const targetIsPrivileged = targetRoles.some((role) => role === "admin" || role === "super_admin");
-  return targetIsPrivileged && !actorIsSuperAdmin ? "PRIVILEGED_TARGET" : null;
+  if (targetIsPrivileged && !actorIsSuperAdmin) return "PRIVILEGED_TARGET";
+  // Auth password updates cannot share the role-change database transaction.
+  return actorIsSuperAdmin ? null : "PASSWORD_REQUIRES_SUPER_ADMIN";
 }
 
 export function getUserDeletionRestriction({

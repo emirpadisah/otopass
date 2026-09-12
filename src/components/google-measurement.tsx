@@ -20,7 +20,7 @@ declare global {
 }
 
 function isMeasurementRoute(pathname: string) {
-  return !pathname.startsWith("/admin") && !pathname.startsWith("/dealer") && !pathname.startsWith("/teklif");
+  return !pathname.startsWith("/admin") && !pathname.startsWith("/dealer") && !pathname.startsWith("/teklif") && !pathname.startsWith("/takip");
 }
 
 function updateGoogleConsent(choice: ConsentChoice, analyticsEnabled: boolean, adsEnabled: boolean) {

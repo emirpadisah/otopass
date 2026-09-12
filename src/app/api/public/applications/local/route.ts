@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isLocalDataMode } from "@/lib/data-mode";
+import { createTrackingCredential } from "@/lib/application-tracking";
 import { createLocalApplication, getLocalDealerBySlug } from "@/lib/local/repository";
 import { removeLocalPhoto, saveLocalPhoto } from "@/lib/local/store";
 import { createReferenceCode, sanitizeUploadName } from "@/lib/public-applications";
@@ -38,7 +39,9 @@ export async function POST(request: Request) {
       await saveLocalPhoto(path, new Uint8Array(await file.arrayBuffer()));
       savedPaths.push(path);
     }
+    const tracking = createTrackingCredential();
     const created = await createLocalApplication({
+      tracking_token_hash: tracking.hash,
       dealer_id: dealer.id,
       dealer_slug: dealer.slug,
       owner_name: application.owner_name,
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
       privacy_acknowledged_at: new Date().toISOString(),
       submitted_at: new Date().toISOString(),
     });
-    return NextResponse.json({ ok: true, referenceCode: created.reference_code, requestId });
+    return NextResponse.json({ ok: true, referenceCode: created.reference_code, trackingUrl: tracking.url, requestId }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     await Promise.all(savedPaths.map((path) => removeLocalPhoto(path)));
     return NextResponse.json({ error: "Başvuru gönderilemedi. Bilgileri kontrol edip tekrar deneyin.", requestId }, { status: 400 });

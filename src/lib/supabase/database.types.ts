@@ -19,6 +19,8 @@ type DealerRow = {
 };
 
 type ApplicationRow = {
+  tracking_token_hash?: string | null;
+  review_started_at?: string | null;
   id: string;
   dealer_id: string;
   dealer_slug: string;
@@ -174,6 +176,11 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      get_email_challenge_kind: { Args: { p_email: string }; Returns: string | null };
+      get_email_verification_status: { Args: { p_user_id: string }; Returns: boolean };
+      get_mfa_exemption_status: { Args: { p_user_id: string }; Returns: boolean };
+      record_email_verification: { Args: { p_user_id: string; p_email: string; p_confirmed_at: string }; Returns: undefined };
+      current_user_email_verified: { Args: Record<PropertyKey, never>; Returns: boolean };
       respond_public_offer: { Args: { p_hash: string; p_response: string }; Returns: boolean };
       add_application_followup: {
         Args: { p_application_id: string; p_note: string; p_reminder_at: string | null };

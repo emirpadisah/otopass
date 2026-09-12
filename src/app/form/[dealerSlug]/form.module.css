@@ -326,3 +326,39 @@
   .page :global(.intake-section:not([hidden])),
   .page :global(.intake-success-view) { animation: none; }
 }
+
+/* Completed applications have one clear next step: open the customer tracker. */
+.page:has(:global(.intake-success-view)) :global(.intake-intro),
+.page:has(:global(.intake-success-view)) :global(.intake-heading),
+.page:has(:global(.intake-success-view)) :global(.intake-aside) { display: none; }
+.page:has(:global(.intake-success-view)) :global(.intake-layout) { grid-template-columns: minmax(0, 1fr); max-width: 680px; margin-top: 32px; }
+.page :global(.intake-success-view a.intake-track-button) { color: var(--accent-contrast); text-decoration: none; }
+
+/* Keep step progress and navigation aligned at every form width. */
+.page :global(.intake-form-footer) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 24px; border-radius: 0 0 14px 14px; }
+.page :global(.intake-step-caption) { display: flex; flex: 1 1 180px; align-items: center; gap: 12px; }
+.page :global(.intake-step-caption > span) { display: flex; align-items: baseline; justify-content: center; gap: 3px; width: 48px; height: auto; padding: 10px 6px; flex-shrink: 0; border: 1px solid var(--border-soft); font-size: 14px; color: var(--text-primary); }
+.page :global(.intake-step-caption > span small) { color: var(--text-muted); font-size: 10px; }
+.page :global(.intake-step-caption p) { display: grid; gap: 4px; margin: 0; }
+.page :global(.intake-step-caption strong) { font-size: 12px; }
+.page :global(.intake-step-caption p small) { color: var(--text-muted); font-size: 11px; }
+.page :global(.intake-form-actions) { display: flex; flex: 0 1 auto; align-items: center; gap: 8px; width: auto; }
+.page :global(.intake-form-actions .inline-flex) { min-width: 0 !important; min-height: 44px; padding-inline: 20px; }
+.page :global(.intake-form-actions .intake-submit) { min-width: 0 !important; }
+.siteFooter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; border-top: 1px solid var(--border-soft); padding-block: 24px; margin-top: 32px; }
+.siteFooter > div { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.siteFooter svg { color: var(--text-muted); flex-shrink: 0; }
+.siteFooter p { display: grid; gap: 5px; line-height: 1.6; }
+.siteFooter strong { font-size: 12px; font-weight: 600; }
+.siteFooter p span, .siteFooter nav { font-size: 11px; color: var(--text-muted); }
+.siteFooter nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.siteFooter a { text-decoration: underline; text-underline-offset: 4px; color: var(--text-secondary); }
+.siteFooter a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+@media (max-width: 600px) {
+  .page :global(.intake-form-footer) { align-items: stretch; padding: 16px; gap: 14px; }
+  .page :global(.intake-step-caption) { flex-basis: 100%; }
+  .page :global(.intake-form-actions) { width: 100%; }
+  .page :global(.intake-form-actions .inline-flex) { flex: 1; padding-inline: 12px; }
+  .siteFooter { gap: 18px; margin-top: 24px; padding: 22px 8px; }
+  .siteFooter nav { width: 100%; justify-content: space-between; }
+}

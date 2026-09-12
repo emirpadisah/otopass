@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isLocalDataMode } from "@/lib/data-mode";
+import { createTrackingCredential } from "@/lib/application-tracking";
 import {
   APPLICATIONS_BUCKET,
   createFinalizeToken,
@@ -125,6 +126,7 @@ export async function POST(request: Request) {
     }));
 
     const finalizeToken = createFinalizeToken();
+    const tracking = createTrackingCredential();
     const { error: applicationError } = await supabase.from("applications").insert({
       id: applicationId,
       dealer_id: dealer.id,
@@ -144,6 +146,7 @@ export async function POST(request: Request) {
       damage_info: application.damage_info,
       body_condition: application.body_condition,
       reference_code: referenceCode,
+      tracking_token_hash: tracking.hash,
       privacy_version: PRIVACY_NOTICE_VERSION,
       privacy_acknowledged_at: now,
       submitted_at: null,
@@ -180,7 +183,7 @@ export async function POST(request: Request) {
     try {
       const uploads = await createSignedUploads(supabase, items);
       return NextResponse.json(
-        { sessionId, finalizeToken, uploads, requestId },
+        { sessionId, finalizeToken, uploads, trackingUrl: tracking.url, requestId },
         { headers: PRIVATE_NO_STORE_HEADERS },
       );
     } catch (error) {

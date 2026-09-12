@@ -1,17 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { getPasswordChangeRestriction, getUserDeletionRestriction } from "../src/lib/auth/admin-user-management";
+import { canAssignRole, canUpdateUserAccess, getPasswordChangeRestriction, getUserDeletionRestriction } from "../src/lib/auth/admin-user-management";
 
 const actorUserId = "00000000-0000-4000-8000-000000000001";
 const targetUserId = "00000000-0000-4000-8000-000000000002";
 
 describe("admin user management policy", () => {
-  it("allows an admin to set a dealer user's password", () => {
+  it("blocks both ends of the demote-reset-promote chain", () => {
+    expect(canUpdateUserAccess(["admin"], ["admin"], "dealer_manager")).toBe(false);
+    expect(canUpdateUserAccess(["admin"], ["dealer_manager"], "admin")).toBe(false);
+    expect(canAssignRole(["admin"], "admin")).toBe(false);
+  });
+  it("allows dealer access management without peer control", () => {
+    expect(canUpdateUserAccess(["admin"], ["dealer_viewer"], "dealer_manager")).toBe(true);
+    expect(canUpdateUserAccess(["admin"], ["dealer_viewer", "admin"], "dealer_manager")).toBe(false);
+    expect(canUpdateUserAccess(["super_admin"], ["admin"], "dealer_manager")).toBe(true);
+    expect(canAssignRole(["dealer_owner"], "dealer_manager")).toBe(false);
+  });
+  it("rejects dealer password replacement by a normal admin even during role changes", () => {
     expect(getPasswordChangeRestriction({
       actorUserId,
       actorRoles: ["admin"],
       targetUserId,
       targetRoles: ["dealer_owner"],
-    })).toBeNull();
+    })).toBe("PASSWORD_REQUIRES_SUPER_ADMIN");
   });
 
   it("requires a super admin for privileged account passwords", () => {

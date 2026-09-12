@@ -1,6 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(47);
+select set_config('request.jwt.claims', '{"aal":"aal2"}', true);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -10,6 +11,10 @@ values
   ('00000000-0000-4000-8000-000000000104', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'inactive@test.local', '', now(), now(), now()),
   ('00000000-0000-4000-8000-000000000105', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@test.local', '', now(), now(), now()),
   ('00000000-0000-4000-8000-000000000106', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'super@test.local', '', now(), now(), now());
+
+insert into security_private.email_verifications(user_id, email, auth_confirmed_at)
+select id, lower(email), email_confirmed_at from auth.users
+where id between '00000000-0000-4000-8000-000000000101'::uuid and '00000000-0000-4000-8000-000000000106'::uuid;
 
 insert into public.user_profiles(user_id, is_active, must_change_password) values
   ('00000000-0000-4000-8000-000000000101', true, false),

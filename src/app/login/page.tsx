@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isEmailVerificationRequired } from "@/lib/auth/email-policy";
 import { ShieldCheck } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
@@ -36,6 +37,7 @@ export default function LoginPage() {
               <p className={styles.description}>Yetkili kullanıcı hesabınızın e-posta adresi ve şifresiyle devam edin.</p>
             </div>
             <LoginForm disabled={localAuthDisabled} />
+            {isEmailVerificationRequired() ? <Link href="/login/verify-email" className="mt-4 block text-center text-sm underline">E-postamı doğrula</Link> : null}
           </div>
         </div>
 

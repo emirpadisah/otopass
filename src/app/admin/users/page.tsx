@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, UserPlus, UsersRound } from "lucide-react";
+import { isEmailVerificationRequired } from "@/lib/auth/email-policy";
 import {
   DataTable,
   ListControls,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/cn";
 import { parsePagination } from "@/lib/pagination";
 import { listAdminUsersPage, listDealerOptionsForAdmin } from "@/lib/supabase/queries";
 import { UserCreateForm } from "./UserCreateForm";
+import { requireAdminAccess } from "@/lib/auth/roles";
 
 type Params = { q?: string; status?: string; page?: string; pageSize?: string; sort?: string; created?: string; deleted?: string };
 const roleLabels: Record<string, string> = {
@@ -31,6 +33,7 @@ const roleLabels: Record<string, string> = {
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<Params> }) {
   const raw = await searchParams;
+  const roles = await requireAdminAccess();
   const input = parsePagination(raw);
   const [data, dealers] = await Promise.all([listAdminUsersPage(input), listDealerOptionsForAdmin()]);
   const visibleUsers = data.items;
@@ -53,9 +56,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
 
       {raw.created === "dealer" || raw.created === "admin" ? (
         <div className="status-alert mt-4" data-tone="success" role="status">
-          {raw.created === "dealer"
-            ? "Galeri hesabı oluşturuldu. Kullanıcı ilk girişte geçici şifresini değiştirecek."
-            : "Yönetici hesabı başarıyla oluşturuldu."}
+          {!isEmailVerificationRequired()
+            ? "Hesap oluşturuldu. Kullanıcı geçici şifresiyle giriş yapıp iki adımlı doğrulamayı ve şifre değişimini tamamlamalı."
+            : raw.created === "dealer"
+            ? "Galeri hesabı oluşturuldu. Kullanıcı önce giriş ekranındaki E-postamı doğrula adımını tamamlamalı, ardından geçici şifresini değiştirmeli."
+            : "Yönetici hesabı oluşturuldu. Kullanıcı giriş ekranındaki E-postamı doğrula adımını tamamlamalı."}
         </div>
       ) : null}
 
@@ -118,7 +123,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
             description="Hesap, rol ve galeri üyeliğini birlikte oluşturun"
             icon={UserPlus}
           >
-            <UserCreateForm dealers={dealers.map((dealer) => ({ id: dealer.id, name: dealer.name }))} />
+            <UserCreateForm dealers={dealers.map((dealer) => ({ id: dealer.id, name: dealer.name }))} canCreateAdmin={roles.includes("super_admin")} />
           </PanelSection>
         </aside>
       </div>

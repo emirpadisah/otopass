@@ -11,6 +11,7 @@ function assertManager(role: string | undefined): void {
 
 function mapWorkflowError(error: { message?: string } | null, fallback: string): Error {
   const message = error?.message ?? "";
+  if (message.includes("APPLICATION_NOT_SUBMITTED")) return new Error("Bu başvuru henüz gönderilmemiş veya silinmiş.");
   if (message.includes("INVALID_APPLICATION_STATE")) return new Error("Bu başvuruya mevcut durumunda teklif verilemez.");
   if (message.includes("INVALID_OFFER_STATE")) return new Error("Bu teklif daha önce sonuçlandırılmış.");
   if (message.includes("OFFER_MUST_BE_ACCEPTED")) return new Error("Satıştan önce teklif kabul edilmelidir.");

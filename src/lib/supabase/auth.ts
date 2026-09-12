@@ -1,5 +1,6 @@
 ﻿import { createSupabaseServiceClient } from "./service";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
+import { isEmailVerificationRequired } from "@/lib/auth/email-policy";
 import { createLocalUser } from "@/lib/local/auth";
 import type { UserRole } from "@/lib/types";
 import { validatePasswordPolicy } from "@/lib/validation/password";
@@ -48,7 +49,8 @@ export async function createUserByAdmin(input: CreateUserInput): Promise<void> {
     const { data: createdUser, error: createUserError } = await supabase.auth.admin.createUser({
       email: input.email,
       password: input.password,
-      email_confirm: true,
+      // Deferred rollout preserves password login, without recording mailbox proof.
+      email_confirm: !isEmailVerificationRequired(),
     });
 
     assertNoSupabaseError(createUserError, "auth", "Kullanıcı oluşturulamadı.");

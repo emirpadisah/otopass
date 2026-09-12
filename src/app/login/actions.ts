@@ -1,6 +1,7 @@
 ﻿"use server";
 
 import { redirect } from "next/navigation";
+import { isEmailVerificationRequired, passesEmailGate } from "@/lib/auth/email-policy";
 import { headers } from "next/headers";
 import { isLocalDataMode, isLocalUserAuthEnabled } from "@/lib/data-mode";
 import {
@@ -18,6 +19,7 @@ import { validatePasswordPolicy } from "@/lib/validation/password";
 import { consumeLoginRateLimits, consumeRateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
 import { getPublicSiteOrigin } from "@/lib/site-url";
+import { requirePasswordChangeAccess } from "@/lib/auth/password-access";
 
 type LoginState = {
   error: string | null;
@@ -80,7 +82,9 @@ export async function login(
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      return { error: "Giriş başarısız. Bilgilerinizi kontrol edin." };
+      return { error: isEmailVerificationRequired()
+        ? "Giriş başarısız. Bilgilerinizi kontrol edin; e-postanızı henüz doğrulamadıysanız E-postamı doğrula bağlantısını kullanın."
+        : "Giriş başarısız. Bilgilerinizi kontrol edin." };
     }
 
     const user = signInData.user;
@@ -90,7 +94,6 @@ export async function login(
       await supabase.auth.signOut();
       return { error: "Bu hesap aktif değil. Sistem yöneticinizle iletişime geçin." };
     }
-    if (access.mustChangePassword) redirect("/login/change-password");
 
     const targetRoute = resolveRouteForRoles(access.roles);
     if (targetRoute === "/login") {
@@ -98,7 +101,8 @@ export async function login(
       return { error: "Bu hesap için erişim yetkisi bulunmuyor. Sistem yöneticinizle iletişime geçin." };
     }
 
-    redirect(targetRoute);
+    if (!passesEmailGate(access.emailVerified)) redirect("/login/verify-email");
+    redirect("/login/mfa/setup");
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return { error: "Giriş tamamlanamadı. Lütfen yeniden deneyin." };
@@ -183,6 +187,7 @@ export async function changePassword(
       return { error: "Oturum süresi doldu. Lütfen tekrar giriş yapın." };
     }
 
+    await requirePasswordChangeAccess();
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
       return { error: "Şifre güncellenemedi." };
@@ -200,7 +205,7 @@ export async function changePassword(
 
     await supabase.auth.signOut({ scope: "others" });
 
-    redirect(await resolvePostLoginRoute());
+    redirect("/login/mfa/setup");
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return { error: "Şifre güncellenemedi. Lütfen yeniden deneyin." };

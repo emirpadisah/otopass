@@ -17,7 +17,7 @@ const DEALER_ROLE_SET = new Set(["dealer_owner", "dealer_manager", "dealer_viewe
 
 type DealerOption = { id: string; name: string };
 
-export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
+export function UserCreateForm({ dealers, canCreateAdmin = false }: { dealers: DealerOption[]; canCreateAdmin?: boolean }) {
   const [state, formAction, pending] = useActionState(createUserAction, initialState);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -61,8 +61,8 @@ export function UserCreateForm({ dealers }: { dealers: DealerOption[] }) {
               <option value="" disabled>
                 Rol seçin
               </option>
-              <option value="admin">Yönetici</option>
-              <option value="super_admin">Süper yönetici</option>
+              {canCreateAdmin ? <option value="admin">Yönetici</option> : null}
+              {canCreateAdmin ? <option value="super_admin">Süper yönetici</option> : null}
               <option value="dealer_owner" disabled={dealers.length === 0}>
                 Galeri sahibi
               </option>

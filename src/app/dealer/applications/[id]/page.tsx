@@ -1,4 +1,5 @@
 import { similarApplications } from "@/lib/offer-links";
+import { ApplicationReviewButton } from "@/components/ui/application-review-button";
 import { OfferLinkForm } from "@/components/ui/offer-link-form";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -192,6 +193,11 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
               description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"
               icon={HandCoins}
             >
+              {application.status === "pending" && !application.purged_at ? (
+                application.review_started_at
+                  ? <p className="mb-4 text-sm text-[var(--text-muted)]">Başvuru incelemede.</p>
+                  : <ApplicationReviewButton applicationId={application.id} />
+              ) : null}
               {application.status === "pending" || application.status === "rejected" ? (
                 <OfferForm applicationId={application.id} />
               ) : application.status === "offered" && currentOffer ? (

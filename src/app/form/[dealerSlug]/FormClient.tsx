@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TrackingLink } from "@/components/tracking-link";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -33,10 +34,12 @@ type SubmissionState = {
   message: string;
   progress: number;
   referenceCode?: string;
+  trackingUrl?: string;
 };
 type InitiateResponse = {
   sessionId: string;
   finalizeToken: string;
+  trackingUrl: string;
   uploads: Array<{ path: string; token: string }>;
   error?: string;
 };
@@ -320,7 +323,7 @@ export function FormClient({
     formData.delete("photos");
     compressed.forEach((file) => formData.append("photos", file));
     const response = await fetch("/api/public/applications/local", { method: "POST", body: formData });
-    return response.json() as Promise<{ ok?: boolean; referenceCode?: string; error?: string }>;
+    return response.json() as Promise<{ ok?: boolean; referenceCode?: string; trackingUrl?: string; error?: string }>;
   }
 
   async function uploadWithServerFallback({
@@ -408,7 +411,7 @@ export function FormClient({
     });
     const result = (await finalize.json()) as { ok?: boolean; referenceCode?: string; error?: string };
     if (!finalize.ok) throw new Error(result.error || "Başvuru tamamlanamadı.");
-    return result;
+    return { ...result, trackingUrl: initiated.trackingUrl };
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -456,6 +459,7 @@ export function FormClient({
         message: "Başvurunuz galeri ekibine iletildi.",
         progress: 100,
         referenceCode: result.referenceCode,
+        trackingUrl: result.trackingUrl,
       });
     } catch (error) {
       setState({ tone: "danger", message: error instanceof Error ? error.message : "Başvuru gönderilemedi.", progress: 0 });
@@ -484,14 +488,14 @@ export function FormClient({
         <section className="intake-success-view" role="status" aria-labelledby="intake-success-title">
           <span className="intake-success-icon"><CheckCircle2 size={28} aria-hidden="true" /></span>
           <p className="section-label">Başvuru tamamlandı</p>
-          <h2 ref={successHeadingRef} id="intake-success-title" tabIndex={-1}>Aracınız değerlendirme sırasına alındı.</h2>
-          <p>{state.message} Süreçle ilgili geri dönüş, paylaştığınız iletişim bilgileri üzerinden yapılacak.</p>
+          <h2 ref={successHeadingRef} id="intake-success-title" tabIndex={-1}>Başvurunuz alındı.</h2>
+          <p>Başvurunuzun durumunu ve teklif sürecini size özel takip sayfasından görebilirsiniz.</p>
           <div className="intake-reference">
             <span>Başvuru referansı</span>
             <strong>{state.referenceCode || "Oluşturuldu"}</strong>
           </div>
-          <div className="intake-success-note"><LockKeyhole size={16} aria-hidden="true" /> Bu kodu başvurunuzla ilgili görüşmelerde kullanabilirsiniz.</div>
-          <Button type="button" variant="secondary" size="lg" onClick={startNewApplication}>
+          {state.trackingUrl ? <TrackingLink url={state.trackingUrl} /> : null}
+          <Button type="button" variant="ghost" size="sm" onClick={startNewApplication}>
             <RotateCcw size={16} aria-hidden="true" /> Yeni başvuru oluştur
           </Button>
         </section>
@@ -672,8 +676,8 @@ export function FormClient({
 
           <footer className="intake-form-footer">
             <div className="intake-step-caption">
-              <span>{String(currentStep + 1).padStart(2, "0")}</span>
-              <p><strong>{formSteps[currentStep].label}</strong>{currentStep < formSteps.length - 1 ? " bilgilerini tamamlayın" : " adımını kontrol edip gönderin"}</p>
+              <span>{currentStep + 1}<small> / {formSteps.length}</small></span>
+              <p><strong>{formSteps[currentStep].label}</strong><small>{currentStep < formSteps.length - 1 ? `Sıradaki: ${formSteps[currentStep + 1].label}` : "Son kontrol ve gönderim"}</small></p>
             </div>
             <div className="intake-form-actions">
               {currentStep > 0 ? (

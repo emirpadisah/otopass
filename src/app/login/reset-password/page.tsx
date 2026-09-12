@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { requireUser } from "@/lib/auth/session";
+import { requirePasswordChangeAccess } from "@/lib/auth/password-access";
 import { ChangePasswordForm } from "../change-password/ChangePasswordForm";
 
 export const metadata: Metadata = { title: "Yeni şifre | otoköprü" };
 
 export default async function ResetPasswordPage() {
-  await requireUser();
+  await requirePasswordChangeAccess();
   return <ChangePasswordForm />;
 }

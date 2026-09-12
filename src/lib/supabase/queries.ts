@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { getRequestAccessContext } from "@/lib/auth/access-context";
+import { getProtectedAccessContext } from "@/lib/auth/access-context";
 import { requireAdminAccess } from "@/lib/auth/roles";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
@@ -60,7 +60,7 @@ export async function getDealerById(id: string): Promise<DealerRow | null> {
 }
 
 export const getCurrentUserId = cache(async (): Promise<string | null> => {
-  const context = await getRequestAccessContext();
+  const context = await getProtectedAccessContext();
   return context?.isActive ? context.user.id : null;
 });
 
@@ -84,13 +84,13 @@ export async function listDealers(): Promise<DealerRow[]> {
 }
 
 export const getDealerForCurrentUser = cache(async () => {
-  const context = await getRequestAccessContext();
+  const context = await getProtectedAccessContext();
   if (!context?.isActive || !context.dealerId || !context.membershipRole) return null;
   return { dealer_id: context.dealerId, role: context.membershipRole };
 });
 
 export async function getDealerForCurrentUserWithDetails() {
-  const context = await getRequestAccessContext();
+  const context = await getProtectedAccessContext();
   return context?.isActive ? context.dealer : null;
 }
 
@@ -135,6 +135,7 @@ export async function listDealerApplications(dealerId: string): Promise<Applicat
     .select("*")
     .eq("dealer_id", dealerId)
     .not("submitted_at", "is", null)
+    .is("purged_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as ApplicationRow[]) ?? [];
@@ -270,11 +271,18 @@ export async function listDealerOffers(dealerId: string): Promise<OfferRow[]> {
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("offers")
-    .select("*")
+    .select("*, applications!inner(submitted_at, purged_at)")
     .eq("dealer_id", dealerId)
+    .not("applications.submitted_at", "is", null)
+    .is("applications.purged_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as OfferRow[]) ?? [];
+  return ((data as Array<OfferRow & { applications: unknown }> | null) ?? [])
+    .map((row) => {
+      const { applications, ...offer } = row;
+      void applications;
+      return offer;
+    });
 }
 
 export async function listDealerOffersForCurrentUser(): Promise<OfferRow[]> {
@@ -284,8 +292,11 @@ export async function listDealerOffersForCurrentUser(): Promise<OfferRow[]> {
 }
 
 export async function listDealerOffersForApplicationCurrentUser(applicationId: string): Promise<OfferRow[]> {
-  const dealer = await getDealerForCurrentUser();
-  if (!dealer?.dealer_id) return [];
+  const [dealer, application] = await Promise.all([
+    getDealerForCurrentUser(),
+    getDealerApplicationForCurrentUser(applicationId),
+  ]);
+  if (!dealer?.dealer_id || !application) return [];
   if (isLocalDataMode()) {
     return (await listLocalDealerOffers(dealer.dealer_id)).filter((offer) => offer.application_id === applicationId);
   }
@@ -293,12 +304,19 @@ export async function listDealerOffersForApplicationCurrentUser(applicationId: s
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("offers")
-    .select("*")
+    .select("*, applications!inner(submitted_at, purged_at)")
     .eq("dealer_id", dealer.dealer_id)
     .eq("application_id", applicationId)
+    .not("applications.submitted_at", "is", null)
+    .is("applications.purged_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as OfferRow[] | null) ?? [];
+  return ((data as Array<OfferRow & { applications: unknown }> | null) ?? [])
+    .map((row) => {
+      const { applications, ...offer } = row;
+      void applications;
+      return offer;
+    });
 }
 
 export async function getDealerDashboardData(dealerId: string): Promise<{
@@ -369,6 +387,7 @@ export async function getDealerApplicationForCurrentUser(applicationId: string):
     .eq("id", applicationId)
     .eq("dealer_id", dealer.dealer_id)
     .not("submitted_at", "is", null)
+    .is("purged_at", null)
     .maybeSingle();
   if (error) throw error;
   return (data as ApplicationRow | null) ?? null;

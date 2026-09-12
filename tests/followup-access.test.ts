@@ -3,7 +3,7 @@ import type { LocalData } from "../src/lib/local/store";
 
 const mocks = vi.hoisted(() => ({ context: vi.fn(), read: vi.fn(), mutate: vi.fn(), local: vi.fn(), server: vi.fn() }));
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/auth/access-context", () => ({ getRequestAccessContext: mocks.context }));
+vi.mock("@/lib/auth/access-context", () => ({ getProtectedAccessContext: mocks.context }));
 vi.mock("@/lib/local/store", () => ({ readLocalData: mocks.read, mutateLocalData: mocks.mutate }));
 vi.mock("@/lib/data-mode", () => ({ isLocalDataMode: mocks.local }));
 vi.mock("@/lib/supabase/server", () => ({ createSupabaseServerClient: mocks.server }));

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireUser } from "@/lib/auth/session";
+import { requirePasswordChangeAccess } from "@/lib/auth/password-access";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export const metadata: Metadata = {
@@ -8,6 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function ChangePasswordPage() {
-  await requireUser();
+  await requirePasswordChangeAccess();
   return <ChangePasswordForm />;
 }
