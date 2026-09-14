@@ -434,7 +434,7 @@
 .pricingHeading h2 { margin: 0; color: #fff; font-size: 40px; line-height: 1.08; }
 .pricingHeading p { margin: 16px 0 0; color: rgba(255, 255, 255, .7); line-height: 1.65; }
 .priceCard { overflow: hidden; align-self: start; border: 1px solid var(--c-border); border-radius: 16px; background: #090909; background-image: radial-gradient(80% 50% at 50% 0%, #1a1a1a 0%, transparent 70%); }
-.priceCardAnnual { margin-bottom: 48px; }
+.priceCardPro { margin-bottom: 48px; }
 .priceCardTop { min-height: 285px; border-bottom: 1px solid rgba(255, 255, 255, .1); padding: 38px; }
 .priceCardTop > p:first-child { margin: 0; color: var(--c-muted); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; margin-top: 16px; }
@@ -540,7 +540,7 @@
   .timelineGrid { grid-template-columns: 1fr; gap: 56px; }
   .timelineHeading { position: static; }
   .timelineHeading h2 { font-size: 34px; }
-  .priceCardAnnual { margin-bottom: 0; }
+  .priceCardPro { margin-bottom: 0; }
   .contactSection { padding: 72px 20px; }
   .contactCard { padding: 32px 20px; }
   .contactCard h2 { font-size: 34px; }

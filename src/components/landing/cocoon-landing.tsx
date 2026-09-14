@@ -82,6 +82,17 @@ const sharedPlanFeatures = [
   "Galeriye özel marka görünümü",
 ];
 
+const enterprisePlanFeatures = [
+  "OtoKöprü Pro’daki tüm özellikler",
+  "Çoklu şube yönetimi",
+  "İhtiyaca özel entegrasyonlar",
+  "Ek kullanıcı ve gelişmiş rol yapısı",
+  "İhtiyaca özel SLA",
+  "Kurulum ve onboarding desteği",
+  "Veri migrasyonu",
+  "Özel raporlama",
+];
+
 const landingInspectionCondition: VehicleBodyCondition = {
   hood: "local_paint",
   left_front_door: "painted",
@@ -158,27 +169,31 @@ function FeatureVisual({ image, children, alt }: { image: string; children: Reac
   );
 }
 
-function PricingCard({ annual }: { annual: boolean }) {
+function PricingCard({ plan }: { plan: "pro" | "enterprise" }) {
+  const isPro = plan === "pro";
+
   return (
-    <article className={`${styles.priceCard} ${annual ? styles.priceCardAnnual : ""}`} data-testid="pricing-card">
+    <article className={`${styles.priceCard} ${isPro ? styles.priceCardPro : ""}`} data-testid="pricing-card">
       <div className={styles.priceCardTop}>
-        <p>{annual ? "Yıllık" : "Aylık"}</p>
+        <p>OtoKöprü {isPro ? "Pro" : "Enterprise"}</p>
         <div className={styles.price}>
-          <strong>{annual ? "₺50.000" : "₺5.000"}</strong>
-          <span>+ KDV / {annual ? "yıl" : "ay"}</span>
+          <strong>{isPro ? "₺50.000" : "Özel"}</strong>
+          {" "}
+          <span>{isPro ? "+ KDV / yıl" : "fiyatlandırma"}</span>
         </div>
         <p className={styles.priceDescription}>
-          {annual
-            ? "Yıl boyunca sabit maliyetle markanıza özel çalışma alanı."
-            : "Taahhütsüz başlayın ve araç alım operasyonunuzu hemen düzenleyin."}
+          {isPro
+            ? "Araç alım operasyonunu tek noktada yöneten galeriler için yıllık paket."
+            : "Çok şubeli ve özel operasyon ihtiyaçları olan kurumlara özel çözüm."}
         </p>
       </div>
       <div className={styles.priceCardBottom}>
         <ul>
-          {sharedPlanFeatures.map((feature) => <li key={feature}><Check size={16} />{feature}</li>)}
-          {annual && <li><Check size={16} />Kendi özel domaininizi bağlama</li>}
+          {(isPro ? [...sharedPlanFeatures, "Kendi özel domaininizi bağlama"] : enterprisePlanFeatures).map((feature) => (
+            <li key={feature}><Check size={16} />{feature}</li>
+          ))}
         </ul>
-        <a href="#iletisim" className={styles.outlineButton}>Bilgi alın</a>
+        <a href="#iletisim" className={styles.outlineButton}>{isPro ? "Pro için bilgi alın" : "Teklif isteyin"}</a>
       </div>
     </article>
   );
@@ -481,11 +496,11 @@ export function CocoonLanding() {
               <div className={styles.pricingShade} />
               <div className={`${styles.container} ${styles.pricingGrid}`} data-animate>
                 <div className={styles.pricingHeading}>
-                  <h2>Sade ve şeffaf fiyatlandırma</h2>
-                  <p>Gizli maliyet yok. İki pakette de aynı operasyon özellikleri; yıllık pakette özel domain avantajı.</p>
+                  <h2>Operasyonunuza uygun planı seçin</h2>
+                  <p>Pro ile yıllık sabit fiyat avantajından yararlanın; kurumsal ihtiyaçlarınız için Enterprise çözümünü birlikte şekillendirelim.</p>
                 </div>
-                <PricingCard annual={false} />
-                <PricingCard annual />
+                <PricingCard plan="pro" />
+                <PricingCard plan="enterprise" />
               </div>
             </div>
           </div>
