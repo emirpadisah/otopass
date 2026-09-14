@@ -177,7 +177,7 @@ function PricingCard({ plan }: { plan: "pro" | "enterprise" }) {
       <div className={styles.priceCardTop}>
         <p>OtoKöprü {isPro ? "Pro" : "Enterprise"}</p>
         <div className={styles.price}>
-          <strong>{isPro ? "₺50.000" : "Özel"}</strong>
+          <strong>{isPro ? "₺40.000" : "Özel"}</strong>
           {" "}
           <span>{isPro ? "+ KDV / yıl" : "fiyatlandırma"}</span>
         </div>

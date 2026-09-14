@@ -69,7 +69,7 @@ test("landing pricing and contact form prepare a WhatsApp inquiry", async ({ pag
   const pricingCards = page.getByTestId("pricing-card");
   await expect(pricingCards).toHaveCount(2);
   await expect(pricingCards.nth(0)).toContainText("OtoKöprü Pro");
-  await expect(pricingCards.nth(0)).toContainText("₺50.000");
+  await expect(pricingCards.nth(0)).toContainText("₺40.000");
   await expect(pricingCards.nth(1)).toContainText("OtoKöprü Enterprise");
   await expect(pricingCards.nth(1)).toContainText("Özel fiyatlandırma");
 
