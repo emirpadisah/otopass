@@ -77,13 +77,23 @@ test("landing pricing and contact form prepare a WhatsApp inquiry", async ({ pag
   await page.goto("/");
   const pricingCards = page.getByTestId("pricing-card");
   await expect(pricingCards).toHaveCount(2);
-  await expect(pricingCards.nth(0)).toContainText("₺5.000");
-  await expect(pricingCards.nth(1)).toContainText("₺50.000");
+  await expect(pricingCards.nth(0)).toContainText("OtoKöprü Pro");
+  await expect(pricingCards.nth(0)).toContainText("₺50.000");
+  await expect(pricingCards.nth(1)).toContainText("OtoKöprü Enterprise");
+  await expect(pricingCards.nth(1)).toContainText("Özel fiyatlandırma");
 
-  const monthlyFeatures = await pricingCards.nth(0).locator("li").allTextContents();
-  const annualFeatures = await pricingCards.nth(1).locator("li").allTextContents();
-  expect(annualFeatures.slice(0, -1)).toEqual(monthlyFeatures);
-  expect(annualFeatures.at(-1)).toContain("özel domain");
+  const proFeatures = await pricingCards.nth(0).locator("li").allTextContents();
+  const enterpriseFeatures = await pricingCards.nth(1).locator("li").allTextContents();
+  expect(proFeatures).toContain("Kendi özel domaininizi bağlama");
+  expect(enterpriseFeatures).toEqual(expect.arrayContaining([
+    "Çoklu şube yönetimi",
+    "İhtiyaca özel entegrasyonlar",
+    "Ek kullanıcı ve gelişmiş rol yapısı",
+    "İhtiyaca özel SLA",
+    "Kurulum ve onboarding desteği",
+    "Veri migrasyonu",
+    "Özel raporlama",
+  ]));
 
   await page.locator("#iletisim").scrollIntoViewIfNeeded();
   await page.getByLabel("Ad soyad").fill("E2E Galeri");
