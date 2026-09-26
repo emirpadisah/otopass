@@ -3,29 +3,27 @@ import { getRequestAccessContext } from "@/lib/auth/access-context";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { createLocalOffer, markLocalApplicationAsSold, respondToLocalOffer } from "@/lib/local/repository";
 import type { OfferStatus } from "@/lib/types";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
+import { getSupabasePublicEnv } from "./env";
 import { getDealerForCurrentUser } from "./queries";
 import { createSupabaseServerClient } from "./server";
 
 async function logOfferAuthorizationFailure(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  supabase: SupabaseClient<Database>,
   dealerId: string,
   applicationId: string,
+  verifiedUserId: string,
 ) {
   try {
-    const context = await getRequestAccessContext();
-    const { data: claims } = await supabase.auth.getClaims();
-    const { data: session } = await supabase.auth.getSession();
     const [access, profile] = await Promise.all([
       supabase.rpc("current_user_can_manage_dealer", { _dealer_id: dealerId }),
-      supabase.from("user_profiles").select("user_id").eq("user_id", context?.user.id ?? "").maybeSingle(),
+      supabase.from("user_profiles").select("user_id").eq("user_id", verifiedUserId).maybeSingle(),
     ]);
     console.error("OFFER_AUTH_DIAGNOSTIC", {
       applicationId,
       dealerId,
-      contextUserId: context?.user.id ?? null,
-      claimsUserId: claims?.claims?.sub ?? null,
-      sessionUserId: session.session?.user.id ?? null,
-      hasAccessToken: !!session.session?.access_token,
+      verifiedUserId,
       databaseCanManage: access.data,
       databaseCheckCode: access.error?.code ?? null,
       ownProfileVisible: !!profile.data,
@@ -37,10 +35,24 @@ async function logOfferAuthorizationFailure(
 }
 
 async function createAuthenticatedWorkflowClient() {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data?.claims?.sub) throw new Error("Oturumunuz sona erdi. Lütfen yeniden giriş yapın.");
-  return supabase;
+  const sessionClient = await createSupabaseServerClient();
+  const { data: sessionData, error: sessionError } = await sessionClient.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (sessionError || !accessToken) throw new Error("Oturumunuz sona erdi. Lütfen yeniden giriş yapın.");
+
+  const { data: claimsData, error: claimsError } = await sessionClient.auth.getClaims(accessToken);
+  const context = await getRequestAccessContext();
+  const verifiedUserId = claimsData?.claims?.sub;
+  if (claimsError || !verifiedUserId || verifiedUserId !== context?.user.id) {
+    throw new Error("Oturumunuz doğrulanamadı. Lütfen yeniden giriş yapın.");
+  }
+
+  const { url, anonKey } = getSupabasePublicEnv();
+  const supabase = createClient<Database>(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return { supabase, verifiedUserId };
 }
 
 function assertManager(role: string | undefined): void {
@@ -66,9 +78,9 @@ export async function createOfferForCurrentDealer(input: { applicationId: string
     await createLocalOffer({ applicationId: input.applicationId, dealerId: dealer.dealer_id, amount: input.amount, notes: input.notes });
     return;
   }
-  const supabase = await createAuthenticatedWorkflowClient();
+  const { supabase, verifiedUserId } = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("create_dealer_offer", { p_application_id: input.applicationId, p_amount: input.amount, p_currency: "TRY", p_notes: input.notes });
-  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId);
+  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId, verifiedUserId);
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
 }
 
@@ -81,7 +93,7 @@ export async function respondToOfferForCurrentDealer(input: { offerId: string; r
     await respondToLocalOffer(input.offerId, dealer.dealer_id, input.response, input.note);
     return;
   }
-  const supabase = await createAuthenticatedWorkflowClient();
+  const { supabase } = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("respond_to_dealer_offer", { p_offer_id: input.offerId, p_response: input.response, p_note: input.note });
   if (error) throw mapWorkflowError(error, "Teklif yanıtı kaydedilemedi.");
 }
@@ -95,7 +107,7 @@ export async function markApplicationAsSoldForCurrentDealer(applicationId: strin
     await markLocalApplicationAsSold(applicationId, dealer.dealer_id);
     return;
   }
-  const supabase = await createAuthenticatedWorkflowClient();
+  const { supabase } = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("mark_dealer_application_sold", { p_application_id: applicationId });
   if (error) throw mapWorkflowError(error, "Satış durumu kaydedilemedi.");
 }
