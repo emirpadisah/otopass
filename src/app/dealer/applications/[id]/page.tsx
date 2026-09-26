@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, KeyRound, Phone, ScanSearch, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, KeyRound, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   ApplicationDeleteButton,
-  OfferShareCard,
   PanelPageHeader,
   PanelSection,
-  StatusBadge,
   WhatsAppPhoneLink,
   VehicleConditionMap,
   buttonVariants,
@@ -19,9 +17,9 @@ import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
 import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentUser, listDealerOffersForApplicationCurrentUser } from "@/lib/supabase/queries";
-import { OfferForm } from "./OfferForm";
-import { OfferDecisionForm } from "./OfferDecisionForm";
-import { SoldButtonForm } from "../SoldButtonForm";
+import { OfferPageState, OfferStatusBadge } from "./OfferPageState";
+import { OfferSharePanel } from "./OfferSharePanel";
+import { OfferWorkflowPanel } from "./OfferWorkflowPanel";
 import { TrackingKeyForm } from "./TrackingKeyForm";
 import { deleteDealerApplicationAction } from "./delete-actions";
 
@@ -62,7 +60,8 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
   ];
 
   return (
-    <div>
+    <OfferPageState key={`${application.id}:${application.status}:${currentOffer?.id ?? ""}`} initialStatus={application.status}>
+      <div>
       <PanelPageHeader
         eyebrow="Başvurular / Detay"
         title={`${application.brand} ${application.model}`}
@@ -72,7 +71,7 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         icon={CarFront}
         meta={
           <>
-            <StatusBadge status={application.status} />
+            <OfferStatusBadge />
             <span className="ops-chip"><Camera size={13} aria-hidden="true" /> {photoUrls.viewUrls.length} fotoğraf</span>
           </>
         }
@@ -124,36 +123,32 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
             <VehicleConditionMap value={bodyCondition} readOnly />
           </PanelSection>
 
-          {currentOffer ? (
-            <PanelSection
-              title="Paylaşılabilir teklif özeti"
-              description="Başvuru ve teklif bilgilerinden otomatik hazırlanan indirilebilir görsel"
-              icon={FileImage}
-            >
-              <OfferShareCard
-                dealerName={dealerDetails?.name ?? "Galeri"}
-                dealerLogoUrl={dealerDetails ? getDealerLogoSrc(dealerDetails) : null}
-                referenceCode={application.reference_code}
-                amount={currentOffer.amount}
-                currency={currentOffer.currency}
-                notes={currentOffer.notes}
-                createdAt={currentOffer.created_at}
-                vehicle={{
-                  brand: application.brand,
-                  model: application.model,
-                  vehiclePackage: application.vehicle_package,
-                  engineInfo: application.engine_info,
-                  modelYear: application.model_year,
-                  km: application.km,
-                  fuelType: application.fuel_type,
-                  transmission: application.transmission,
-                  tramerInfo: application.tramer_info,
-                  damageInfo: application.damage_info,
-                }}
-                bodyCondition={bodyCondition}
-              />
-            </PanelSection>
-          ) : null}
+          <OfferSharePanel
+            base={{
+              dealerName: dealerDetails?.name ?? "Galeri",
+              dealerLogoUrl: dealerDetails ? getDealerLogoSrc(dealerDetails) : null,
+              referenceCode: application.reference_code,
+              vehicle: {
+                brand: application.brand,
+                model: application.model,
+                vehiclePackage: application.vehicle_package,
+                engineInfo: application.engine_info,
+                modelYear: application.model_year,
+                km: application.km,
+                fuelType: application.fuel_type,
+                transmission: application.transmission,
+                tramerInfo: application.tramer_info,
+                damageInfo: application.damage_info,
+              },
+              bodyCondition,
+            }}
+            currentOffer={currentOffer ? {
+              amount: currentOffer.amount,
+              currency: currentOffer.currency,
+              notes: currentOffer.notes,
+              createdAt: currentOffer.created_at,
+            } : null}
+          />
 
           <div className="grid gap-4 lg:grid-cols-[1fr_.75fr]">
             <PanelSection title="Başvuru bilgileri" description="Müşteri ve araç bilgileri" icon={ClipboardCheck}>
@@ -183,35 +178,14 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
                 <TrackingKeyForm applicationId={application.id} />
               </PanelSection>
             ) : null}
-            <PanelSection
-              title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
-              description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"
-              icon={HandCoins}
-            >
-              {application.status === "pending" || application.status === "rejected" ? (
-                <OfferForm applicationId={application.id} />
-              ) : application.status === "offered" && currentOffer ? (
-                <div className="space-y-4">
-                  <div className="panel-subtle p-4">
-                    <p className="text-xs text-[var(--text-muted)]">Yanıt bekleyen teklif</p>
-                    <p className="mt-1 text-xl font-bold">
-                      {new Intl.NumberFormat("tr-TR", { style: "currency", currency: currentOffer.currency, maximumFractionDigits: 0 }).format(currentOffer.amount)}
-                    </p>
-                  </div>
-                  <OfferDecisionForm applicationId={application.id} offerId={currentOffer.id} />
-                </div>
-              ) : application.status === "accepted" ? (
-                <div className="space-y-4">
-                  <div className="status-alert" data-tone="success">Müşteri teklifi kabul etti. Araç devri tamamlandığında satışı kapatın.</div>
-                  <SoldButtonForm applicationId={application.id} />
-                </div>
-              ) : (
-                <div className="status-alert" role="status">Bu başvuruda bekleyen bir işlem bulunmuyor.</div>
-              )}
-            </PanelSection>
+            <OfferWorkflowPanel
+              applicationId={application.id}
+              currentOffer={currentOffer ? { id: currentOffer.id, amount: currentOffer.amount, currency: currentOffer.currency } : null}
+            />
           </aside>
         ) : null}
       </div>
-    </div>
+      </div>
+    </OfferPageState>
   );
 }

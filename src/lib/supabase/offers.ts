@@ -36,25 +36,26 @@ function mapWorkflowError(error: { message?: string } | null, fallback: string):
 }
 
 export async function createOfferForCurrentDealer(input: { applicationId: string; amount: number; notes: string | null }) {
-  const dealer = await getDealerForCurrentUser();
-  if (!dealer?.dealer_id) throw new Error("Galeri hesabı gerekli.");
-  assertManager(dealer.role);
+  const context = await getRequestAccessContext();
+  if (!context?.isActive || !context.dealerId) throw new Error("Galeri hesabı gerekli.");
+  assertManager(context.membershipRole ?? undefined);
   if (!Number.isFinite(input.amount) || input.amount <= 0 || input.amount > 1_000_000_000) throw new Error("Teklif tutarı geçersiz.");
   if (input.notes && input.notes.length > 2000) throw new Error("Teklif notu en fazla 2000 karakter olabilir.");
   if (isLocalDataMode()) {
-    await createLocalOffer({ applicationId: input.applicationId, dealerId: dealer.dealer_id, amount: input.amount, notes: input.notes });
-    return;
+    const offer = await createLocalOffer({ applicationId: input.applicationId, dealerId: context.dealerId, amount: input.amount, notes: input.notes });
+    return { id: offer.id, amount: offer.amount, currency: offer.currency, notes: offer.notes, createdAt: offer.created_at };
   }
-  const actorUserId = await getVerifiedWorkflowActorId();
   const service = createSupabaseServiceClient();
-  const { error } = await service.rpc("create_dealer_offer_for_actor", {
+  const { data: offer, error } = await service.rpc("create_dealer_offer_for_actor", {
     p_application_id: input.applicationId,
     p_amount: input.amount,
     p_currency: "TRY",
     p_notes: input.notes,
-    p_actor_user_id: actorUserId,
+    p_actor_user_id: context.user.id,
   });
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
+  if (!offer) throw new Error("Teklif oluşturulamadı.");
+  return { id: offer.id, amount: offer.amount, currency: offer.currency, notes: offer.notes, createdAt: offer.created_at };
 }
 
 export async function respondToOfferForCurrentDealer(input: { offerId: string; response: Exclude<OfferStatus, "pending">; note: string | null }) {

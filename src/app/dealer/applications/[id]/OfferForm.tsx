@@ -3,12 +3,11 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { HandCoins } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 import { createOfferAction } from "./actions";
-import type { ActionResponse } from "@/lib/types";
+import { useOfferPageState } from "./OfferPageState";
 
-const initialState: ActionResponse = { ok: false };
+const initialState: Awaited<ReturnType<typeof createOfferAction>> = { ok: false };
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -23,11 +22,15 @@ function SubmitButton() {
 
 export function OfferForm({ applicationId }: { applicationId: string }) {
   const [state, formAction] = useActionState(createOfferAction, initialState);
-  const router = useRouter();
+  const { setCreatedOffer } = useOfferPageState();
 
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [router, state.ok]);
+    if (state.ok && state.offer) setCreatedOffer(state.offer);
+  }, [setCreatedOffer, state.ok, state.offer]);
+
+  if (state.ok) {
+    return <div className="status-alert" data-tone="success" role="status">Teklif başarıyla oluşturuldu.</div>;
+  }
 
   return (
     <form action={formAction} className="space-y-4">

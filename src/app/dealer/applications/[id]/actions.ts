@@ -4,20 +4,21 @@ import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/lib/types";
 import { createOfferForCurrentDealer, respondToOfferForCurrentDealer } from "@/lib/supabase/offers";
 
+type CreateOfferResponse = ActionResponse & {
+  offer?: { id: string; amount: number; currency: string; notes: string | null; createdAt: string };
+};
+
 export async function createOfferAction(
-  _prevState: ActionResponse,
+  _prevState: CreateOfferResponse,
   formData: FormData
-): Promise<ActionResponse> {
+): Promise<CreateOfferResponse> {
   const applicationId = String(formData.get("applicationId") ?? "");
   const amount = Number(formData.get("amount") ?? 0);
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   try {
-    await createOfferForCurrentDealer({ applicationId, amount, notes });
-    revalidatePath("/dealer");
-    revalidatePath("/dealer/applications");
-    revalidatePath(`/dealer/applications/${applicationId}`);
-    return { ok: true, code: "OFFER_CREATED", message: "Teklif başarıyla oluşturuldu." };
+    const offer = await createOfferForCurrentDealer({ applicationId, amount, notes });
+    return { ok: true, code: "OFFER_CREATED", message: "Teklif başarıyla oluşturuldu.", offer };
   } catch (error) {
     return {
       ok: false,
