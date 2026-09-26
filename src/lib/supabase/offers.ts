@@ -5,6 +5,13 @@ import type { OfferStatus } from "@/lib/types";
 import { getDealerForCurrentUser } from "./queries";
 import { createSupabaseServerClient } from "./server";
 
+async function createAuthenticatedWorkflowClient() {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims?.sub) throw new Error("Oturumunuz sona erdi. Lütfen yeniden giriş yapın.");
+  return supabase;
+}
+
 function assertManager(role: string | undefined): void {
   if (!role || !canManageDealerMembership(role)) throw new Error("Bu işlem için galeri yönetim yetkisi gerekli.");
 }
@@ -28,7 +35,7 @@ export async function createOfferForCurrentDealer(input: { applicationId: string
     await createLocalOffer({ applicationId: input.applicationId, dealerId: dealer.dealer_id, amount: input.amount, notes: input.notes });
     return;
   }
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("create_dealer_offer", { p_application_id: input.applicationId, p_amount: input.amount, p_currency: "TRY", p_notes: input.notes });
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
 }
@@ -42,7 +49,7 @@ export async function respondToOfferForCurrentDealer(input: { offerId: string; r
     await respondToLocalOffer(input.offerId, dealer.dealer_id, input.response, input.note);
     return;
   }
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("respond_to_dealer_offer", { p_offer_id: input.offerId, p_response: input.response, p_note: input.note });
   if (error) throw mapWorkflowError(error, "Teklif yanıtı kaydedilemedi.");
 }
@@ -56,7 +63,7 @@ export async function markApplicationAsSoldForCurrentDealer(applicationId: strin
     await markLocalApplicationAsSold(applicationId, dealer.dealer_id);
     return;
   }
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("mark_dealer_application_sold", { p_application_id: applicationId });
   if (error) throw mapWorkflowError(error, "Satış durumu kaydedilemedi.");
 }
