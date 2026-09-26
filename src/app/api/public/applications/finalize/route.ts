@@ -2,7 +2,6 @@ import { timingSafeEqual } from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createTrackingKey, hashTrackingKey } from "@/lib/application-tracking";
 import { APPLICATIONS_BUCKET, hashFinalizeToken } from "@/lib/public-applications";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import {
@@ -141,16 +140,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const trackingKey = createTrackingKey();
-    const { data: application, error: finalizeError } = await supabase.rpc("finalize_public_application_with_tracking_key", {
+    const { data: application, error: finalizeError } = await supabase.rpc("finalize_public_application", {
       p_session_id: body.sessionId,
       p_photo_paths: storedItems.map((item) => item.path),
-      p_tracking_key_hash: hashTrackingKey(trackingKey.replaceAll("-", "")),
     });
     if (finalizeError) throw finalizeError;
 
     return NextResponse.json(
-      { ok: true, referenceCode: application.reference_code, trackingKey, requestId },
+      { ok: true, referenceCode: application.reference_code, requestId },
       { headers: PRIVATE_NO_STORE_HEADERS },
     );
   } catch (error) {

@@ -16,7 +16,9 @@ describe("public application upload tokens", () => {
   });
 
   it("creates bounded references and storage-safe file stems", () => {
-    expect(createReferenceCode(new Date("2026-08-24T00:00:00Z"))).toMatch(/^OTP-20260824-[A-F0-9]{8}$/);
+    const references = new Set(Array.from({ length: 100 }, () => createReferenceCode(new Date("2026-08-24T00:00:00Z"))));
+    expect(references.size).toBe(100);
+    for (const reference of references) expect(reference).toMatch(/^OTP-20260824-[A-F0-9]{24}$/);
     expect(sanitizeUploadName("../../arac fotoğrafı<script>.jpg")).toBe("arac-fotog-raf-script");
     expect(sanitizeUploadName("x".repeat(200))).toHaveLength(64);
   });

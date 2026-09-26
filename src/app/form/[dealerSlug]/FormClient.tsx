@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Button, Field, Input, Textarea, VehicleConditionMap, buttonVariants } from "@/components/ui";
-import { TrackingKeyCopyButton } from "@/components/tracking-key-copy-button";
 import { formatTurkishMobileInput } from "@/lib/phone";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, MAX_FILE_SIZE } from "@/lib/validation/application";
@@ -33,7 +32,6 @@ type SubmissionState = {
   message: string;
   progress: number;
   referenceCode?: string;
-  trackingKey?: string;
 };
 type InitiateResponse = {
   sessionId: string;
@@ -243,7 +241,7 @@ export function FormClient({
     formData.delete("photos");
     compressed.forEach((file) => formData.append("photos", file));
     const response = await fetch("/api/public/applications/local", { method: "POST", body: formData });
-    return response.json() as Promise<{ ok?: boolean; referenceCode?: string; trackingKey?: string; error?: string }>;
+    return response.json() as Promise<{ ok?: boolean; referenceCode?: string; error?: string }>;
   }
 
   async function uploadWithServerFallback({
@@ -329,7 +327,7 @@ export function FormClient({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ sessionId: initiated.sessionId, finalizeToken: initiated.finalizeToken }),
     });
-    const result = (await finalize.json()) as { ok?: boolean; referenceCode?: string; trackingKey?: string; error?: string };
+    const result = (await finalize.json()) as { ok?: boolean; referenceCode?: string; error?: string };
     if (!finalize.ok) throw new Error(result.error || "Başvuru tamamlanamadı.");
     return result;
   }
@@ -374,7 +372,6 @@ export function FormClient({
         message: "Başvurunuz galeri ekibine iletildi.",
         progress: 100,
         referenceCode: result.referenceCode,
-        trackingKey: result.trackingKey,
       });
     } catch (error) {
       setState({ tone: "danger", message: error instanceof Error ? error.message : "Başvuru gönderilemedi.", progress: 0 });
@@ -408,18 +405,8 @@ export function FormClient({
             <span>Başvuru referansı</span>
             <strong>{state.referenceCode || "Oluşturuldu"}</strong>
           </div>
-          <div className="intake-success-note"><LockKeyhole size={16} aria-hidden="true" /> Bu kodu başvurunuzla ilgili görüşmelerde kullanabilirsiniz.</div>
-          {state.trackingKey ? (
-            <>
-              <div className="intake-reference">
-                <span>Gizli takip anahtarı</span>
-                <strong className="break-all select-all">{state.trackingKey}</strong>
-              </div>
-              <TrackingKeyCopyButton key={state.trackingKey} value={state.trackingKey} />
-              <div className="intake-success-note"><LockKeyhole size={16} aria-hidden="true" /> Bu anahtarı şimdi kaydedin. Güvenlik için daha sonra tekrar gösterilemez.</div>
-              <Link href="/takip" className={buttonVariants({ size: "lg" })}>Başvuru durumunu takip et <ArrowRight size={16} /></Link>
-            </>
-          ) : null}
+          <div className="intake-success-note"><LockKeyhole size={16} aria-hidden="true" /> Durumu görüntülemek için bu referans kodunu saklayın.</div>
+          {state.referenceCode ? <Link href="/takip" className={buttonVariants({ size: "lg" })}>Başvuru durumunu takip et <ArrowRight size={16} /></Link> : null}
           <Button type="button" variant="secondary" size="lg" onClick={startNewApplication}>
             <RotateCcw size={16} aria-hidden="true" /> Yeni başvuru oluştur
           </Button>

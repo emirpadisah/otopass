@@ -4,7 +4,7 @@ export const APPLICATIONS_BUCKET = "applications";
 
 export function createReferenceCode(now = new Date()): string {
   const date = now.toISOString().slice(0, 10).replaceAll("-", "");
-  return `OTP-${date}-${randomBytes(4).toString("hex").toUpperCase()}`;
+  return `OTP-${date}-${randomBytes(12).toString("hex").toUpperCase()}`;
 }
 
 export function createFinalizeToken(): string {

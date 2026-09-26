@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, KeyRound, Phone, ScanSearch, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   ApplicationDeleteButton,
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { canManageDealerMembership } from "@/lib/auth/route";
-import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
@@ -20,7 +19,6 @@ import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentU
 import { OfferPageState, OfferStatusBadge } from "./OfferPageState";
 import { OfferSharePanel } from "./OfferSharePanel";
 import { OfferWorkflowPanel } from "./OfferWorkflowPanel";
-import { TrackingKeyForm } from "./TrackingKeyForm";
 import { deleteDealerApplicationAction } from "./delete-actions";
 
 type PageProps = {
@@ -173,11 +171,6 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
 
         {canManage ? (
           <aside className="space-y-4 xl:sticky xl:top-[102px] xl:self-start">
-            {!isLocalDataMode() ? (
-              <PanelSection title="Müşteri takip anahtarı" description="Başvuru durumunu güvenle paylaşın" icon={KeyRound}>
-                <TrackingKeyForm applicationId={application.id} />
-              </PanelSection>
-            ) : null}
             <OfferWorkflowPanel
               applicationId={application.id}
               currentOffer={currentOffer ? { id: currentOffer.id, amount: currentOffer.amount, currency: currentOffer.currency } : null}
