@@ -17,6 +17,7 @@ describe("Turnstile configuration", () => {
     delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     delete process.env.TURNSTILE_SECRET_KEY;
     await expect(verifyTurnstile("", "127.0.0.1")).resolves.toBe(true);
+    await expect(verifyTurnstile("", "127.0.0.1", "www.otokopru.com", "tracking_verify")).resolves.toBe(true);
   });
 
   it("rejects partial configuration", async () => {

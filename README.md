@@ -14,6 +14,7 @@ npm run dev
 Public demo varsayılan olarak local veri modunda `/form/test-galeri` adresinde çalışır. Kayıtlar Git tarafından izlenmeyen `.local-data/` dizininde tutulur. Local kullanıcı ve panel oturumları devre dışıdır; admin ve galeri paneli Supabase gerektirir.
 
 Başvuru sahipleri `/takip` sayfasında referans kodu ve başvuru sonunda yalnız bir kez gösterilen gizli takip anahtarıyla durumlarını görüntüleyebilir. Anahtarın yalnız SHA-256 hash'i saklanır. Kaybolan veya ifşa olan anahtar galeri panelinden yenilenebilir; eskisi hemen geçersiz olur. Takip sayfası local demo modunda kapalıdır.
+Takip sorguları IP ve referans başına sınırlandırılır. Turnstile anahtarları tanımlanırsa sorgulamada ek bot doğrulaması yapılır.
 
 ## Production kurulumu
 

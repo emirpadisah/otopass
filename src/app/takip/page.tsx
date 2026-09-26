@@ -14,8 +14,7 @@ export const metadata: Metadata = {
 
 export default function TrackingPage() {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || null;
-  const captchaConfigured = process.env.NODE_ENV !== "production" || Boolean(siteKey && process.env.TURNSTILE_SECRET_KEY?.trim());
-  const available = !isLocalDataMode() && captchaConfigured;
+  const available = !isLocalDataMode();
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 py-6 sm:px-8 sm:py-9">
       <header className="flex items-center justify-between gap-4">

@@ -22,9 +22,6 @@ export async function POST(request: Request) {
   const invalid = () => NextResponse.json({ error: "Referans veya takip anahtarı geçersiz.", requestId }, { status: 400, headers });
   try {
     if (isLocalDataMode()) return NextResponse.json({ error: "Başvuru takibi şu anda kullanılamıyor.", requestId }, { status: 503, headers });
-    if (process.env.NODE_ENV === "production" && (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || !process.env.TURNSTILE_SECRET_KEY)) {
-      return NextResponse.json({ error: "Başvuru takibi şu anda kullanılamıyor.", requestId }, { status: 503, headers });
-    }
     if (!hasTrustedMutationOrigin(request.headers)) return NextResponse.json({ error: "İstek kaynağı doğrulanamadı.", requestId }, { status: 403, headers });
     const body = requestSchema.parse(await readJsonBody(request, 8 * 1024));
     const referenceCode = normalizeTrackingReference(body.referenceCode);
