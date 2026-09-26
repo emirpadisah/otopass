@@ -19,6 +19,7 @@ const actionLabels: Record<string, string> = {
   APPLICATION_DELETED: "Başvuru silindi",
   APPLICATION_ARCHIVED: "Başvuru arşivlendi",
   APPLICATION_PURGED: "Başvuru anonimleştirildi",
+  TRACKING_KEY_ROTATED: "Müşteri takip anahtarı yenilendi",
   DEALER_PROFILE_UPDATED: "Galeri profili güncellendi",
   DEALER_LOGO_UPDATED: "Galeri logosu güncellendi",
   DEALER_LOGO_REMOVED: "Galeri logosu kaldırıldı",

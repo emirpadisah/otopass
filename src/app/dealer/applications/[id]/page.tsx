@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, Phone, ScanSearch, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, CarFront, ClipboardCheck, FileImage, HandCoins, KeyRound, Phone, ScanSearch, UserRound } from "lucide-react";
 import {
   ApplicationPhotoGallery,
   ApplicationDeleteButton,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { canManageDealerMembership } from "@/lib/auth/route";
+import { isLocalDataMode } from "@/lib/data-mode";
 import { getDealerLogoSrc } from "@/lib/dealer-branding";
 import { getApplicationPhotoUrls } from "@/lib/application-photo-urls";
 import { normalizeVehicleBodyCondition } from "@/lib/vehicle-condition";
@@ -21,6 +22,7 @@ import { getDealerApplicationForCurrentUser, getDealerById, getDealerForCurrentU
 import { OfferForm } from "./OfferForm";
 import { OfferDecisionForm } from "./OfferDecisionForm";
 import { SoldButtonForm } from "../SoldButtonForm";
+import { TrackingKeyForm } from "./TrackingKeyForm";
 import { deleteDealerApplicationAction } from "./delete-actions";
 
 type PageProps = {
@@ -175,7 +177,12 @@ export default async function DealerApplicationDetailPage({ params }: PageProps)
         </div>
 
         {canManage ? (
-          <aside className="xl:sticky xl:top-[102px] xl:self-start">
+          <aside className="space-y-4 xl:sticky xl:top-[102px] xl:self-start">
+            {!isLocalDataMode() ? (
+              <PanelSection title="Müşteri takip anahtarı" description="Başvuru durumunu güvenle paylaşın" icon={KeyRound}>
+                <TrackingKeyForm applicationId={application.id} />
+              </PanelSection>
+            ) : null}
             <PanelSection
               title={application.status === "pending" || application.status === "rejected" ? "Teklif oluştur" : "Teklif süreci"}
               description="Teklif, müşteri yanıtı ve satın alma sonucunu kaydedin"

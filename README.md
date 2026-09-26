@@ -13,6 +13,8 @@ npm run dev
 
 Public demo varsayılan olarak local veri modunda `/form/test-galeri` adresinde çalışır. Kayıtlar Git tarafından izlenmeyen `.local-data/` dizininde tutulur. Local kullanıcı ve panel oturumları devre dışıdır; admin ve galeri paneli Supabase gerektirir.
 
+Başvuru sahipleri `/takip` sayfasında referans kodu ve başvuru sonunda yalnız bir kez gösterilen gizli takip anahtarıyla durumlarını görüntüleyebilir. Anahtarın yalnız SHA-256 hash'i saklanır. Kaybolan veya ifşa olan anahtar galeri panelinden yenilenebilir; eskisi hemen geçersiz olur. Takip sayfası local demo modunda kapalıdır.
+
 ## Production kurulumu
 
 1. `.env.example` içindeki değişkenleri Supabase ve Vercel ortamlarında tanımlayın. Production için `OTOPASS_DATA_MODE=supabase` kullanın.
@@ -33,6 +35,7 @@ npm run bootstrap:admin
 
 5. Bootstrap secret'larını ortamdan kaldırın. Sonraki kullanıcıları `/admin/users` üzerinden yönetin.
 6. Supabase Dashboard'dan günlük yedek ve PITR'ı etkinleştirin. Aylık geri yükleme testini [production runbook](docs/production-runbook.md) ile kaydedin.
+7. Başvuru takibi migration'ını uygulayın. Yeni başvurularda takip anahtarının başarı ekranında gösterildiğini ve mevcut başvurular için galeri panelinden anahtar oluşturulabildiğini doğrulayın.
 
 Veritabanı şemasının tek kaynağı `supabase/migrations/` dizinidir.
 

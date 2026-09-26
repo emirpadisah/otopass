@@ -344,6 +344,7 @@ export function CocoonLanding() {
           <Link href="/" className={styles.brand} aria-label="OtoKöprü ana sayfa"><BrandLogo preload size="compact" /></Link>
           <div className={styles.desktopNav}>
             {navigation.map((item) => <a key={item.href} href={item.href} onClick={(event) => scrollToSection(event, item.href)}>{item.label}</a>)}
+            <Link href="/takip">Başvuru takibi</Link>
           </div>
           <Link href="/login" className={styles.headerCta}>Panele giriş</Link>
           <button
@@ -360,6 +361,7 @@ export function CocoonLanding() {
         </nav>
         <div ref={menuRef} id="landing-mobile-menu" className={`${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ""}`} aria-hidden={!menuOpen} inert={!menuOpen}>
           {navigation.map((item) => <a key={item.href} href={item.href} onClick={(event) => { scrollToSection(event, item.href); closeMenu(); }}>{item.label}</a>)}
+          <Link href="/takip" onClick={closeMenu}>Başvuru takibi</Link>
           <Link href="/login" onClick={closeMenu}>Panele giriş <ArrowRight size={16} /></Link>
         </div>
       </header>
@@ -529,7 +531,7 @@ export function CocoonLanding() {
       <footer className={styles.footer}>
         <div className={`${styles.container} ${styles.footerGrid}`}>
           <div className={styles.footerBrand}><BrandLogo size="compact" /><p>Araç başvurularını ve teklif süreçlerini tek çalışma alanında yönetin.</p></div>
-          <nav aria-label="Yasal bağlantılar"><Link href="/terms">Kullanım koşulları</Link><Link href="/privacy">Gizlilik</Link><Link href="/kvkk">KVKK</Link></nav>
+          <nav aria-label="Yasal bağlantılar"><Link href="/takip">Başvuru takibi</Link><Link href="/terms">Kullanım koşulları</Link><Link href="/privacy">Gizlilik</Link><Link href="/kvkk">KVKK</Link></nav>
           <div className={styles.footerContact}><strong>İletişim</strong><a href="tel:+905536845821">{contactPhone}</a><a href={`mailto:${contactEmail}`}>{contactEmail}</a></div>
         </div>
         <p className={styles.copyright}>© {new Date().getFullYear()} OtoKöprü. Tüm hakları saklıdır.</p>

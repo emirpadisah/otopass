@@ -57,6 +57,7 @@ Secret değerlerini repoya, loglara veya olay kayıtlarına yazmayın. Bootstrap
 4. `master` push sonrasında Vercel Git deployment'ını izleyin.
 5. `/api/health` yanıtının `200` ve yalnız genel readiness bilgisi döndürdüğünü doğrulayın.
 6. Public başvuru, teklif, kabul/ret, satış ve admin audit akışlarına smoke test uygulayın.
+7. Test başvurusu yapıp referans ile takip anahtarının yalnız başarı ekranında göründüğünü, yanlış anahtarın reddedildiğini ve galeri panelinden yenilenen anahtarın eskisini geçersiz kıldığını doğrulayın.
 
 ## Yedek ve PITR
 

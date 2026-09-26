@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(47);
+select plan(55);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -106,6 +106,17 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000106
 select throws_ok($$ select public.admin_update_user_access('00000000-0000-4000-8000-000000000106', 'Super', 'super_admin', null, false) $$, 'CANNOT_DEACTIVATE_SELF', 'super admin cannot deactivate the current account');
 
 set local role service_role;
+insert into public.application_tracking_keys(application_id, key_hash)
+values ('00000000-0000-4000-8000-000000000301', repeat('a', 64));
+select is(public.verify_application_tracking_key('OTP-TEST-1', repeat('b', 64)), null::uuid, 'wrong tracking key reveals no application');
+select is(public.verify_application_tracking_key('OTP-TEST-1', repeat('a', 64)), '00000000-0000-4000-8000-000000000301'::uuid, 'reference and key together verify an application');
+select public.rotate_application_tracking_key('00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000201', '00000000-0000-4000-8000-000000000106', repeat('c', 64));
+select is(public.verify_application_tracking_key('OTP-TEST-1', repeat('a', 64)), null::uuid, 'rotated tracking key invalidates old key');
+select is(public.verify_application_tracking_key('OTP-TEST-1', repeat('c', 64)), '00000000-0000-4000-8000-000000000301'::uuid, 'rotated tracking key verifies application');
+select throws_ok($$ select public.rotate_application_tracking_key('00000000-0000-4000-8000-000000000301', '00000000-0000-4000-8000-000000000202', '00000000-0000-4000-8000-000000000106', repeat('d', 64)) $$, 'INVALID_APPLICATION', 'tracking key cannot be rotated for another dealer');
+select isnt(has_function_privilege('authenticated', 'public.verify_application_tracking_key(text, text)', 'EXECUTE'), true, 'authenticated clients cannot call tracking verification directly');
+select isnt(has_table_privilege('anon', 'public.application_tracking_keys', 'SELECT'), true, 'anonymous clients cannot read tracking keys');
+select isnt(has_function_privilege('service_role', 'public.finalize_public_application(uuid, text[])', 'EXECUTE'), true, 'old finalization cannot bypass tracking key creation');
 select is(
   (select is_active from public.get_user_access_context('00000000-0000-4000-8000-000000000102')),
   true,

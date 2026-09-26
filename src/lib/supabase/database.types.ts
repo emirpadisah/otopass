@@ -150,6 +150,12 @@ export type Database = {
         sort_order: number;
         created_at: string;
       }>;
+      application_tracking_keys: TableShape<{
+        application_id: string;
+        key_hash: string;
+        created_at: string;
+        rotated_at: string | null;
+      }, { application_id: string; key_hash: string }>;
       app_settings: TableShape<{ key: string; value: Json; updated_at: string; updated_by: string | null }>;
       migration_issues: TableShape<{
         id: number;
@@ -242,6 +248,18 @@ export type Database = {
       resolve_dealer_domain: {
         Args: { p_hostname: string };
         Returns: { dealer_slug: string }[];
+      };
+      finalize_public_application_with_tracking_key: {
+        Args: { p_session_id: string; p_photo_paths: string[]; p_tracking_key_hash: string };
+        Returns: ApplicationRow;
+      };
+      verify_application_tracking_key: {
+        Args: { p_reference_code: string; p_key_hash: string };
+        Returns: string | null;
+      };
+      rotate_application_tracking_key: {
+        Args: { p_application_id: string; p_dealer_id: string; p_actor_user_id: string; p_key_hash: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

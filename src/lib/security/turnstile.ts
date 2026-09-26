@@ -1,6 +1,6 @@
 type TurnstileResponse = { success: boolean; hostname?: string; action?: string; "error-codes"?: string[] };
 
-export async function verifyTurnstile(token: string, ip: string, expectedHostname?: string): Promise<boolean> {
+export async function verifyTurnstile(token: string, ip: string, expectedHostname?: string, expectedAction = "public_application"): Promise<boolean> {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
   if (!siteKey && !secret) return true;
@@ -15,6 +15,7 @@ export async function verifyTurnstile(token: string, ip: string, expectedHostnam
   if (!response.ok) return false;
   const result = (await response.json()) as TurnstileResponse;
   if (!result.success) return false;
-  if (result.action && result.action !== "public_application") return false;
+  if (expectedAction === "tracking_verify" && (!result.action || !result.hostname)) return false;
+  if (result.action && result.action !== expectedAction) return false;
   return !expectedHostname || !result.hostname || result.hostname.toLowerCase() === expectedHostname.toLowerCase();
 }
