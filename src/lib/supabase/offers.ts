@@ -14,6 +14,8 @@ async function logOfferAuthorizationFailure(
   dealerId: string,
   applicationId: string,
   verifiedUserId: string,
+  jwtRole: unknown,
+  authorizationObserved: () => boolean,
 ) {
   try {
     const [access, profile] = await Promise.all([
@@ -24,6 +26,8 @@ async function logOfferAuthorizationFailure(
       applicationId,
       dealerId,
       verifiedUserId,
+      jwtRole: typeof jwtRole === "string" ? jwtRole : null,
+      authorizationObserved: authorizationObserved(),
       databaseCanManage: access.data,
       databaseCheckCode: access.error?.code ?? null,
       ownProfileVisible: !!profile.data,
@@ -48,11 +52,18 @@ async function createAuthenticatedWorkflowClient() {
   }
 
   const { url, anonKey } = getSupabasePublicEnv();
+  let authorizationObserved = false;
   const supabase = createClient<Database>(url, anonKey, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    accessToken: async () => accessToken,
+    global: {
+      fetch: async (input, init) => {
+        authorizationObserved = new Headers(init?.headers).get("authorization") === `Bearer ${accessToken}`;
+        return fetch(input, init);
+      },
+    },
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return { supabase, verifiedUserId };
+  return { supabase, verifiedUserId, jwtRole: claimsData.claims.role, authorizationObserved: () => authorizationObserved };
 }
 
 function assertManager(role: string | undefined): void {
@@ -78,9 +89,9 @@ export async function createOfferForCurrentDealer(input: { applicationId: string
     await createLocalOffer({ applicationId: input.applicationId, dealerId: dealer.dealer_id, amount: input.amount, notes: input.notes });
     return;
   }
-  const { supabase, verifiedUserId } = await createAuthenticatedWorkflowClient();
+  const { supabase, verifiedUserId, jwtRole, authorizationObserved } = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("create_dealer_offer", { p_application_id: input.applicationId, p_amount: input.amount, p_currency: "TRY", p_notes: input.notes });
-  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId, verifiedUserId);
+  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId, verifiedUserId, jwtRole, authorizationObserved);
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
 }
 
