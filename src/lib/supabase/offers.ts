@@ -1,9 +1,40 @@
 import { canManageDealerMembership } from "@/lib/auth/route";
+import { getRequestAccessContext } from "@/lib/auth/access-context";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { createLocalOffer, markLocalApplicationAsSold, respondToLocalOffer } from "@/lib/local/repository";
 import type { OfferStatus } from "@/lib/types";
 import { getDealerForCurrentUser } from "./queries";
 import { createSupabaseServerClient } from "./server";
+
+async function logOfferAuthorizationFailure(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  dealerId: string,
+  applicationId: string,
+) {
+  try {
+    const context = await getRequestAccessContext();
+    const { data: claims } = await supabase.auth.getClaims();
+    const { data: session } = await supabase.auth.getSession();
+    const [access, profile] = await Promise.all([
+      supabase.rpc("current_user_can_manage_dealer", { _dealer_id: dealerId }),
+      supabase.from("user_profiles").select("user_id").eq("user_id", context?.user.id ?? "").maybeSingle(),
+    ]);
+    console.error("OFFER_AUTH_DIAGNOSTIC", {
+      applicationId,
+      dealerId,
+      contextUserId: context?.user.id ?? null,
+      claimsUserId: claims?.claims?.sub ?? null,
+      sessionUserId: session.session?.user.id ?? null,
+      hasAccessToken: !!session.session?.access_token,
+      databaseCanManage: access.data,
+      databaseCheckCode: access.error?.code ?? null,
+      ownProfileVisible: !!profile.data,
+      ownProfileCode: profile.error?.code ?? null,
+    });
+  } catch (diagnosticError) {
+    console.error("OFFER_AUTH_DIAGNOSTIC_FAILED", diagnosticError instanceof Error ? diagnosticError.message : "UNKNOWN");
+  }
+}
 
 async function createAuthenticatedWorkflowClient() {
   const supabase = await createSupabaseServerClient();
@@ -37,6 +68,7 @@ export async function createOfferForCurrentDealer(input: { applicationId: string
   }
   const supabase = await createAuthenticatedWorkflowClient();
   const { error } = await supabase.rpc("create_dealer_offer", { p_application_id: input.applicationId, p_amount: input.amount, p_currency: "TRY", p_notes: input.notes });
+  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId);
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
 }
 

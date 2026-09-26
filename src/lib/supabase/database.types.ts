@@ -221,6 +221,10 @@ export type Database = {
         Args: { p_query: string; p_status: string | null; p_sort: string; p_offset: number; p_limit: number };
         Returns: Json;
       };
+      current_user_can_manage_dealer: {
+        Args: { _dealer_id: string };
+        Returns: boolean;
+      };
       create_dealer_offer: {
         Args: { p_application_id: string; p_amount: number; p_currency?: string; p_notes?: string | null };
         Returns: OfferRow;
