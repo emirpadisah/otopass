@@ -5,6 +5,7 @@ import "./globals.css";
 import "./orbyn-panels.css";
 import { GoogleMeasurement } from "@/components/google-measurement";
 import { ThemeProvider } from "@/components/theme-provider";
+import { VercelTrafficAnalytics } from "@/components/vercel-traffic-analytics";
 import { getGoogleMeasurementIds } from "@/lib/google-measurement-config";
 import { getPublicSiteOrigin } from "@/lib/site-url";
 
@@ -96,6 +97,7 @@ export default async function RootLayout({
       </head>
       <body className={`${plusJakarta.variable} ${jetBrainsMono.variable} ${onest.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
+        <VercelTrafficAnalytics />
         {googleMeasurementEnabled ? (
           <GoogleMeasurement
             analyticsId={googleMeasurement.analyticsId}

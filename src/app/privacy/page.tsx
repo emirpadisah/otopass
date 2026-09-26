@@ -50,7 +50,8 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="Güvenlik ve tercih teknolojileri">
         <p>Yetki kontrolleri, oturum çerezleri, erişim kısıtları, kayıt izleri ve güvenlik doğrulamaları; hizmeti korumak için kullanılır. Tema tercihi tarayıcınızda saklanabilir.</p>
-        <p>Açık tercihinizle Google Analytics 4, site kullanımını ölçmek; Google Ads ise reklam performansını ve dönüşümleri değerlendirmek için kullanılabilir. Kabul etmediğiniz sürece Google ölçüm etiketleri yüklenmez. Panel yolları ölçüm kapsamı dışındadır ve ölçüm sayfa adreslerine sorgu parametreleri eklenmez.</p>
+        <p>Site trafiğini toplu olarak görmek için Vercel Web Analytics kullanılır. Bu ölçüm çerez kullanmaz; ziyaret ve sayfa görüntüleme istatistiklerini anonim olarak toplar. Yönetici ve galeri paneli sayfaları ölçülmez, sayfa adreslerindeki sorgu parametreleri ve parçalar gönderilmez.</p>
+        <p>Açık tercihinizle Google Analytics 4, site kullanımını ölçmek; Google Ads ise reklam performansını ve dönüşümleri değerlendirmek için kullanılabilir. Kabul etmediğiniz sürece Google ölçüm etiketleri yüklenmez. Panel yolları Google ölçüm kapsamı dışındadır ve ölçüm sayfa adreslerine sorgu parametreleri eklenmez.</p>
         {googleMeasurementEnabled ? <CookiePreferencesButton /> : null}
       </LegalSection>
 

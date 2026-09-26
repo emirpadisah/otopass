@@ -23,6 +23,7 @@
     "@sentry/nextjs": "10.71.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "2.112.4",
+    "@vercel/analytics": "^2.0.1",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "html-to-image": "^1.11.13",
