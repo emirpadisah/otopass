@@ -28,7 +28,7 @@ export function DealerCreateForm() {
             <Input id="slug" name="slug" placeholder="orn-atlas-oto" value={slug} onChange={(event) => setSlug(event.currentTarget.value)} disabled={pending} />
           </Field>
 
-          <Field label="İletişim e-postası" labelFor="contactEmail">
+          <Field label="İletişim e-postası" labelFor="contactEmail" description="Yeni araç başvurusu bildirimleri bu adrese gönderilir.">
             <Input id="contactEmail" name="contactEmail" type="email" placeholder="iletisim@galeri.com" value={contactEmail} onChange={(event) => setContactEmail(event.currentTarget.value)} disabled={pending} />
           </Field>
 

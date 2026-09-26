@@ -1,8 +1,9 @@
 import { timingSafeEqual } from "crypto";
 import * as Sentry from "@sentry/nextjs";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { APPLICATIONS_BUCKET, hashFinalizeToken } from "@/lib/public-applications";
+import { notifyDealerOfNewApplication } from "@/lib/notifications/new-application-email";
 import { consumeRateLimit } from "@/lib/security/rate-limit";
 import {
   createRequestId,
@@ -16,6 +17,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { hasMatchingImageSignature, MAX_FILES } from "@/lib/validation/application";
 
 const MAX_FINALIZE_BODY_BYTES = 8 * 1024;
+export const maxDuration = 30;
 const requestSchema = z.object({
   sessionId: z.string().uuid(),
   finalizeToken: z.string().length(43).regex(/^[A-Za-z0-9_-]+$/),
@@ -145,6 +147,23 @@ export async function POST(request: Request) {
       p_photo_paths: storedItems.map((item) => item.path),
     });
     if (finalizeError) throw finalizeError;
+
+    after(async () => {
+      try {
+        const result = await notifyDealerOfNewApplication({
+          id: application.id,
+          dealerId: application.dealer_id,
+          referenceCode: application.reference_code,
+          brand: application.brand,
+          model: application.model,
+          modelYear: application.model_year,
+        });
+        if (result === "unconfigured") console.warn("Galeri e-posta bildirimi yapılandırılmamış.");
+      } catch (notificationError) {
+        Sentry.captureException(notificationError, { tags: { requestId, endpoint: "dealer-new-application-email" } });
+        console.error("Galeri e-posta bildirimi gönderilemedi.", notificationError);
+      }
+    });
 
     return NextResponse.json(
       { ok: true, referenceCode: application.reference_code, requestId },

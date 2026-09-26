@@ -19,7 +19,7 @@ export function DealerManageForm({ dealer, canDelete }: { dealer: Dealer; canDel
       <input type="hidden" name="dealerId" value={dealer.id} />
       <Field label="Galeri adı" labelFor="name"><Input id="name" name="name" defaultValue={dealer.name} required /></Field>
       <Field label="Hukuki unvan" labelFor="legalName" description="KVKK aydınlatma metninde veri sorumlusu olarak gösterilir."><Input id="legalName" name="legalName" defaultValue={dealer.legal_name ?? ""} /></Field>
-      <Field label="İletişim e-postası" labelFor="contactEmail"><Input id="contactEmail" name="contactEmail" type="email" defaultValue={dealer.contact_email ?? ""} /></Field>
+      <Field label="İletişim e-postası" labelFor="contactEmail" description="Yeni araç başvurusu bildirimleri bu adrese gönderilir."><Input id="contactEmail" name="contactEmail" type="email" defaultValue={dealer.contact_email ?? ""} /></Field>
       <Field label="KVKK e-postası" labelFor="privacyEmail"><Input id="privacyEmail" name="privacyEmail" type="email" defaultValue={dealer.privacy_contact_email ?? ""} /></Field>
       <label className="checkbox-row sm:col-span-2"><input type="checkbox" name="isActive" defaultChecked={dealer.is_active} /><span>Galeri aktif ve başvuru kabul ediyor</span></label>
       {state.message ? <div className="status-alert sm:col-span-2" data-tone={state.ok ? "success" : "danger"}>{state.message}</div> : null}

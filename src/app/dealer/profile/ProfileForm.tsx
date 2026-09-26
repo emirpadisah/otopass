@@ -97,7 +97,7 @@ export function ProfileForm({ dealer, canManage }: { dealer: Dealer; canManage: 
               placeholder="+905xxxxxxxxx"
             />
           </Field>
-          <Field label="Müşteri iletişim e-postası" labelFor="contactEmail" description="İsteğe bağlıdır.">
+          <Field label="Müşteri iletişim e-postası" labelFor="contactEmail" description="Yeni araç başvurusu bildirimleri bu adrese gönderilir.">
             <Input
               id="contactEmail"
               name="contactEmail"
