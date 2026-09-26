@@ -3,42 +3,11 @@ import { getRequestAccessContext } from "@/lib/auth/access-context";
 import { isLocalDataMode } from "@/lib/data-mode";
 import { createLocalOffer, markLocalApplicationAsSold, respondToLocalOffer } from "@/lib/local/repository";
 import type { OfferStatus } from "@/lib/types";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "./database.types";
-import { getSupabasePublicEnv } from "./env";
 import { getDealerForCurrentUser } from "./queries";
 import { createSupabaseServerClient } from "./server";
+import { createSupabaseServiceClient } from "./service";
 
-async function logOfferAuthorizationFailure(
-  supabase: SupabaseClient<Database>,
-  dealerId: string,
-  applicationId: string,
-  verifiedUserId: string,
-  jwtRole: unknown,
-  authorizationObserved: () => boolean,
-) {
-  try {
-    const [access, profile] = await Promise.all([
-      supabase.rpc("current_user_can_manage_dealer", { _dealer_id: dealerId }),
-      supabase.from("user_profiles").select("user_id").eq("user_id", verifiedUserId).maybeSingle(),
-    ]);
-    console.error("OFFER_AUTH_DIAGNOSTIC", {
-      applicationId,
-      dealerId,
-      verifiedUserId,
-      jwtRole: typeof jwtRole === "string" ? jwtRole : null,
-      authorizationObserved: authorizationObserved(),
-      databaseCanManage: access.data,
-      databaseCheckCode: access.error?.code ?? null,
-      ownProfileVisible: !!profile.data,
-      ownProfileCode: profile.error?.code ?? null,
-    });
-  } catch (diagnosticError) {
-    console.error("OFFER_AUTH_DIAGNOSTIC_FAILED", diagnosticError instanceof Error ? diagnosticError.message : "UNKNOWN");
-  }
-}
-
-async function createAuthenticatedWorkflowClient() {
+async function getVerifiedWorkflowActorId(): Promise<string> {
   const sessionClient = await createSupabaseServerClient();
   const { data: sessionData, error: sessionError } = await sessionClient.auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -47,23 +16,10 @@ async function createAuthenticatedWorkflowClient() {
   const { data: claimsData, error: claimsError } = await sessionClient.auth.getClaims(accessToken);
   const context = await getRequestAccessContext();
   const verifiedUserId = claimsData?.claims?.sub;
-  if (claimsError || !verifiedUserId || verifiedUserId !== context?.user.id) {
+  if (claimsError || !verifiedUserId || verifiedUserId !== context?.user.id || !context.isActive) {
     throw new Error("Oturumunuz doğrulanamadı. Lütfen yeniden giriş yapın.");
   }
-
-  const { url, anonKey } = getSupabasePublicEnv();
-  let authorizationObserved = false;
-  const supabase = createClient<Database>(url, anonKey, {
-    accessToken: async () => accessToken,
-    global: {
-      fetch: async (input, init) => {
-        authorizationObserved = new Headers(init?.headers).get("authorization") === `Bearer ${accessToken}`;
-        return fetch(input, init);
-      },
-    },
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return { supabase, verifiedUserId, jwtRole: claimsData.claims.role, authorizationObserved: () => authorizationObserved };
+  return verifiedUserId;
 }
 
 function assertManager(role: string | undefined): void {
@@ -89,9 +45,15 @@ export async function createOfferForCurrentDealer(input: { applicationId: string
     await createLocalOffer({ applicationId: input.applicationId, dealerId: dealer.dealer_id, amount: input.amount, notes: input.notes });
     return;
   }
-  const { supabase, verifiedUserId, jwtRole, authorizationObserved } = await createAuthenticatedWorkflowClient();
-  const { error } = await supabase.rpc("create_dealer_offer", { p_application_id: input.applicationId, p_amount: input.amount, p_currency: "TRY", p_notes: input.notes });
-  if (error?.message.includes("FORBIDDEN")) await logOfferAuthorizationFailure(supabase, dealer.dealer_id, input.applicationId, verifiedUserId, jwtRole, authorizationObserved);
+  const actorUserId = await getVerifiedWorkflowActorId();
+  const service = createSupabaseServiceClient();
+  const { error } = await service.rpc("create_dealer_offer_for_actor", {
+    p_application_id: input.applicationId,
+    p_amount: input.amount,
+    p_currency: "TRY",
+    p_notes: input.notes,
+    p_actor_user_id: actorUserId,
+  });
   if (error) throw mapWorkflowError(error, "Teklif oluşturulamadı.");
 }
 
@@ -104,8 +66,14 @@ export async function respondToOfferForCurrentDealer(input: { offerId: string; r
     await respondToLocalOffer(input.offerId, dealer.dealer_id, input.response, input.note);
     return;
   }
-  const { supabase } = await createAuthenticatedWorkflowClient();
-  const { error } = await supabase.rpc("respond_to_dealer_offer", { p_offer_id: input.offerId, p_response: input.response, p_note: input.note });
+  const actorUserId = await getVerifiedWorkflowActorId();
+  const service = createSupabaseServiceClient();
+  const { error } = await service.rpc("respond_to_dealer_offer_for_actor", {
+    p_offer_id: input.offerId,
+    p_response: input.response,
+    p_note: input.note,
+    p_actor_user_id: actorUserId,
+  });
   if (error) throw mapWorkflowError(error, "Teklif yanıtı kaydedilemedi.");
 }
 
@@ -118,7 +86,11 @@ export async function markApplicationAsSoldForCurrentDealer(applicationId: strin
     await markLocalApplicationAsSold(applicationId, dealer.dealer_id);
     return;
   }
-  const { supabase } = await createAuthenticatedWorkflowClient();
-  const { error } = await supabase.rpc("mark_dealer_application_sold", { p_application_id: applicationId });
+  const actorUserId = await getVerifiedWorkflowActorId();
+  const service = createSupabaseServiceClient();
+  const { error } = await service.rpc("mark_dealer_application_sold_for_actor", {
+    p_application_id: applicationId,
+    p_actor_user_id: actorUserId,
+  });
   if (error) throw mapWorkflowError(error, "Satış durumu kaydedilemedi.");
 }

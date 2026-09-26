@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(55);
+select plan(63);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
 values
@@ -156,6 +156,21 @@ select isnt(
   true,
   'anonymous clients cannot execute panel snapshot RPCs'
 );
+
+insert into public.applications(id, dealer_id, dealer_slug, brand, model, reference_code, submitted_at)
+values ('00000000-0000-4000-8000-000000000305', '00000000-0000-4000-8000-000000000201', 'dealer-a', 'Service', 'Test', 'OTP-SERVICE-1', now());
+select isnt(
+  has_function_privilege('authenticated', 'public.create_dealer_offer_for_actor(uuid,numeric,text,text,uuid)', 'EXECUTE'),
+  true,
+  'authenticated clients cannot impersonate another actor through the service RPC'
+);
+select throws_ok($$ select public.create_dealer_offer_for_actor('00000000-0000-4000-8000-000000000305', 1000, 'TRY', null, '00000000-0000-4000-8000-000000000103') $$, 'FORBIDDEN', 'cross-dealer actor cannot create an offer');
+select throws_ok($$ select public.create_dealer_offer_for_actor('00000000-0000-4000-8000-000000000305', 1000, 'TRY', null, '00000000-0000-4000-8000-000000000104') $$, 'FORBIDDEN', 'inactive actor cannot create an offer');
+select lives_ok($$ select public.create_dealer_offer_for_actor('00000000-0000-4000-8000-000000000305', 1000, 'TRY', null, '00000000-0000-4000-8000-000000000102') $$, 'active manager creates an offer through the service RPC');
+select is((select status from public.applications where id = '00000000-0000-4000-8000-000000000305'), 'offered', 'service offer advances the application');
+select is((select actor_user_id from public.activity_log where application_id = '00000000-0000-4000-8000-000000000305' and action = 'OFFER_CREATED'), '00000000-0000-4000-8000-000000000102'::uuid, 'service offer records the verified actor');
+select lives_ok($$ select public.respond_to_dealer_offer_for_actor((select id from public.offers where application_id = '00000000-0000-4000-8000-000000000305'), 'accepted', null, '00000000-0000-4000-8000-000000000102') $$, 'manager records acceptance through the service RPC');
+select lives_ok($$ select public.mark_dealer_application_sold_for_actor('00000000-0000-4000-8000-000000000305', '00000000-0000-4000-8000-000000000102') $$, 'manager records sale through the service RPC');
 
 set local role anon;
 select results_eq(

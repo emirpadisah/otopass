@@ -237,6 +237,18 @@ export type Database = {
         Args: { p_application_id: string };
         Returns: ApplicationRow;
       };
+      create_dealer_offer_for_actor: {
+        Args: { p_application_id: string; p_amount: number; p_currency: string; p_notes: string | null; p_actor_user_id: string };
+        Returns: OfferRow;
+      };
+      respond_to_dealer_offer_for_actor: {
+        Args: { p_offer_id: string; p_response: string; p_note: string | null; p_actor_user_id: string };
+        Returns: OfferRow;
+      };
+      mark_dealer_application_sold_for_actor: {
+        Args: { p_application_id: string; p_actor_user_id: string };
+        Returns: ApplicationRow;
+      };
       delete_application_for_current_user: {
         Args: { p_application_id: string };
         Returns: string[];
