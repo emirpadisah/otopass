@@ -14,6 +14,7 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { loadAccessContextForUser } from "@/lib/auth/access-context";
 import { resolvePostLoginRoute } from "@/lib/auth/roles";
 import { resolveRouteForRoles } from "@/lib/auth/route";
+import { needsMfaVerification, requireCompletedMfa } from "@/lib/auth/mfa";
 import { validatePasswordPolicy } from "@/lib/validation/password";
 import { consumeLoginRateLimits, consumeRateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
@@ -90,14 +91,14 @@ export async function login(
       await supabase.auth.signOut();
       return { error: "Bu hesap aktif değil. Sistem yöneticinizle iletişime geçin." };
     }
-    if (access.mustChangePassword) redirect("/login/change-password");
-
     const targetRoute = resolveRouteForRoles(access.roles);
     if (targetRoute === "/login") {
       await supabase.auth.signOut();
       return { error: "Bu hesap için erişim yetkisi bulunmuyor. Sistem yöneticinizle iletişime geçin." };
     }
 
+    if (await needsMfaVerification()) redirect("/login/mfa/verify");
+    if (access.mustChangePassword) redirect("/login/change-password");
     redirect(targetRoute);
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -182,6 +183,8 @@ export async function changePassword(
     if (!user) {
       return { error: "Oturum süresi doldu. Lütfen tekrar giriş yapın." };
     }
+
+    await requireCompletedMfa();
 
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {

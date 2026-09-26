@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { getRequestAccessContext } from "@/lib/auth/access-context";
+import { requireCompletedMfa } from "@/lib/auth/mfa";
 import { requireAdminAccess } from "@/lib/auth/roles";
 import { createSupabaseServiceClient } from "./service";
 import type { Database } from "./database.types";
@@ -83,12 +84,14 @@ export async function listDealers(): Promise<DealerRow[]> {
 }
 
 export const getDealerForCurrentUser = cache(async () => {
+  await requireCompletedMfa();
   const context = await getRequestAccessContext();
   if (!context?.isActive || !context.dealerId || !context.membershipRole) return null;
   return { dealer_id: context.dealerId, role: context.membershipRole };
 });
 
 export async function getDealerForCurrentUserWithDetails() {
+  await requireCompletedMfa();
   const context = await getRequestAccessContext();
   return context?.isActive ? context.dealer : null;
 }

@@ -10,6 +10,7 @@ describe("proxy auth refresh routing", () => {
     "/login/change-password",
     "/login/reset-password",
     "/login/mfa/setup",
+    "/login/mfa/verify",
     "/api/admin/export/users",
     "/api/dealer/logo",
     "/api/applications/123/photos",

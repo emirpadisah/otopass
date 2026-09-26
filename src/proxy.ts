@@ -14,6 +14,7 @@ export function shouldRefreshAuthSession(pathname: string): boolean {
     || pathname === "/login/change-password"
     || pathname === "/login/reset-password"
     || pathname === "/login/mfa/setup"
+    || pathname === "/login/mfa/verify"
     || pathname.startsWith("/api/admin/")
     || pathname.startsWith("/api/dealer/")
     || pathname.startsWith("/api/applications/");

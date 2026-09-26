@@ -2,6 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { getRequestAccessContext } from "@/lib/auth/access-context";
 import { requireUser } from "@/lib/auth/session";
+import { requireCompletedMfa } from "@/lib/auth/mfa";
 import { hasDealerRole, resolveRouteForRoles } from "@/lib/auth/route";
 import type { AuthRedirectTarget, UserRole } from "@/lib/types";
 
@@ -22,6 +23,7 @@ async function getRolesForProtectedPanel(): Promise<UserRole[]> {
   await requireUser();
   const context = await getRequestAccessContext();
   if (context?.mustChangePassword) redirect("/login/change-password");
+  await requireCompletedMfa();
   return getCurrentUserRoles();
 }
 
