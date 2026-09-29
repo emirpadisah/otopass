@@ -22,6 +22,7 @@ test("public application can be submitted in local demo mode", async ({ page }, 
   await expect(page.getByLabel(/Telefon numarası/)).toHaveValue(`+90${nationalPhone}`);
   await page.getByRole("button", { name: "Devam et" }).click();
 
+  await page.getByLabel(/Araç türü/).selectOption({ label: "Otomobil" });
   await page.getByLabel("Marka").fill("Volkswagen");
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();
@@ -46,6 +47,7 @@ test("public application requires at least one vehicle photo", async ({ page }) 
   await page.getByLabel(/Telefon numarası/).fill("05551234567");
   await page.getByRole("button", { name: "Devam et" }).click();
 
+  await page.getByLabel(/Araç türü/).selectOption({ label: "Otomobil" });
   await page.getByLabel("Marka").fill("Volkswagen");
   await page.getByRole("textbox", { name: /^Model / }).fill("Golf");
   await page.getByRole("button", { name: "Devam et" }).click();

@@ -25,6 +25,7 @@ import { formatTurkishMobileInput } from "@/lib/phone";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ACCEPTED_IMAGE_TYPES, MAX_FILES, MAX_FILE_SIZE } from "@/lib/validation/application";
 import type { VehicleBodyCondition } from "@/lib/vehicle-condition";
+import { VehicleCatalogFields } from "./VehicleCatalogFields";
 
 type PhotoItem = { id: string; file: File; preview: string };
 type SubmissionState = {
@@ -50,7 +51,7 @@ const formSteps = [
 ] as const;
 const stepFieldIds = [
   ["owner_name", "owner_phone"],
-  ["brand", "model"],
+  ["vehicle_category", "brand", "model"],
   [],
 ] as const;
 
@@ -222,7 +223,7 @@ export function FormClient({
 
     for (const fieldId of stepFieldIds[currentStep]) {
       const field = form.elements.namedItem(fieldId);
-      if (field instanceof HTMLInputElement && !field.checkValidity()) {
+      if ((field instanceof HTMLInputElement || field instanceof HTMLSelectElement) && !field.checkValidity()) {
         setState({ tone: "danger", message: "Zorunlu alanları doldurarak devam edin.", progress: 0 });
         field.reportValidity();
         field.focus();
@@ -474,15 +475,12 @@ export function FormClient({
               <FormSectionHeader
                 step={2}
                 title="Araç bilgilerini paylaşın"
-                description="Marka ve model zorunludur. Diğer bilgiler ön değerlendirmenin daha ayrıntılı yapılmasına yardımcı olur."
+                description="Araç türü, marka ve model zorunludur. Diğer bilgiler ön değerlendirmenin daha ayrıntılı yapılmasına yardımcı olur."
                 icon={CarFront}
                 headingRef={(element) => { stepHeadingRefs.current[1] = element; }}
               />
               <div className="intake-field-grid intake-vehicle-grid">
-                <Field label="Marka *" labelFor="brand"><Input id="brand" name="brand" placeholder="Örn. Volkswagen" required /></Field>
-                <Field label="Model *" labelFor="model"><Input id="model" name="model" placeholder="Örn. Golf" required /></Field>
-                <Field label="Paket" labelFor="vehicle_package"><Input id="vehicle_package" name="vehicle_package" placeholder="Örn. Comfortline" /></Field>
-                <Field label="Motor" labelFor="engine_info"><Input id="engine_info" name="engine_info" maxLength={120} placeholder="Örn. 1.6 TDI" /></Field>
+                <VehicleCatalogFields localMode={localMode} />
                 <Field label="Model yılı" labelFor="model_year"><Input id="model_year" name="model_year" type="number" min={1950} max={new Date().getFullYear() + 1} inputMode="numeric" placeholder="2022" /></Field>
                 <Field label="Kilometre" labelFor="km"><Input id="km" name="km" type="number" min={0} max={10_000_000} inputMode="numeric" placeholder="45000" /></Field>
                 <Field label="Yakıt tipi" labelFor="fuel_type">

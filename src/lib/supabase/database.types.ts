@@ -86,6 +86,11 @@ type TableShape<Row, Insert = Partial<Row>, Update = Partial<Insert>> = {
 export type Database = {
   public: {
     Tables: {
+      vehicle_catalog_categories: TableShape<{ id: number; name: string }>;
+      vehicle_catalog_brands: TableShape<{ id: number; category_id: number; name: string }>;
+      vehicle_catalog_models: TableShape<{ id: number; brand_id: number; name: string }>;
+      vehicle_catalog_motor_options: TableShape<{ id: number; model_id: number; name: string }>;
+      vehicle_catalog_packages: TableShape<{ id: number; motor_option_id: number; name: string }>;
       dealers: TableShape<DealerRow, Partial<DealerRow> & Pick<DealerRow, "name" | "slug">>;
       dealer_domains: TableShape<
         DealerDomainRow,

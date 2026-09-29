@@ -164,6 +164,9 @@
 .page :global(.intake-form textarea.input-base) { min-height: 90px; }
 .page :global(.intake-form .input-base:hover) { border-color: var(--border-strong); }
 .page :global(.intake-form .input-base:focus) { border-color: var(--text-primary); background: var(--surface-1); box-shadow: 0 0 0 3px var(--focus-ring); }
+.page :global(.intake-catalog-switch) { margin-top: 6px; padding: 2px 0; color: var(--accent); font-size: 11px; font-weight: 650; text-align: left; }
+.page :global(.intake-catalog-switch:hover) { text-decoration: underline; }
+.page :global(.intake-catalog-switch:focus-visible) { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 .page :global(.intake-section-content) { gap: 18px; }
 .page :global(.intake-inspection) { gap: 15px; border-bottom-color: var(--border-soft); padding-bottom: 20px; }
