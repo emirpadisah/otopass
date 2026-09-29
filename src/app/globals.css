@@ -4978,6 +4978,15 @@ html.theme-dark .vc-offer-visual {
 }
 
 .cookie-consent {
+  --bg: #09090b;
+  --surface-1: #18181b;
+  --surface-2: #27272a;
+  --surface-solid: #121214;
+  --text-primary: #fafafa;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --border-soft: #27272a;
+  --border-strong: #3f3f46;
   position: fixed;
   z-index: 50;
   right: 20px;
@@ -4994,7 +5003,20 @@ html.theme-dark .vc-offer-visual {
   background: var(--surface-solid);
   padding: 16px;
   color: var(--text-primary);
-  box-shadow: 0 20px 54px color-mix(in srgb, var(--text-primary) 18%, transparent);
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.45);
+}
+
+html.theme-light .cookie-consent {
+  --bg: #f4f4f5;
+  --surface-1: #ffffff;
+  --surface-2: #f7f7f8;
+  --surface-solid: #ffffff;
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717a;
+  --border-soft: #e4e4e7;
+  --border-strong: #d4d4d8;
+  box-shadow: 0 20px 54px rgba(24, 24, 27, 0.16);
 }
 
 .cookie-consent-icon {
